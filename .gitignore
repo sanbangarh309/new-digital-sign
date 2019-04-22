@@ -1,0 +1,28 @@
+# Compiled files
+dist/
+.vscode
+# Config file
+server/config.js
+
+# Database directory
+db
+
+# Node stuff
+node_modules
+.npm
+.node_repl_history
+.lock-wscript
+logs
+*.log
+npm-debug.log*
+package-lock.json
+
+# OS stuff
+Desktop.ini
+ehthumbs.db
+Thumbs.db
+$RECYCLE.BIN/
+._*
+.DS_Store
+.Spotlight-V100
+.Trashes

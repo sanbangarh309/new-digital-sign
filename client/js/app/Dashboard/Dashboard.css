@@ -1,0 +1,21 @@
+.logout{
+    float:right;
+    margin:10px 0px;
+}
+
+.main-sidebar .sidebar-menu li.active a span, .main-sidebar .sidebar-menu li a.active {
+	color: #3271e5 !important;
+}
+
+.custom-nav li.active a {
+	color: #000 !important;
+}
+
+.upload_docs #hidden_upload_file {
+	position: absolute;
+	opacity: 0;
+	width: 100%;
+	height: 100%;
+	cursor: pointer;
+	z-index: 6;
+}

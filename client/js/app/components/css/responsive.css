@@ -1,0 +1,211 @@
+@media screen and (min-width:1200px) and (max-width:1440px) {
+	.block-bg-image {
+	margin-bottom: 90px;
+}
+.block-bg-image {
+	height: 100vh !important;
+}
+.sidebar-is-expanded .l-sidebar {
+	width: 157px;
+}
+}
+@media screen and (min-width:992px) and (max-width:1199px) {
+	.block-bg-image {
+	height: 100vh !important;
+}
+
+.mr-auto.custom-nav {padding: 0px;}
+.block-bg-image {background-size: cover !important;margin-bottom: 98px;}
+.sutomer-favriot .veg-image + h2 + p {font-size: 15px !important;line-height: 24px;}
+
+/*---dashboard-tabview-----*/
+.l-sidebar {width:73px !important;height: 100vh;}
+.c-header-icon.js-hamburger {display: none;}
+.c-menu-item__title {display: none;}
+.navber-logo {display: none;}
+.date-botm h3 {font-size: 20px;}
+.date-botm p {font-size: 14px;line-height: 21px;}
+.right-bid {width: 146px;height: 39px;font-size: 16px;}
+.date-oct {margin: 5px 10px;font-size: 13px;}
+.show-result.booking li {width: 100%;	float: left;margin-right: 10px;}
+.u-list li {line-height: 58px !important;}
+.hotel-imgs.hotel-bkng img {max-width: 100% !important;height: 200px;}
+.navber-logo.d-xl-none.d-md-block.d-sm-block {
+	float: left;
+}
+}
+
+@media screen and (min-width:768px) and (max-width:991px) {
+.banner-captions {position: absolute;top:32%;}
+.navbar-brand img {max-width: 141px;width: 100%;}
+.mr-auto.custom-nav li a {padding: 0px 6px;font-size: 13PX !important;} 
+.mr-auto.custom-nav {margin: 10PX 0 0 0;}
+.block-bg-image {height: 100vh !important;background-size: cover !important;margin-bottom: 70px;}
+.post-book h1 {font-size: 45px;color: #fff;}
+.block-content h2 {font-size: 16px;}
+.block-content p {font-size: 15px;}
+.block-content {width: 100%;padding: 5px;}
+.sutomer-favriot .veg-image + h2 + p {font-size: 15px !important;line-height: 24px;}
+nav #nav-tab a {font-size: 16px;}
+.try-now .top-haedng p {font-size: 18px;}
+.abt-headng {padding-top: 71px;}
+.abt-headng p {font-size: 17px;}
+.carousel-caption small {font-size: 16px;}
+.carousel-caption h3 {font-size: 22px;}
+
+/*-------Dashboard-tab-view-css------*/
+.l-sidebar {width:61px !important;height: 100vh;}
+.c-header-icon.js-hamburger {display: none;}
+.c-menu-item__title {display: none;}
+.show-result.booking li {width: 100%;}
+.date-botm p {font-size: 14px;line-height: 24px;}
+.date-botm h3 {font-size: 18px;}
+.date-oct {margin: 2px 7px;font-size: 14px;}
+.search-btn {width: 90%;float: left;}
+.serach-filter {float: left;}
+.no-padd{padding:0px;}
+.add-grp {font-size: 13px;}
+.u-list li {line-height: 58px !important;}
+.navber-logo.d-xl-none.d-md-block.d-sm-block {float: left;}
+.navber-logo a img {margin-bottom:0px;
+}
+}
+@media screen and (max-width:767px) {
+	.registration-form {margin: 35% auto 0 auto;padding: 20px;
+}
+	body{overflow-x:hidden;}
+h1{font-size:22px !important;}
+h2{font-size:20px !important;}
+h3{font-size:18px !important;}
+p{font-size:14px !important;}
+	
+#ChangeToggle {background: none;border: 0px;}
+#ChangeToggle {color: #fff !important;}
+.mr-auto.custom-nav li {display: block !important;float: none;width: 100%; }
+.sidenav {
+	height: 100%;
+	width: 0;
+	position: fixed;
+	z-index: 1111;
+	top: 0;
+	left: 0;
+	background-color: #0cc28c;
+	overflow-x: hidden;
+	padding-top: 60px;
+	transition: 0.5s;
+}
+.mr-auto.custom-nav li a {
+	font-size: 18px;
+}
+.mr-auto.custom-nav {
+	padding: 0px !important;
+	margin: 20px 0 !important;
+	float: left !important;
+}
+#ChangeToggle {
+	color: #fff !important;
+}
+/* The navigation menu links */
+.sidenav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidenav a:hover {
+    color: #f1f1f1;
+}
+
+/* Position and style the close button (top right corner) */
+.sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+/* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+#main {transition: margin-left .5s;padding: 20px;}
+.block-bg-image {background-size: cover !important;height: auto !important;}
+.banner-captions {width: 84%;left: 2px;right: 0px;display: block;margin: 0 auto;top: 25% !important;}
+.post-book p {margin: 12px 0;}
+.party-plans h1 {margin: 20px 0;}
+.block-icon a img {max-width: 41px;height:41px;}
+.party-plans {margin: 4px auto;}
+.block-icon {padding: 20px 0;position: relative;}
+.block-content {display: none;}
+.col-4.col-xs-4.col-sm-4.col-md-4.col-lg-4.col-xl-4 {padding-left: 0px;padding-right: 0px;}
+.navbar-brand img {max-width:120px;margin: 0px auto;}
+#ChangeToggle {position: absolute;right: 0px;top: 23%;}
+.start-btn {background: #0cc28c;color: #fff;width: 121px;display: inline-block;height: 41px;line-height: 37px;border-radius: 20px;font-size: 19px;}
+.try-now {width: 100%;float: left;margin: 11% 0 0 0;}
+.text-center.top-haedng h1 {font-size: 17px !important;margin-bottom: 7px;}
+#tabs {margin: 14px 0;}
+nav #nav-tab a {font-size: 14px;}
+.abt-headng {padding-top:27px;}
+.abt-headng h1 {font-size:49px;margin-bottom: 12px;}
+.sutomer-favriot .veg-image + h2 + p {
+	font-size: 15px !important;
+	line-height: 24px;
+}
+.card .carousel-item {
+	min-height: 370px;
+}
+.carousel-caption small {
+	font-size: 14px;
+	line-height: 27px;
+}
+.imgss {
+	max-width:100px;
+	height:100px;
+	border-radius: 50%;
+	display: block;
+	text-align: center;
+	margin: 0 auto;
+}
+
+.testimonials {
+	height: 600px !important;
+	margin-bottom:0px !important;
+	background-size:cover !important;
+}
+.get-contact {
+	float: left;
+}
+.social-links-media {margin: 22px 0 0 0;float: left;text-align: left;padding: 0px;}
+#tabs nav{padding:0 15px;}
+a.trynow {width: 100%;display: inline-block;height: 50px;font-size: 18px;line-height: 45px	}
+.sutomer-favriot {margin-bottom: 30px;}
+
+
+/*-----dashboard-mobile-view-------*/
+.l-sidebar {width: 41px !important;height: 100vh;}
+.c-header-icon.js-hamburger {display: none;}
+.c-menu-item__title {display: none;}
+
+.serach-filter .form-group input {width:100%;}
+.search-btn {position: relative;width: 100%;float: left;}
+.myq-hdng h1 {font-size:28px; margin:10px 0; text-align:center;}
+.add-grp {margin-bottom: 26px;}
+.right-bid {width: 129px;height: 40px;font-size: 16px;}
+.show-result.booking li {width: 100%;}
+.myq-bokhdng p {font-size: 16px !important;}
+.inline-text {margin: 11px 0 10px 0;}
+.hotel-imgs.hotel-bkng img {max-width: 200px !important;height:200px;display: block;margin: 6px auto;}
+.pricelrft {font-size: 20px;}
+.u-list li {line-height: 58px !important;}
+.navber-logo.d-xl-none.d-md-none.visible-col.d-sm-block {
+	float: left;
+	max-width: 90px;
+	margin: 0px;
+}
+
+
+}
+
+

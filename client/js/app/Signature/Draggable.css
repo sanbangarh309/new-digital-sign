@@ -1,0 +1,92 @@
+*, *:before, *:after {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing:    border-box;
+    -o-box-sizing:      border-box;
+    -ms-box-sizing:     border-box;
+    box-sizing:         border-box;
+  }
+  [draggable=true] {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -khtml-user-drag: element;
+    -webkit-user-drag: element;
+  }
+
+  .drop-area {
+    position: relative;
+    padding:0;
+    width: 100%;
+    min-height: 600px;
+    border: 1px solid #999;
+  }
+
+  .drop-area:last-child{
+    margin-bottom: 40px;
+  }
+
+  .drop-area .item {
+    position: absolute;
+    cursor: pointer;
+    width:100px;
+    height:60px;
+    font-size: 105%;
+    /* background: white; */
+    /* border: dashed 1px black; */
+    /* background-color: rgba(34, 176, 20, 0.2); */
+    /* background-color: green; */
+    margin:0;
+    padding:0;
+  }
+
+  .drop-area .item.signer , .drop-area .item.signer_added {
+    background-color: green;
+  }
+
+  .unselectable {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    resize:'both';
+    background-color: rgba(28, 164, 255, 0.2);
+  }
+
+  .draggable.resizable{
+    position: absolute !important;
+    border: medium solid;
+  }
+
+
+  .unselectable textarea{
+    border: none !important;
+    background: transparent !important;
+  }
+  /* .drop-area .item .resizer {
+    position:absolute;
+    right:0;
+    bottom:0;
+    cursor:se-resize;
+    margin:5px;
+    border-bottom: solid 2px #333;
+    border-right: solid 2px #333;
+    opacity: 0;
+  } */
+
+  .resizer {
+    width: 16px;
+    height: 16px;
+    position:absolute;
+    right:0;
+    bottom:0;
+    cursor:se-resize;
+    margin:5px;
+    border-bottom: solid 2px #333;
+    border-right: solid 2px #333;
+    opacity: 0;
+  }
+
+  .drop-area .page{
+    overflow: visible !important;
+  }

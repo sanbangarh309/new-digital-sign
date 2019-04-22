@@ -1,0 +1,13 @@
+.logout{
+    float:right;
+    margin:10px 0px;
+
+}
+
+header .custom-navheader .custom-nav li.active a span, .custom-nav li a.active {
+	color: #30a747 !important;
+}
+
+.custom-nav li.active a {
+	color: #000 !important;
+}
