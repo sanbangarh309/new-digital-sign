@@ -503,7 +503,7 @@ class DropArea extends React.Component {
       return (
         <div className={"text-field-box item unselectable "+this.props.fieldType}
           ref={"node"}
-          draggable= "true"
+          draggable= {this.props.isDragging}
           id={ this.props.fieldType+'_' + this.props.id }
           fieldtype={this.props.fieldType}
           onMouseDown={this.onMouseDown.bind(this)}
