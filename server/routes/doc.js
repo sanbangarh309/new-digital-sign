@@ -31,6 +31,7 @@ module.exports = (app) => {
             template.user_id = user.sub;
             template.name = buffer.name;
             template.path = buffer.name;
+            template.type = buffer.type;
             template.save();
             return res.json(template);
           }
@@ -45,8 +46,16 @@ module.exports = (app) => {
         .catch((err) => next(err));
     });
 
+    app.get('/api/template/:id', async (req,res,next) => {
+      Template.findById(req.params.id)
+        .exec()
+        .then((doc) => {
+          res.json(doc);
+        })
+        .catch((err) => next(err));
+    });
+
     app.get('/api/doc/:id', async (req,res,next) => {
-      console.log(req.params.id);
       Doc.findById(req.params.id)
         .exec()
         .then((doc) => {
@@ -94,6 +103,26 @@ module.exports = (app) => {
       });
     });
 
+    app.post('/api/open_template',async (req,res,next) => {
+      const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+      const userMatched = await User.findById(user.sub);
+      if(userMatched){
+        const template = await Template.findById(req.body.id);
+        if(template){
+          San_Function.pdfToImage(template.name, async (data) => {
+            template.images = data.message;
+            template.save();
+            console.log(data);
+            return res.json(template);
+          });
+        }else{
+          return res.json('template not found');
+        }
+      }else{
+        return res.json('template not found');
+      }
+    });
+
     app.post('/api/addfield', (req, res, next) => {
       const {signer} = req.body;
       let signer_user = new Signer();
@@ -139,35 +168,10 @@ module.exports = (app) => {
     });
 
     app.delete('/api/doc/:id', (req, res, next) => {
-      // Doc.findOne({_id: ObjectId(req.params.id)})
-      //   .exec()
-      //   .then((doc) => {
-      //     var fs = require('fs');
-      //     console.log(doc);
-      //     if ( typeof doc.file !== 'undefined' && doc.file ){
-      //       console.log(config.directory+'/uploads/docs/'+doc.file);
-      //       // fs.unlink(config.directory+'/uploads/docs/'+doc.file);
-      //     }
-      //     if ( typeof doc.images !== 'undefined' && doc.images[0] ){
-      //       doc.images.forEach(el => {
-      //         console.log(config.directory+'/uploads/docs/'+el.name);
-      //         // fs.unlink(config.directory+'/uploads/docs/'+el.name);
-      //       });
-      //       let strn = doc.images[0].name.replace("_cnvrt_1", "").split('.');
-            
-      //       let pdf_file = strn[0]+'.pdf';
-      //       if(pdf_file){
-      //         console.log(config.directory+'/uploads/docs/'+pdf_file);
-      //         // fs.unlink(config.directory+'/uploads/docs/'+pdf_file);
-      //       }
-      //     }
-      //     res.json(doc);
-      //   });
         Doc.findOneAndRemove({_id: req.params.id})
         .exec()
         .then((doc) => {
           var fs = require('fs');
-          console.log(doc);
           if ( typeof doc.file !== 'undefined' && doc.file && fs.existsSync(config.directory+'/uploads/docs/'+doc.file)){
             fs.unlink(config.directory+'/uploads/docs/'+doc.file);
           }
@@ -188,11 +192,39 @@ module.exports = (app) => {
         .catch((err) => next(err));
     });
 
+    app.delete('/api/template/:id', (req, res, next) => {
+      Template.findOneAndRemove({_id: req.params.id})
+        .exec()
+        .then((doc) => {
+          var fs = require('fs');
+          if ( typeof doc.name !== 'undefined' && doc.name && fs.existsSync(config.directory+'/uploads/docs/'+doc.name)){
+            fs.unlink(config.directory+'/uploads/docs/'+doc.name);
+          }
+          // if ( typeof doc.images !== 'undefined' && doc.images[0]){
+          //   doc.images.forEach(el => {
+          //     if(fs.existsSync(config.directory+'/uploads/docs/'+el.name)){
+          //       fs.unlink(config.directory+'/uploads/docs/'+el.name);
+          //     }
+          //   });
+          //   let strn = doc.images[0].name.replace("_cnvrt_1", "").split('.');
+          //   let pdf_file = strn[0]+'.pdf';
+          //   if(pdf_file && fs.existsSync(pdf_file)){
+          //     fs.unlink(config.directory+'/uploads/docs/'+pdf_file);
+          //   }
+          // }
+          res.json(doc);
+        })
+        .catch((err) => next(err));
+    });
+
     app.put('/api/doc/:id', (req, res, next) => {
       San_Function.uploadFinalDoc(req.body.base64Data, async (buffer)=> {
         Doc.findById(ObjectId(req.params.id))
         .exec()
         .then((doc) => {
+            if(!doc){
+              
+            }
             if(doc.file){
               require('fs').unlinkSync(config.directory + "/uploads/docs/"+doc.file)
             }

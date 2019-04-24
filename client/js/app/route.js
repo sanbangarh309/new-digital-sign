@@ -8,7 +8,7 @@ import auth from 'src/auth';
 import App from './components/App';
 import Logout from './Logout';
 import Signature_edit from './Signature/Signature_edit';
-import Dashboard from './Dashboard';
+import Template from './Dashboard/Template';
 
 const Home = Loadable({
     loader: () => import('./Home/route'),
@@ -28,7 +28,7 @@ export default () => (
             <Route path="/advanced-permission" component={TestWithAdvPerm} />
             <Route key="signature_edit" exact path="/signature/:id" component={Signature_edit} />
             <Route path="/logout" component={Logout.route} />
-            <Route path="/templates" component={Dashboard.route} />
+            <Route path="/templates" component={Template} />
             {/* Import all routes, permissions are verified in each route */}
             {features.filter((feature) => feature.route).map((feature) => (
                 <Route

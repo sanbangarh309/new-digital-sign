@@ -15,6 +15,87 @@ class SignerFields extends Component {
         this.state ={
           field:null,
         };
+        this.createTextField = this.createTextField.bind(this);
+        this.createDateField = this.createDateField.bind(this);
+        this.showInitialField = this.showInitialField.bind(this);
+        this.showSignatureField = this.showSignatureField.bind(this);
+      }
+
+      showSignatureField(e){
+            $('#signer_sign_list').addClass('current-btn');
+            $('#signer_text_list').removeClass('current-btn');
+            $('#signer_initial_list').removeClass('current-btn');
+            // $('#check_field').removeClass('current-btn');
+            // $('#clear_field').removeClass('current-btn');
+            $('#signer_date_list').removeClass('current-btn');
+        
+            $('#text_field').removeClass('current-btn');
+            $('#sign_nav_tabs .nav-item #draw_').addClass('active');
+            $('#sign_nav_tabs .nav-item #type_').removeClass('active');
+            $('#sign_nav_tabs .nav-item #upload_').removeClass('active');
+        
+            $('.modal-content .modal-body #draw').addClass('active').addClass('show');
+            $('.modal-content .modal-body #type').removeClass('active');
+            $('.modal-content .modal-body #upload').removeClass('active').removeClass('show');
+            $('.signature_container').addClass('hovrcr_sign');
+            $('.signature_container').removeClass('hovrcr_text');
+            $('.signature_container').removeClass('hovrcr_date');
+            $('.signature_container').removeClass('hovrcr_check');
+            $('.signature_container').removeClass('hovrcr_initials');
+      } 
+
+      createTextField(){
+        $('#signer_text_list').addClass('current-btn');
+        $('#signer_date_list').removeClass('current-btn');
+        $('#signer_initial_list').removeClass('current-btn');
+        $('#signer_sign_list').removeClass('current-btn');
+        $('#check_field').removeClass('current-btn');
+        $('#clear_field').removeClass('current-btn');
+        
+    
+        $('.signature_container').addClass('hovrcr_text');
+        $('.signature_container').removeClass('hovrcr_date');
+        $('.signature_container').removeClass('hovrcr_initials');
+        $('.signature_container').removeClass('hovrcr_check');
+        $('.signature_container').removeClass('hovrcr_sign');
+      }
+      createDateField(e){
+        $('#signer_date_list').addClass('current-btn');
+        $('#signer_text_list').removeClass('current-btn');
+        $('#signer_initial_list').removeClass('current-btn');
+        $('#signer_sign_list').removeClass('current-btn');
+        $('#check_field').removeClass('current-btn');
+        $('#clear_field').removeClass('current-btn');
+    
+        $('.signature_container').addClass('hovrcr_date');
+        $('.signature_container').removeClass('hovrcr_text');
+        $('.signature_container').removeClass('hovrcr_initials');
+        $('.signature_container').removeClass('hovrcr_check');
+        $('.signature_container').removeClass('hovrcr_sign');
+      }
+      showInitialField(e){
+        $('#signer_initial_list').addClass('current-btn');
+        $('#signer_text_list').removeClass('current-btn');
+        $('#signer_sign_list').removeClass('current-btn');
+        $('#check_field').removeClass('current-btn');
+        $('#signer_date_list').removeClass('current-btn');
+    
+        $('#text_field').removeClass('current-btn');
+        $('.sign-btn').click();
+        $('#sign_nav_tabs .nav-item #type_').addClass('active');
+        $('#sign_nav_tabs .nav-item #draw_').removeClass('active');
+        $('#sign_nav_tabs .nav-item #upload_').removeClass('active');
+    
+        $('.modal-content .modal-body #type').addClass('active');
+        $('.modal-content .modal-body #draw').removeClass('active').removeClass('show');
+        $('.modal-content .modal-body #upload').removeClass('active').removeClass('show');
+    
+        $('.signature_container').addClass('hovrcr_initials');
+        $('.signature_container').removeClass('hovrcr_text');
+        $('.signature_container').removeClass('hovrcr_date');
+        $('.signature_container').removeClass('hovrcr_check');
+        $('.signature_container').removeClass('hovrcr_sign');
+        console.log('clicked on Initial Button')
       }
 
     //   onMouseDown(e){
@@ -52,6 +133,18 @@ class SignerFields extends Component {
 
       setField = (field,e) => {
         e.preventDefault();
+        if(field == 'text'){
+          this.createTextField();
+        }
+        if(field=='date'){
+        this.createDateField();
+        }
+        if(field == 'initial'){
+        this.showInitialField();
+        }
+        if(field == 'sign'){
+        this.showSignatureField();
+        }
         this.props.setSignerField(field);
       }
 
@@ -79,13 +172,13 @@ class SignerFields extends Component {
                     <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
                         <div className="card-body">
                         <ol className="btn-mainlist">
-                        <li class="current-btn"><a href="#" id={'signer_sign'} class="btn" onClick={this.setField.bind(this,'sign')}><span class="material-icons">border_color</span> Signature Field</a></li>
-												<li><a href="javascript:void(0)" id={'signer_text'} class="btn" onClick={this.setField.bind(this,'text')}><span class="material-icons">text_fields</span> Text Field</a></li>
-												<li><a href="javascript:void(0)" id={'signer_date'} class="btn" onClick={this.setField.bind(this,'date')}><span class="material-icons">insert_invitation</span> Date Field</a></li>
-												<li><a href="javascript:void(0)" id={'signer_initial'} class="btn" onClick={this.setField.bind(this,'initial')}><span class="material-icons">adjust</span> Initials Field</a></li>
-												<li><a href="javascript:void(0)" id={'signer_checkbox'} class="btn" onClick={this.setField.bind(this,'checkbox')} ><span class="material-icons">done_all</span> Checkbox Field</a></li>
-												<li><a href="javascript:void(0)" id={'signer_radio'} class="btn" onClick={this.setField.bind(this,'radio')}><span class="material-icons">radio_button_checked</span> Radio Fields</a></li>
-												<li><a href="javascript:void(0)" id={'signer_attach'} class="btn" onClick={this.setField.bind(this,'attach')}><span class="material-icons file-attach">attach_file</span> Attachment</a></li>
+                        <li class="current-btn" id={'signer_sign_list'}><a href="#" id={'signer_sign'} class="btn" onClick={this.setField.bind(this,'sign')}><span class="material-icons">border_color</span> Signature Field</a></li>
+												<li id={'signer_text_list'}><a href="javascript:void(0)" id={'signer_text'} class="btn" onClick={this.setField.bind(this,'text')}><span class="material-icons">text_fields</span> Text Field</a></li>
+												<li id={'signer_date_list'}><a href="javascript:void(0)" id={'signer_date'} class="btn" onClick={this.setField.bind(this,'date')}><span class="material-icons">insert_invitation</span> Date Field</a></li>
+												<li id={'signer_initial_list'}><a href="javascript:void(0)" id={'signer_initial'} class="btn" onClick={this.setField.bind(this,'initial')}><span class="material-icons">adjust</span> Initials Field</a></li>
+												<li id={'signer_checkbox_list'}><a href="javascript:void(0)" id={'signer_checkbox'} class="btn" onClick={this.setField.bind(this,'checkbox')} ><span class="material-icons">done_all</span> Checkbox Field</a></li>
+												<li id={'signer_radio_list'}><a href="javascript:void(0)" id={'signer_radio'} class="btn" onClick={this.setField.bind(this,'radio')}><span class="material-icons">radio_button_checked</span> Radio Fields</a></li>
+												<li id={'signer_attach_list'}><a href="javascript:void(0)" id={'signer_attach'} class="btn" onClick={this.setField.bind(this,'attach')}><span class="material-icons file-attach">attach_file</span> Attachment</a></li>
                         </ol>
                         </div>
                     </div>

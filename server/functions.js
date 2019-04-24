@@ -53,15 +53,19 @@ module.exports = {
     var imageTypeDetected = imageBuffer.type.match(imageTypeRegularExpression);
     if(imageTypeDetected[1] == 'pdf'){
       var uniqueRandomImageName = 'pdf_' + uniqueSHA1String;
+    }else if(imageTypeDetected[1] == 'msword'){
+      var uniqueRandomImageName = 'doc_' + uniqueSHA1String;
     }else{
       var uniqueRandomImageName = 'image_' + uniqueSHA1String;
     }
+    // console.log(imageTypeDetected);
+    // debugger;
     var userUploadedImagePath = uploafdf_dir + uniqueRandomImageName + '.' + imageTypeDetected[1];
     var filename = uniqueRandomImageName + '.' + imageTypeDetected[1];
     require('fs').writeFile(userUploadedImagePath, imageBuffer.data,
       function()
       {
-        sb({name:filename});
+        sb({name:filename,type:imageTypeDetected[1]});
       });
   },
 
@@ -133,6 +137,46 @@ module.exports = {
       {
         sb('')
       }
+  },
+
+  pdfToImage : function(file,sb){
+    const fs = require('fs');
+    var upload_dir = config.directory + "/uploads/docs/";
+    var filename = file.split('.').slice(0, -1).join('.');
+    var userUploadedImagePath = upload_dir+file;
+    
+    if(!fs.existsSync(upload_dir+file)){
+      console.log('exist');
+      sb('');
+      return false;
+    }
+    console.log(userUploadedImagePath);
+    if(fs.existsSync(userUploadedImagePath.replace('.', '_cnvrt.'))){
+      console.log('exist image');
+      sb('');
+      return false;
+    }
+    const Pdf2Img = require('pdf2img-promises');
+    let converter = new Pdf2Img();
+    converter.on(file, (msg) => {
+      console.log('Received: ', msg);
+    });
+    converter.setOptions({
+      type: 'jpg',                                // png or jpg, default jpg
+      size: 1024,                                 // default 1024
+      density: 600,                               // default 600
+      quality: 100,                               // default 100
+      outputdir: upload_dir, // output folder, default null (if null given, then it will create folder name same as file name)
+      outputname: filename + "_cnvrt",                       // output file name, dafault null (if null given, then it will create image name same as input name)
+      page: null                                  // convert selected page, default null (if null given, then it will convert all pages)
+    });
+    converter.convert(userUploadedImagePath)
+    .then(info => {
+      sb(info);
+    })
+    .catch(err => {
+      console.error(err);
+    })
   },
 
   sanGenerateQRCode : function(req, res,id, callback) {

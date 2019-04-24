@@ -1,6 +1,7 @@
 import React from 'react';
 import {connect} from 'react-redux';
 import history from '../history';
+import  { Redirect } from 'react-router-dom'
 // import 'font-awesome/css/font-awesome.min.css';
 // import './css/docs.theme.min.css';
 // import './css/owl.carousel.min.css';

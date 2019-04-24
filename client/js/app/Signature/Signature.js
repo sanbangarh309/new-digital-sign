@@ -58,11 +58,15 @@ class Signature extends Component {
       },
       signer:null,
       exist_signer:null,
-      signers:[]
+      signers:[],
+      template_id:this.props.location.query.temp || null
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
       this.chkFileType(doc);
+    }
+    if(this.props.location.query.temp){
+      this.useTemplate(this.props.location.query.temp);
     }
     this.addField = this.addField.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -88,6 +92,29 @@ class Signature extends Component {
     this.setState({
       docs: docs
     });
+  }
+
+  useTemplate = (id) => {
+    axios.get('/api/template/'+id).then((res) => {
+      let fina_data = [];
+      Object.keys(res.data.images).map(key => {
+        var i = new Image(); 
+        i.onload = function(){
+          fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
+        };
+        i.src = 'files/docs/'+res.data.images[key].name;
+      });
+      
+      setTimeout(() => {
+        localStorage.setItem("files_array", JSON.stringify(fina_data))
+        this.setState({
+          docs: fina_data
+        });
+        $('#outer-barG').css('display','none');
+      }, 1000);    
+  }).catch(error => {
+    console.log(error.response);
+  });
   }
 
   addField(e){
