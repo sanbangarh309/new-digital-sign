@@ -135,8 +135,8 @@ class DropArea extends React.Component {
         var x = e.clientX - position.left; //x position within the element.
         var y = e.clientY - position.top;
         let doc_id = e.target.id.replace ( /[^\d.]/g, '' ) || 1;
-        let h = 60;
-        let w = 60;
+        let h = 70;
+        let w = 100;
         let alreday = false;
         let list = this.state.items;
         let key___c = this.props.field_type.slice(this.props.field_type.length - 1);
@@ -254,7 +254,6 @@ class DropArea extends React.Component {
           fields = doc.drag_data;
         }
         if((this.state.doc_key == key_) || doc.drag_data){
-          console.log(Object.keys(fields).length);
           if(Object.keys(fields).length == 0){
             this.state.list = [];
           }
@@ -401,7 +400,7 @@ class DropArea extends React.Component {
       this.props.updateStateDragging( this.props.drag_id, false );
     }
 
-    removeField(e){ console.log(this.props.drag_id);
+    removeField(e){
       this.props.removeFieldBox(this.props.drag_id,this.props.docId)
     }
     componentWillMount(){
@@ -461,8 +460,8 @@ class DropArea extends React.Component {
       styles['height'] = this.props.sign_image.canvas.height;
     }
     if(this.props.fieldType == 'check'){
-      styles['width'] = '100px';
-      styles['height'] = '100px';
+      styles['width'] = '60px';
+      styles['height'] = '60px';
     }
     if(this.props.fieldType == 'sign_text'){
       dateField = this.props.sign_text;
@@ -489,7 +488,7 @@ class DropArea extends React.Component {
       styles['width'] = '230px';
       styles['height'] = '40px';
       textstyle['fontSize'] = '27px';
-      textstyle['marginLeft'] = '24px';
+      textstyle['marginLeft'] = '7px';
     }
       if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){
         this.props.fieldType = 'text';
@@ -515,7 +514,7 @@ class DropArea extends React.Component {
         {(() => {
           switch (this.props.fieldType) {
             case "sign": return (<img src={this.props.sign_image ? this.props.sign_image.src : ''}></img>);
-            case "check": return (<img src={'/assets/img/checkmark.png'} style={{width:'100px',height:'100px'}}></img>);
+            case "check": return (<img src={'/assets/img/checkmark.png'} style={{width:'60px',height:'60px'}}></img>);
             case "signer_added": return (<span style={textstyle}>{this.props.signer_field}</span>);
             case "signer": return (<span style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType}>{this.props.sign_text}</span>);
@@ -563,19 +562,21 @@ class DropArea extends React.Component {
     }
     componentDidMount(){
       const x = document.getElementById("signature_container_"+this.props.docId);
-      if(x){
-        x.addEventListener('mousemove', this.onMouseMove.bind(this), false);
-        x.addEventListener('mouseup', this.onMouseUp.bind(this), false);
-      }
-      // window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
-      // window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+      // if(x){
+      //   x.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+      //   x.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+      // }
+      window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+      window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
     }
     componentWillUnmount(){
       const x = document.getElementById("signature_container_"+this.props.docId);
-      if(x){
-        x.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
-        x.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
-      }
+      // if(x){
+      //   x.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
+      //   x.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
+      // }
+      window.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
+      window.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
     }
     onMouseDown(e) {
       console.log("Resizer.onMouseDown");
@@ -589,7 +590,7 @@ class DropArea extends React.Component {
       }
     }
     onMouseUp(e) {
-      // console.log('up hey:-  '+this.props.isResizing);
+      console.log('up hey:-  '+this.props.isResizing);
       console.log("Resizer.onMouseUp");
       if( this.props.isResizing ){
         this.props.updateStateResizing( this.props.drag_id, false);

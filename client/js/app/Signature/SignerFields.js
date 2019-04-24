@@ -137,13 +137,13 @@ class SignerFields extends Component {
           this.createTextField();
         }
         if(field=='date'){
-        this.createDateField();
+          this.createDateField();
         }
         if(field == 'initial'){
-        this.showInitialField();
+          this.showInitialField();
         }
         if(field == 'sign'){
-        this.showSignatureField();
+          this.showSignatureField();
         }
         this.props.setSignerField(field);
       }
