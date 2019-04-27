@@ -626,7 +626,7 @@
 	visibility: hidden;
 }
 .ui-resizable-se {
-	cursor: se-resize;
+	/* cursor: se-resize; */
 	width: 10px;
 	height: 10px;
 	right: -5px;

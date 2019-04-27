@@ -59,6 +59,7 @@ class Signature extends Component {
       signer:null,
       exist_signer:null,
       signers:[],
+      signers_err:null,
       template_id:this.props.location.query.temp || null
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
@@ -132,7 +133,7 @@ class Signature extends Component {
       }).catch(error => {
         
       });
-    }else{
+    }else if(this.state.exist_signer){
       this.state.inputFields.push('signer_added');
       let unique = [...new Set(this.state.inputFields)];
       this.setState({inputFields:unique});
@@ -143,6 +144,11 @@ class Signature extends Component {
         $(".signature_container").click();
       }, 1000);
       
+    }else{
+      this.setState({signers_err: 'Signer is Required'});
+      console.log($('#exist_signer').val());
+      console.log($('#signer').val());
+      // debugger;
     }
   }
 
@@ -455,6 +461,20 @@ class Signature extends Component {
   }
 
   handleChange(e) {
+    if(e.target.name == 'signer'){
+      if(e.target.value){
+        $('select[name="exist_signer"]').prop('disabled', true);
+      }else{
+        $('select[name="exist_signer"]').prop('disabled', false);
+      }
+    }
+    if(e.target.name == 'exist_signer'){
+      if(e.target.value){
+        $('input[name="signer"]').attr('readonly','readonly');
+      }else{
+        $('input[name="signer"]').removeAttr('readonly');
+      }
+    }
       this.setState({[e.target.name]: e.target.value});
   }
 
@@ -487,6 +507,7 @@ class Signature extends Component {
     }else{
       dashboard = <li><NavLink  className="btn current-btn" id="dashboard" to='/dashboard'>Dasboard</NavLink></li>
     }
+    let required_msg = this.state.signers_err ? (<h3 className="text-center" style={{color:'red'}}>{this.state.signers_err}</h3>) : '';
     return (
       <div><header>
          <nav className="navbar navbar-expand-lg navbar-light custom-navheader navbar-fixed header-template" id="sroll-className">
@@ -710,6 +731,7 @@ class Signature extends Component {
                             <div className="text-center">
                                 <h3><i className="fa fa-sign-in fa-4x"></i></h3>
                                 <h2 className="text-center">Field Properties</h2>
+                                {required_msg}
                                 <div className="panel-body">
                                     <div className="form-group">
                                       <div className="input-group">
@@ -721,7 +743,7 @@ class Signature extends Component {
                                     <div className="form-group">
                                       <div className="input-group">
                                         <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
-                                        <select name="exist_signer" onChange={this.handleChange}>
+                                        <select name="exist_signer" id="exist_signer" onChange={this.handleChange}>
                                         <option value=''>Select Signer</option>
                                         {this.state.signers.map((person) => <option key={person._id}>{person.name}</option>)}
                                         </select>

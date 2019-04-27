@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import './Draggable.css';
-import Drag from './Drag';
 // drop area Component
 class DropArea extends React.Component {
     constructor(props) {
@@ -113,10 +112,11 @@ class DropArea extends React.Component {
       let element = this.refs[field+'_'+ this.state.doc_key+'_'+ id];
       let list = this.state.items;
       let position = element.refs.node.getBoundingClientRect();
-      list[id].width =   clientX - position.left + (16 / 2);
-      list[id].height =  clientY - position.top  + (16 / 2);
+      let w = clientX - position.left + (16 / 2);
+      let h = clientY - position.top  + (16 / 2);
+      list[id].width =   w;
+      list[id].height =  h;
       list[id].fontSize = parseFloat(list[id].height/2.5);
-      // console.log(position)
       let newState = Object.assign(
         this.state, {
           items : list
@@ -203,6 +203,7 @@ class DropArea extends React.Component {
             Object.assign(newobj, new_list);
             this.setState({items:newobj});
           }
+        let fontsize = 20;
         if(!alreday){
           // this.setState((state) => ({ field_count: state.field_count + 1})); 
           let items = []
@@ -211,8 +212,19 @@ class DropArea extends React.Component {
             x = this.props.left
             y = this.props.top
             text = this.props.signer_field;
+            w = 230;
+            h = 40;
+            fontsize = 27;
           }
-          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:20,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id});
+          if(key___ == 'sign_text'){
+            w = 230;
+            h = 60;
+          }
+          if(key___ == 'check'){
+            w = 60;
+            h = 60;
+          }
+          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id});
           
           Object.assign(newobj, this.state.field_lists); 
           this.setState({show_field:true});
@@ -432,6 +444,7 @@ class DropArea extends React.Component {
         width:  this.props.width,
         height: this.props.height,
         fontSize: this.props.fontSize,
+        display:'table'
       };
       let cusstyle = {
           width: '100%',
@@ -460,8 +473,8 @@ class DropArea extends React.Component {
       styles['height'] = this.props.sign_image.canvas.height;
     }
     if(this.props.fieldType == 'check'){
-      styles['width'] = '60px';
-      styles['height'] = '60px';
+      // styles['width'] = '60px';
+      // styles['height'] = '60px';
     }
     if(this.props.fieldType == 'sign_text'){
       dateField = this.props.sign_text;
@@ -472,8 +485,8 @@ class DropArea extends React.Component {
       cusstyle['fontSize'] = (50-parseInt(this.props.sign_text.length))+'px';
       cusstyle['width'] = '230px';
       cusstyle['height'] = '100px';
-      styles['width'] = '230px';
-      styles['height'] = '60px';
+      // styles['width'] = '230px';
+      // styles['height'] = '60px';
     }
     // if(this.props.fieldType == 'sign'){
     //   let field_ = this.props.sign_image;
@@ -485,9 +498,8 @@ class DropArea extends React.Component {
       marginLeft: '50px'
     }
     if((this.props.fieldType == 'signer_added' || this.props.fieldType == 'signer') && this.props.currentNode !='SPAN'){
-      styles['width'] = '230px';
-      styles['height'] = '40px';
-      textstyle['fontSize'] = '27px';
+      // styles['width'] = this.props.isResizing ? this.props.width : '230px';
+      textstyle['fontSize'] = '1.2em';
       textstyle['marginLeft'] = '7px';
     }
       if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){
@@ -583,14 +595,12 @@ class DropArea extends React.Component {
       this.props.updateStateResizing( this.props.drag_id, true);
     }
     onMouseMove(e) {
-      console.log('move hey:-  '+this.props.isResizing);
       if( this.props.isResizing ){
         console.log("Resizer.onMouseMove");
         this.props.funcResizing( this.props.drag_id, e.clientX, e.clientY,this.props.fieldtype);
       }
     }
     onMouseUp(e) {
-      console.log('up hey:-  '+this.props.isResizing);
       console.log("Resizer.onMouseUp");
       if( this.props.isResizing ){
         this.props.updateStateResizing( this.props.drag_id, false);

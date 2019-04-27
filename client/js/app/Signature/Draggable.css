@@ -41,7 +41,7 @@
   }
 
   .drop-area .item.signer , .drop-area .item.signer_added {
-    background-color: green;
+    background-color:#2D993F;
   }
 
   .unselectable {
