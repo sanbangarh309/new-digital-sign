@@ -123,8 +123,8 @@ class Signature extends Component {
     if(this.state.signer){
       axios.post('/api/addfield',this.state).then((res) => {
         this.state.inputFields.push('signer_added');
-        let unique = [...new Set(this.state.inputFields)];
-        this.setState({inputFields:unique});
+        // let unique = [...new Set(this.state.inputFields)];
+        // this.setState({inputFields:unique});
         this.setState({signer_field: res.data.name+' '+fld});
         $('#add_signer').modal('hide');
         setTimeout(() => {
@@ -135,8 +135,8 @@ class Signature extends Component {
       });
     }else if(this.state.exist_signer){
       this.state.inputFields.push('signer_added');
-      let unique = [...new Set(this.state.inputFields)];
-      this.setState({inputFields:unique});
+      // let unique = [...new Set(this.state.inputFields)];
+      // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
       this.setState({signer_field: sgn+' '+fld});
       $('#add_signer').modal('hide');
@@ -442,7 +442,7 @@ class Signature extends Component {
     this.setState({bind_signature: false});
   }
 
-  updateSignFieldType(){
+  updateSignFieldType(){ 
     this.state.inputFields.push('sign');
   }
 
@@ -493,7 +493,7 @@ class Signature extends Component {
     // this.state.signer_field.push(field);
     this.state.inputFields.push('signer');
   }
-  render() {
+  render() { console.log(this.state.inputFields)
     // debugger;
     let dashboard = '';
     let docs = this.state.docs || localStorage.getItem('files_array') 

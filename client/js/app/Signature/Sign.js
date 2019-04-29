@@ -25,17 +25,15 @@ class Sign extends Component {
         img = document.createElement("img"),
           onClick = (e)=>{ 
           // debugger;
-          container.removeChild(e.target);
+          // container.removeChild(e.target);
         };
-          
           img.src = image;
           img.alt = "Double Click to Remove Signature";
           $(img).addClass('sign_image');
           $(img).css('margin-top',this.props.t);
           $(img).css('margin-left',this.props.l);
-          // console.log(this.props);
           this.props.updateSignField({src:image,top:this.props.t,left:this.props.l,canvas:newcanvas});
-          container.children.length ? container.removeChild(container.children[0]) : null;
+          // container.children.length ? container.removeChild(container.children[0]) : null;
           if(this.props.doc_for_sign){
             container.appendChild(img);
           }
@@ -66,7 +64,7 @@ class Sign extends Component {
       }
 
       componentWillUnmount(){
-            window.addEventListener("resize",this.resizeCanvas);
+          window.addEventListener("resize",this.resizeCanvas);
       }
 
       trim(c) {

@@ -116,7 +116,7 @@ class DropArea extends React.Component {
       let h = clientY - position.top  + (16 / 2);
       list[id].width =   w;
       list[id].height =  h;
-      list[id].fontSize = parseFloat(list[id].height/2.5);
+      // list[id].fontSize = parseFloat(list[id].height/2.5);
       let newState = Object.assign(
         this.state, {
           items : list
@@ -246,14 +246,14 @@ class DropArea extends React.Component {
       let newState = Object.assign(
         this.state, {
           items : list
-        });
+      });
       this.setState(newState);
     }
 
     render() {
       let DropJgah = []
       let key_ = 1;
-      let fields = this.state.items; 
+      let fields = this.state.items;
       let doc_key = this.state.doc_key;
       this.props.docs.map(doc => {
         let items = [];
@@ -266,18 +266,18 @@ class DropArea extends React.Component {
           fields = doc.drag_data;
         }
         if((this.state.doc_key == key_) || doc.drag_data){
-          if(Object.keys(fields).length == 0){
-            this.state.list = [];
-          }
+          // if(Object.keys(fields).length == 0){
+          //   this.state.list = [];
+          // }
           Object.keys(fields).map(key => {
             // if(doc.drag_data){
             //   key_ = 
             // }
-            if(this.props.doc_for_sign && this.state.currentNode == 'SPAN'){
-              if(this.state.currentText == 'sign' && fields[key].type =='signer' && fields[key].content == 'sign'){
-                return;
-              }
-            }
+            // if(this.props.doc_for_sign && this.state.currentNode == 'SPAN'){
+            //   if(this.state.currentText == 'sign' && fields[key].type =='signer' && fields[key].content == 'sign'){
+            //     return;
+            //   }
+            // }
             // && !fields[key].isDragging && !fields[key].isResizing
             // console.log(fields[key])
             if(!fields[key].isHide){ 
@@ -303,7 +303,7 @@ class DropArea extends React.Component {
                     docId={key_}
                     fieldType={fields[key].type}
                     signer_field={fields[key].content}
-                    sign_image={this.props.sign_image}
+                    sign_image={fields[key].type == 'sign' ? this.props.sign_image : ''}
                     sign_text={this.props.sign_text}
                     sign_font={this.props.sign_font}
                     sign_color={this.props.sign_color}
@@ -339,7 +339,6 @@ class DropArea extends React.Component {
             // }
             
           });
-         
           DropJgah.push(<div
             className="drop-area container doc-bg signature_container hovrcr_sign" 
             onDragOver={this.onDragOver.bind(this)}
@@ -364,9 +363,10 @@ class DropArea extends React.Component {
         
         key_++;
       });
+      
       return (
         <div className="right-maintemplate" key="1">
-        <div className="pageNumber">Page 1 of 1</div>
+        {/* <div className="pageNumber">Page 1 of 1</div> */}
         {DropJgah}
         </div>
       );
@@ -378,6 +378,9 @@ class DropArea extends React.Component {
   class Draggable extends React.Component {
     constructor(props) {
       super(props);
+      this.state = {
+        resized_div : []
+      }
     }
     onMouseDown(e){
       console.log("Draggable.onMouseDown");
@@ -468,10 +471,19 @@ class DropArea extends React.Component {
       var year = new Date().getFullYear();
       dateField = month + '/' + date + '/' + year;
     }
-    if(this.props.fieldType == 'sign' && this.props.sign_image){
+    let sign_image_style = {};
+    if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){
       styles['width'] = this.props.sign_image.canvas.width;
       styles['height'] = this.props.sign_image.canvas.height;
+      this.state.resized_div.push(this.props.fieldType+'_' + this.props.id);
+    }else{
+      sign_image_style = {width:this.props.width,height:this.props.height};
+    } 
+    if(this.props.fieldType == 'sign' && this.props.sign_image && this.props.isResizing){
+      styles['width'] = this.props.width;
+      styles['height'] = this.props.height;
     }
+    
     if(this.props.fieldType == 'check'){
       // styles['width'] = '60px';
       // styles['height'] = '60px';
@@ -483,8 +495,8 @@ class DropArea extends React.Component {
       cusstyle['padding'] = '10px';
       cusstyle['margin'] = '3px';
       cusstyle['fontSize'] = (50-parseInt(this.props.sign_text.length))+'px';
-      cusstyle['width'] = '230px';
-      cusstyle['height'] = '100px';
+      cusstyle['width'] = this.props.width;
+      cusstyle['height'] = this.props.height;
       // styles['width'] = '230px';
       // styles['height'] = '60px';
     }
@@ -497,12 +509,15 @@ class DropArea extends React.Component {
       fontSize: '42px',
       marginLeft: '50px'
     }
+    
     if((this.props.fieldType == 'signer_added' || this.props.fieldType == 'signer') && this.props.currentNode !='SPAN'){
       // styles['width'] = this.props.isResizing ? this.props.width : '230px';
       textstyle['fontSize'] = '1.2em';
       textstyle['marginLeft'] = '7px';
+      textstyle['width'] = this.props.width;
+      textstyle['height'] = this.props.height;
     }
-      if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){
+      if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){ 
         this.props.fieldType = 'text';
         this.props.signer_field = '';
       }
@@ -512,6 +527,7 @@ class DropArea extends React.Component {
       //   draggable = "false";
       // }
       // class={"signer_field_"+this.props.fieldType+'_' + this.props.id}
+      // style={{width:this.props.width,height:this.props.height}}
       return (
         <div className={"text-field-box item unselectable "+this.props.fieldType}
           ref={"node"}
@@ -523,10 +539,10 @@ class DropArea extends React.Component {
           onDragStart={this.onDragStart.bind(this)}
           onDragEnd={this.onDragEnd.bind(this)} 
           style={styles}>
-        {(() => {
-          switch (this.props.fieldType) {
-            case "sign": return (<img src={this.props.sign_image ? this.props.sign_image.src : ''}></img>);
-            case "check": return (<img src={'/assets/img/checkmark.png'} style={{width:'60px',height:'60px'}}></img>);
+        {(() => { 
+          switch (this.props.fieldType) { 
+            case "sign": return (<img src={this.props.sign_image ? this.props.sign_image.src : ''} style={sign_image_style}></img>);
+            case "check": return (<img src={'/assets/img/checkmark.png'} style={{width:this.props.width,height:this.props.height}}></img>);
             case "signer_added": return (<span style={textstyle}>{this.props.signer_field}</span>);
             case "signer": return (<span style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType}>{this.props.sign_text}</span>);
