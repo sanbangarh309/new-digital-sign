@@ -116,7 +116,7 @@ class DropArea extends React.Component {
       let h = clientY - position.top  + (16 / 2);
       list[id].width =   w;
       list[id].height =  h;
-      // list[id].fontSize = parseFloat(list[id].height/2.5);
+      list[id].fontSize = parseFloat(list[id].height/2.5);
       let newState = Object.assign(
         this.state, {
           items : list
@@ -128,7 +128,7 @@ class DropArea extends React.Component {
       this.setState({currentText:e.target.innerText});
       e.preventDefault();
       let key___ = ''
-      if( !e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer')){
+      if( !e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer') && !e.target.className.includes('preventClicking')){
         console.log('new element created')
         this.setState({add_new:true});
         let position = e.target.getBoundingClientRect();
@@ -138,7 +138,7 @@ class DropArea extends React.Component {
         let h = 70;
         let w = 100;
         let alreday = false;
-        let list = this.state.items;
+        let list = this.state.items; console.log(this.props.field_type)
         let key___c = this.props.field_type.slice(this.props.field_type.length - 1);
         key___ = key___c[0];
         if(key___ == 'sign'){
@@ -176,10 +176,7 @@ class DropArea extends React.Component {
           key___ = e.target.innerText;
         }
         
-        if(key___ == 'date'){
-          w = 100
-          h = 50
-        }
+        
         for(let res of Object.keys(list)){
           if(res.top == y && res.left == x){
             alreday = true;
@@ -203,7 +200,7 @@ class DropArea extends React.Component {
             Object.assign(newobj, new_list);
             this.setState({items:newobj});
           }
-        let fontsize = 20;
+        let fontsize = '1.8vw';
         if(!alreday){
           // this.setState((state) => ({ field_count: state.field_count + 1})); 
           let items = []
@@ -214,17 +211,31 @@ class DropArea extends React.Component {
             text = this.props.signer_field;
             w = 230;
             h = 40;
-            fontsize = 27;
+            fontsize = '2.4vw';
+          }
+          if(key___ == 'date'){
+            w = 100;
+            h = 50;
           }
           if(key___ == 'sign_text'){
             w = 230;
             h = 60;
+            fontsize = '2.8vw';
           }
           if(key___ == 'check'){
             w = 60;
             h = 60;
           }
-          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id});
+          let clr = null;
+          let txt = null;
+          let fnt = null;
+          if(this.props.sign_texts){
+            clr = this.props.sign_texts.color;
+            txt = this.props.sign_texts.text;
+            fnt = this.props.sign_texts.font;
+          }
+  
+          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:false,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr});
           
           Object.assign(newobj, this.state.field_lists); 
           this.setState({show_field:true});
@@ -279,7 +290,7 @@ class DropArea extends React.Component {
             //   }
             // }
             // && !fields[key].isDragging && !fields[key].isResizing
-            // console.log(fields[key])
+            console.log(fields[key])
             if(!fields[key].isHide){ 
                 if(this.state.chkduplicacy.includes(key)){
                   // delete this.state.list[fields[key].id];
@@ -293,7 +304,10 @@ class DropArea extends React.Component {
                     // console.log('current:key- '+this.state.doc_key);
                     // console.log('org:key- '+key_);
                 }
-                // <Drag/>
+                let signimg = '';
+                if(fields[key].type == 'sign'){
+                  signimg = fields[key].sign_img || this.props.sign_image;
+                }
                 items.push(
                   <Draggable 
                     ref={fields[key].type +'_'+key_+'_'+ key}
@@ -303,10 +317,10 @@ class DropArea extends React.Component {
                     docId={key_}
                     fieldType={fields[key].type}
                     signer_field={fields[key].content}
-                    sign_image={fields[key].type == 'sign' ? this.props.sign_image : ''}
-                    sign_text={this.props.sign_text}
-                    sign_font={this.props.sign_font}
-                    sign_color={this.props.sign_color}
+                    sign_image={signimg}
+                    sign_text={fields[key].sign_text}
+                    sign_font={fields[key].sign_font}
+                    sign_color={fields[key].sign_color}
                     top={fields[key].top}
                     left={fields[key].left}
                     width={fields[key].width}
@@ -435,7 +449,7 @@ class DropArea extends React.Component {
             var hRatio = Math.round(h1 / h2 * 10) / 10;
         
             var constraint = Math.min(wRatio, hRatio);
-            $(text).css('font-size', constraint + 'em');
+            // $(text).css('font-size', constraint + 'em');
           }
   }
 
@@ -461,7 +475,7 @@ class DropArea extends React.Component {
           margin: '0px',
           resize: 'none',
           overflow: 'hidden',
-          fontSize:'100%',
+          fontSize:this.props.fontSize,
           position:'relative',
           cursor: 'move',
       }
@@ -472,9 +486,15 @@ class DropArea extends React.Component {
       dateField = month + '/' + date + '/' + year;
     }
     let sign_image_style = {};
-    if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){
-      styles['width'] = this.props.sign_image.canvas.width;
-      styles['height'] = this.props.sign_image.canvas.height;
+    let img_src = this.props.sign_image ? this.props.sign_image.src : '';
+    if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){ 
+      if(this.props.sign_image.canvas){
+        styles['width'] = this.props.sign_image.canvas.width;
+        styles['height'] = this.props.sign_image.canvas.height;
+        img_src = this.props.sign_image.src;
+      }else{
+        img_src = this.props.sign_image;
+      }
       this.state.resized_div.push(this.props.fieldType+'_' + this.props.id);
     }else{
       sign_image_style = {width:this.props.width,height:this.props.height};
@@ -488,13 +508,14 @@ class DropArea extends React.Component {
       // styles['width'] = '60px';
       // styles['height'] = '60px';
     }
+    
     if(this.props.fieldType == 'sign_text'){
       dateField = this.props.sign_text;
       cusstyle['fontFamily'] = this.props.sign_font;
       cusstyle['color'] = this.props.sign_color;
       cusstyle['padding'] = '10px';
       cusstyle['margin'] = '3px';
-      cusstyle['fontSize'] = (50-parseInt(this.props.sign_text.length))+'px';
+      // cusstyle['fontSize'] = (50-parseInt(this.props.sign_text.length))+'px';
       cusstyle['width'] = this.props.width;
       cusstyle['height'] = this.props.height;
       // styles['width'] = '230px';
@@ -506,13 +527,12 @@ class DropArea extends React.Component {
     //   let field_ = <textarea className="form-control" defaultValue={dateField} style={cusstyle}></textarea>;
     // }
     let textstyle = {
-      fontSize: '42px',
+      // fontSize: '42px',
       marginLeft: '50px'
     }
-    
     if((this.props.fieldType == 'signer_added' || this.props.fieldType == 'signer') && this.props.currentNode !='SPAN'){
       // styles['width'] = this.props.isResizing ? this.props.width : '230px';
-      textstyle['fontSize'] = '1.2em';
+      // textstyle['fontSize'] = '2.8vw';
       textstyle['marginLeft'] = '7px';
       textstyle['width'] = this.props.width;
       textstyle['height'] = this.props.height;
@@ -531,6 +551,7 @@ class DropArea extends React.Component {
       return (
         <div className={"text-field-box item unselectable "+this.props.fieldType}
           ref={"node"}
+          data-id={this.props.fieldType}
           draggable= {this.props.isDragging}
           id={ this.props.fieldType+'_' + this.props.id }
           fieldtype={this.props.fieldType}
@@ -541,11 +562,11 @@ class DropArea extends React.Component {
           style={styles}>
         {(() => { 
           switch (this.props.fieldType) { 
-            case "sign": return (<img src={this.props.sign_image ? this.props.sign_image.src : ''} style={sign_image_style}></img>);
-            case "check": return (<img src={'/assets/img/checkmark.png'} style={{width:this.props.width,height:this.props.height}}></img>);
-            case "signer_added": return (<span style={textstyle}>{this.props.signer_field}</span>);
-            case "signer": return (<span style={textstyle}>{this.props.signer_field}</span>);
-            case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType}>{this.props.sign_text}</span>);
+            case "sign": return (<img src={this.props.sign_image ? img_src : ''} class="preventClicking" style={sign_image_style}></img>);
+            case "check": return (<img src={'/assets/img/checkmark.png'} class="preventClicking" style={{width:this.props.width,height:this.props.height}}></img>);
+            case "signer_added": return (<span class="preventClicking" style={textstyle}>{this.props.signer_field}</span>);
+            case "signer": return (<span class="preventClicking" style={textstyle}>{this.props.signer_field}</span>);
+            case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType+" preventClicking"}>{this.props.sign_text}</span>);
             default: return (<textarea className="form-control" defaultValue={dateField} style={cusstyle}></textarea>);
           }
         })()}

@@ -127,7 +127,7 @@ class SignerFields extends Component {
         //     fieldtype: field,
         //     x: e.clientX - parseInt(nodeStyle.left),
         //     y: e.clientY - parseInt(nodeStyle.top),
-        //   }));
+        // }));
         this.props.setSignerField(field);
       }
 
@@ -172,13 +172,27 @@ class SignerFields extends Component {
                     <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
                         <div className="card-body">
                         <ol className="btn-mainlist">
-                        <li class="current-btn" id={'signer_sign_list'}><a href="#" id={'signer_sign'} class="btn" onClick={this.setField.bind(this,'sign')}><span class="material-icons">border_color</span> Signature Field</a></li>
-												<li id={'signer_text_list'}><a href="javascript:void(0)" id={'signer_text'} class="btn" onClick={this.setField.bind(this,'text')}><span class="material-icons">text_fields</span> Text Field</a></li>
-												<li id={'signer_date_list'}><a href="javascript:void(0)" id={'signer_date'} class="btn" onClick={this.setField.bind(this,'date')}><span class="material-icons">insert_invitation</span> Date Field</a></li>
-												<li id={'signer_initial_list'}><a href="javascript:void(0)" id={'signer_initial'} class="btn" onClick={this.setField.bind(this,'initial')}><span class="material-icons">adjust</span> Initials Field</a></li>
-												<li id={'signer_checkbox_list'}><a href="javascript:void(0)" id={'signer_checkbox'} class="btn" onClick={this.setField.bind(this,'checkbox')} ><span class="material-icons">done_all</span> Checkbox Field</a></li>
-												<li id={'signer_radio_list'}><a href="javascript:void(0)" id={'signer_radio'} class="btn" onClick={this.setField.bind(this,'radio')}><span class="material-icons">radio_button_checked</span> Radio Fields</a></li>
-												<li id={'signer_attach_list'}><a href="javascript:void(0)" id={'signer_attach'} class="btn" onClick={this.setField.bind(this,'attach')}><span class="material-icons file-attach">attach_file</span> Attachment</a></li>
+                        <li key={'signer_sign'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'sign')} class="current-btn" id={'signer_sign_list'}><a href="#" id={'signer_sign'} class="btn" onClick={this.setField.bind(this,'sign')}><span class="material-icons">border_color</span> Signature Field</a></li>
+												<li key={'signer_text'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'text')} id={'signer_text_list'}><a href="javascript:void(0)" id={'signer_text'} class="btn" onClick={this.setField.bind(this,'text')}><span class="material-icons">text_fields</span> Text Field</a></li>
+												<li key={'signer_date'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'date')} id={'signer_date_list'}><a href="javascript:void(0)" id={'signer_date'} class="btn" onClick={this.setField.bind(this,'date')}><span class="material-icons">insert_invitation</span> Date Field</a></li>
+												<li key={'signer_initial'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'initial')} id={'signer_initial_list'}><a href="javascript:void(0)" id={'signer_initial'} class="btn" onClick={this.setField.bind(this,'initial')}><span class="material-icons">adjust</span> Initials Field</a></li>
+												<li key={'signer_checkbox'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'checkbox')} id={'signer_checkbox_list'}><a href="javascript:void(0)" id={'signer_checkbox'} class="btn" onClick={this.setField.bind(this,'checkbox')} ><span class="material-icons">done_all</span> Checkbox Field</a></li>
+												<li key={'signer_radio'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'radio')} id={'signer_radio_list'}><a href="javascript:void(0)" id={'signer_radio'} class="btn" onClick={this.setField.bind(this,'radio')}><span class="material-icons">radio_button_checked</span> Radio Fields</a></li>
+												<li key={'signer_attach'} 
+             draggable="true"
+             onDragStart={this.onDragStart.bind(this,'attach')} id={'signer_attach_list'}><a href="javascript:void(0)" id={'signer_attach'} class="btn" onClick={this.setField.bind(this,'attach')}><span class="material-icons file-attach">attach_file</span> Attachment</a></li>
                         </ol>
                         </div>
                     </div>

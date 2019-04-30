@@ -47,6 +47,7 @@ class Signature extends Component {
       sign_image:null,
       sign_font:null,
       sign_text:null,
+      sign_texts:{},
       signer_field:null,
       bind_signature:false,
       docs:[],
@@ -58,8 +59,10 @@ class Signature extends Component {
       },
       signer:null,
       exist_signer:null,
+      field_required:null,
       signers:[],
       signers_err:null,
+      active_tab:'initial',
       template_id:this.props.location.query.temp || null
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
@@ -85,7 +88,6 @@ class Signature extends Component {
       this.setState({
         signers: res.data
       });
-      console.log(res.data);
     }).catch(error => {
       console.log(error.response);
     });
@@ -146,14 +148,11 @@ class Signature extends Component {
       
     }else{
       this.setState({signers_err: 'Signer is Required'});
-      console.log($('#exist_signer').val());
-      console.log($('#signer').val());
       // debugger;
     }
   }
 
   chkFileType = (doc) => {
-    console.log(doc)
     // this.setState({
     //        doc_blob: doc
     // });
@@ -216,16 +215,21 @@ class Signature extends Component {
              docs[parseInt(i)-1].drag_data = [];
             $("#signature_container_"+i+" .unselectable").each(function( index ) {
               let key___ = inputfields.slice(inputfields.length - 1);
-              let field = key___[0];
-              let type = $( this ).find('span').text() ? 'signer' : field; 
+              let field = $( this ).data('id') || key___[0];
+              let type = $( this ).data('id') || field; 
+              let img = $( this ).find('img').attr('src');
+              let w=$(this).width();
+              let h=$(this).height();
+              let font = $(this).css("font-size");
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:200, height:50, fontSize:20,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:false,sign_img:img});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
             });
+            console.log(drag_data);
             docs[parseInt(i)-1].drag_data = drag_data;
-            console.log(docs)
+            // docs[parseInt(i)-1].saved_dom = saved_dom;
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
             if(i == this.state.docs.length){
               setTimeout(function() {
@@ -250,11 +254,11 @@ class Signature extends Component {
                     reader.onloadend = function() {
                         let base64data = reader.result;                
                         axios.post('/api/add_doc',{base64Data:base64data,token:localStorage.getItem('jwtToken'),docs:docs}).then((res) => {
-                          console.log(res);
+                          
                         });
                     }
-                    return <Redirect to='/dashboard'  />
                     swal("Saved!", "Your doc file has been saved", "success");
+                    return <Redirect to='/dashboard'  />
                   }
                 });
               },500);
@@ -427,7 +431,7 @@ class Signature extends Component {
     this.setState({sign_image:null});
     this.setState({bind_signature: false});
     this.setState({sign_text: null});
-    console.log(this.state);
+    this.setState({sign_texts: {}});
     $('.signature_container').html('');
   }
 
@@ -479,24 +483,40 @@ class Signature extends Component {
   }
 
   appendSignature = (e) => {
-    if(this.state.inputFields.includes('sign')){
+    if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
       this.setState({bind_signature: true});
-    }
-    if(this.state.sign_text){
-      this.state.inputFields.push('sign_text');
+    }else{
+      if(this.state.sign_text && this.state.active_tab == 'initial'){
+        // this.state.sign_texts.push({text:this.state.sign_text,font:this.state.sign_font,color:this.state.color});
+        this.setState({sign_texts: {text:this.state.sign_text,font:this.state.sign_font,color:this.state.color}});
+        this.state.inputFields.push('sign_text');
+      }
     }
     $('#close_btn').click();
+    this.setState({active_tab:'initial'});
+  }
+
+  resetTabs = (e) => {
+    if(e.target.innerText == 'DRAW'){
+      this.setState({active_tab:'signpad'});
+    }
+    if(e.target.innerText == 'TYPE'){
+      this.setState({active_tab:'initial'});
+    }
   }
 
   setSignerField = (field) => {
     this.setState({signer_field: field});
     // this.state.signer_field.push(field);
     this.state.inputFields.push('signer');
+    // if(field == 'initial'){
+    //   this.state.inputFields.push('sign_text');
+    // }
   }
-  render() { console.log(this.state.inputFields)
+  render() {
     // debugger;
     let dashboard = '';
-    let docs = this.state.docs || localStorage.getItem('files_array') 
+    let docs = this.state.docs || localStorage.getItem('files_array'); 
     try {
       docs = JSON.parse(docs)
     }catch(e){
@@ -619,7 +639,8 @@ class Signature extends Component {
       getSignPosition={this.getSignPosition.bind(this)} 
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text} 
-      sign_font={this.state.sign_font} 
+      sign_font={this.state.sign_font}
+      sign_texts={this.state.sign_texts} 
       sign_color={this.state.color}
       signer_field={this.state.signer_field}
       top={this.state.top}
@@ -635,13 +656,13 @@ class Signature extends Component {
 				<div className="col-12 p-0 tabnav-top">
 					<ul className="nav nav-tabs" id="sign_nav_tabs">
 						<li className="nav-item">
-							<a className="nav-link " id="type_" data-toggle="tab" href="#type">Type</a>
+							<a className="nav-link " id="type_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#type">Type</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link active" id="draw_" data-toggle="tab" href="#draw">Draw</a>
+							<a className="nav-link active" id="draw_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#draw">Draw</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link" id="upload_" data-toggle="tab" href="#upload">Upload</a>
+							<a className="nav-link" id="upload_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#upload">Upload</a>
 						</li>
 					</ul>
 				</div>
@@ -747,6 +768,12 @@ class Signature extends Component {
                                         <option value=''>Select Signer</option>
                                         {this.state.signers.map((person) => <option key={person._id}>{person.name}</option>)}
                                         </select>
+                                      </div>
+                                    </div>
+                                    <div className="form-group">
+                                      <div className="input-group">
+                                      <label className="input-group-addon">Field Required</label>
+                                        <input name="field_required" onChange={this.handleChange} className="form-control"  type="checkbox" />
                                       </div>
                                     </div>
                                     <div className="form-group">

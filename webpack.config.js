@@ -13,8 +13,8 @@ const hotMiddlewareScript = 'webpack-hot-middleware/client?reload=true';
 
 module.exports = (env, argv) => {
     /* Use webpack mode or NODE_ENV to set devMode, default development. */
-    const mode = 'production';//argv.mode || process.env.NODE_ENV || 'development';
-    const devMode = mode === 'production';//'development';
+    const mode = 'development';//argv.mode || process.env.NODE_ENV || 'development';
+    const devMode = mode === 'development';//'development';
 
     const config = {
         mode: mode,
@@ -99,6 +99,7 @@ module.exports = (env, argv) => {
                     parallel: true,
                     uglifyOptions: {
                         compress: false,
+                        minimize: true,
                         ecma: 6,
                         mangle: true,
                         output: {

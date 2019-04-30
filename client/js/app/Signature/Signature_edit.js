@@ -49,6 +49,7 @@ class Signature_edit extends Component {
       sign_text:null,
       bind_signature:false,
       signer_field:null,
+      sign_texts:{},
       docs:[],
       color:'black',
       buttons:{
@@ -60,6 +61,7 @@ class Signature_edit extends Component {
       signer:null,
       exist_signer:null,
       signers_err:null,
+      active_tab:'initial',
       signers:[]
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
@@ -83,7 +85,7 @@ class Signature_edit extends Component {
       this.setState({
         signers: res.data
       });
-      console.log(res.data);
+     
     }).catch(error => {
       console.log(error.response);
     });
@@ -93,7 +95,6 @@ class Signature_edit extends Component {
         this.setState({
           docs: res.data.images
         });
-        console.log(res.data);
       }).catch(error => {
         console.log(error.response);
       });
@@ -109,8 +110,8 @@ class Signature_edit extends Component {
     if(this.state.signer){
       axios.post('/api/addfield',this.state).then((res) => {
         this.state.inputFields.push('signer_added');
-        let unique = [...new Set(this.state.inputFields)];
-        this.setState({inputFields:unique});
+        // let unique = [...new Set(this.state.inputFields)];
+        // this.setState({inputFields:unique});
         this.setState({signer_field: res.data.name+' '+fld});
         $('#add_signer').modal('hide');
         setTimeout(() => {
@@ -121,8 +122,8 @@ class Signature_edit extends Component {
       });
     }else if(this.state.exist_signer){
       this.state.inputFields.push('signer_added');
-      let unique = [...new Set(this.state.inputFields)];
-      this.setState({inputFields:unique});
+      // let unique = [...new Set(this.state.inputFields)];
+      // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
       this.setState({signer_field: sgn+' '+fld});
       $('#add_signer').modal('hide');
@@ -194,21 +195,21 @@ class Signature_edit extends Component {
              docs[parseInt(i)-1].drag_data = [];
             $("#signature_container_"+i+" .unselectable").each(function( index ) {
               let key___ = inputfields.slice(inputfields.length - 1);
-              let field = key___[0];
+              let field = $( this ).data('id') || key___[0];
               let type = $( this ).find('span').text() ? 'signer' : field; 
+              let img = $( this ).find('img').attr('src');
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:200, height:50, fontSize:20,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:200, height:50, fontSize:'1.8vw',isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:false,sign_img:img});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
             });
             docs[parseInt(i)-1].drag_data = drag_data;
-            console.log(docs)
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
             if(i == this.state.docs.length){
               setTimeout(function() {
                 var blob = doc.output("blob");
-                var blobURL = URL.createObjectURL(blob);console.log(blobURL)
+                var blobURL = URL.createObjectURL(blob);
                 var downloadLink = document.getElementById('pdf-download-link');
                 downloadLink.href = blobURL;
                 var loader = document.getElementById('outer-barG');
@@ -228,7 +229,7 @@ class Signature_edit extends Component {
                     reader.onloadend = function() {
                         let base64data = reader.result;                
                         axios.put('/api/doc/'+edit_id,{base64Data:base64data,token:localStorage.getItem('jwtToken'),docs:docs}).then((res) => {
-                          console.log(res);
+                          
                         });
                     }
                     return <Redirect to='/dashboard'  />
@@ -407,7 +408,7 @@ class Signature_edit extends Component {
     this.setState({sign_image:null});
     this.setState({bind_signature: false});
     this.setState({sign_text: null});
-    console.log(this.state);
+    this.setState({sign_texts: {}});
     $('.signature_container').html('');
   }
 
@@ -448,12 +449,34 @@ class Signature_edit extends Component {
       this.state.inputFields.push('sign_text');
     }
     $('#close_btn').click();
+    this.setState({active_tab:'initial'});
   }
 
   setSignerField = (field) => {
     this.setState({signer_field: field});
     // this.state.signer_field.push(field);
     this.state.inputFields.push('signer');
+  }
+
+  appendSignature = (e) => {
+    if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
+      this.setState({bind_signature: true});
+    }else{
+      if(this.state.sign_text && this.state.active_tab == 'initial'){
+        this.setState({sign_texts: {text:this.state.sign_text,font:this.state.sign_font,color:this.state.color}});
+        this.state.inputFields.push('sign_text');
+      }
+    }
+    $('#close_btn').click();
+  }
+
+  resetTabs = (e) => {
+    if(e.target.innerText == 'DRAW'){
+      this.setState({active_tab:'signpad'});
+    }
+    if(e.target.innerText == 'TYPE'){
+      this.setState({active_tab:'initial'});
+    }
   }
 
   handleChange(e) {
@@ -605,7 +628,8 @@ class Signature_edit extends Component {
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)} 
       sign_image={this.state.sign_image} 
-      sign_text={this.state.sign_text} 
+      sign_text={this.state.sign_text}
+      sign_texts={this.state.sign_texts} 
       sign_font={this.state.sign_font} 
       sign_color={this.state.color}
       signer_field={this.state.signer_field}
@@ -621,15 +645,15 @@ class Signature_edit extends Component {
 			<div className="modal-header">
 				<button type="button" className="close" data-dismiss="modal">&times;</button>
 				<div className="col-12 p-0 tabnav-top">
-					<ul className="nav nav-tabs" id="sign_nav_tabs">
+        <ul className="nav nav-tabs" id="sign_nav_tabs">
 						<li className="nav-item">
-							<a className="nav-link" id="type_" data-toggle="tab" href="#type">Type</a>
+							<a className="nav-link " id="type_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#type">Type</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link active" id="draw_" data-toggle="tab" href="#draw">Draw</a>
+							<a className="nav-link active" id="draw_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#draw">Draw</a>
 						</li>
 						<li className="nav-item">
-							<a className="nav-link" id="upload_" data-toggle="tab" href="#upload">Upload</a>
+							<a className="nav-link" id="upload_" onClick={this.resetTabs.bind(this)} data-toggle="tab" href="#upload">Upload</a>
 						</li>
 					</ul>
 				</div>
@@ -736,6 +760,12 @@ class Signature_edit extends Component {
                                         <option value=''>Select Signer</option>
                                         {this.state.signers.map((person) => <option key={person._id}>{person.name}</option>)}
                                         </select>
+                                      </div>
+                                    </div>
+                                    <div className="form-group">
+                                      <div className="input-group">
+                                        <label className="input-group-addon">Field Required</label>
+                                        <input name="field_required" onChange={this.handleChange} className="form-control"  type="checkbox" />
                                       </div>
                                     </div>
                                     <div className="form-group">

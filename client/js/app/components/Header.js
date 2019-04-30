@@ -2,43 +2,8 @@ import React from 'react';
 import {connect} from 'react-redux';
 import history from '../history';
 import  { Redirect } from 'react-router-dom'
-// import 'font-awesome/css/font-awesome.min.css';
-// import './css/docs.theme.min.css';
-// import './css/owl.carousel.min.css';
-// import './css/owl.theme.default.min.css';
-// import './css/bootstrap.min.css';
-// import './css/animate.min.css';
-// import './css/style.css';
-// import './css/responsive.css';
-// // Js Files
-// import 'jquery';
-// import $ from 'jquery';
-// import 'popper.js/dist/popper.js';
-// import 'bootstrap/dist/js/bootstrap';
-// import './scripts/popper.min.js';
-// import './scripts/bootstrap.min.js';
-
-// import './scripts/wow.min.js'; 
-import WOW from 'wow.js'
-const wow = new WOW({
-  boxClass: 'wow',
-  animateClass: 'animated',
-  offset: 0,
-  live: true
-});
-// import OwlCarousel from 'react-owl-carousel';
-import './scripts/custom.js';
-// import {Link} from 'react-router-dom';
 var NavLink = require('react-router-dom').NavLink;
-let logout = () => {
-  localStorage.clear();
-}
-
 const Header = () => {
-  let url_params = history.location.pathname.split('/');
-    let prms = url_params[url_params.length-1];
-    console.log(prms)
-    // debugger;
     if (localStorage.getItem('jwtToken')) {
         return <Redirect to={'/dashboard'}  />
     }

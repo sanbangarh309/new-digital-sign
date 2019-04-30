@@ -10,7 +10,7 @@ import './loader.css';
 import 'font-awesome/css/font-awesome.min.css';
 import './css/docs.theme.min.css';
 import './css/owl.carousel.min.css';
-import './css/owl.theme.default.min.css';
+// import './css/owl.theme.default.min.css';
 import './css/bootstrap.min.css';
 import './css/animate.min.css';
 import './css/style.css';
@@ -20,7 +20,14 @@ import 'jquery';
 import $ from 'jquery';
 import 'popper.js/dist/popper.js';
 import 'bootstrap/dist/js/bootstrap';
-
+import WOW from 'wow.js'
+import './scripts/custom.js';
+const wow = new WOW({
+  boxClass: 'wow',
+  animateClass: 'animated',
+  offset: 0,
+  live: true
+});
 let laoder = <div id="outer-barG" style={{display:'none'}}>
                 <div id="front-barG" className="bar-animationG">
                     <div id="barG_1" className="bar-lineG"></div>
