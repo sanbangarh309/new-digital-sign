@@ -17,7 +17,7 @@ import './css/style.css';
 import './css/responsive.css';
 // Js Files
 import 'jquery';
-import $ from 'jquery';
+// import $ from 'jquery';
 import 'popper.js/dist/popper.js';
 import 'bootstrap/dist/js/bootstrap';
 import WOW from 'wow.js'

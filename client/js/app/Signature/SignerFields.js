@@ -33,7 +33,6 @@ class SignerFields extends Component {
             $('#sign_nav_tabs .nav-item #draw_').addClass('active');
             $('#sign_nav_tabs .nav-item #type_').removeClass('active');
             $('#sign_nav_tabs .nav-item #upload_').removeClass('active');
-        
             $('.modal-content .modal-body #draw').addClass('active').addClass('show');
             $('.modal-content .modal-body #type').removeClass('active');
             $('.modal-content .modal-body #upload').removeClass('active').removeClass('show');
@@ -81,7 +80,6 @@ class SignerFields extends Component {
         $('#signer_date_list').removeClass('current-btn');
     
         $('#text_field').removeClass('current-btn');
-        $('.sign-btn').click();
         $('#sign_nav_tabs .nav-item #type_').addClass('active');
         $('#sign_nav_tabs .nav-item #draw_').removeClass('active');
         $('#sign_nav_tabs .nav-item #upload_').removeClass('active');

@@ -49,6 +49,7 @@ class Signature extends Component {
       sign_text:null,
       sign_texts:{},
       signer_field:null,
+      signer_id:null,
       bind_signature:false,
       docs:[],
       color:'black',
@@ -128,6 +129,7 @@ class Signature extends Component {
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
         this.setState({signer_field: res.data.name+' '+fld});
+        this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
         setTimeout(() => {
           $(".signature_container").click();
@@ -217,17 +219,25 @@ class Signature extends Component {
               let key___ = inputfields.slice(inputfields.length - 1);
               let field = $( this ).data('id') || key___[0];
               let type = $( this ).data('id') || field; 
-              let img = $( this ).find('img').attr('src');
+              let img = $( this ).find('img').attr('src') || null;
               let w=$(this).width();
               let h=$(this).height();
-              let font = $(this).css("font-size");
+              let font = $(this).css("font-size") || null;
+              let fontfamily = $(this).find('span').css('font-family') || null;
+              let clr = $(this).find('span').css('color') || null;
+              let signer_id = $(this).find('span').attr('id') || null;
+              let reqrd = false;
+              if($(this).find('span').hasClass('required')){
+                reqrd = true;
+              } 
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:false,sign_img:img});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
             });
             console.log(drag_data);
+            debugger;
             docs[parseInt(i)-1].drag_data = drag_data;
             // docs[parseInt(i)-1].saved_dom = saved_dom;
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
@@ -370,6 +380,7 @@ class Signature extends Component {
     $('.signature_container').removeClass('hovrcr_date');
     $('.signature_container').removeClass('hovrcr_check');
     $('.signature_container').removeClass('hovrcr_sign');
+    this.setState({active_tab:'initial'});
     console.log('clicked on Initial Button')
   }
 
@@ -398,6 +409,7 @@ class Signature extends Component {
     $('.signature_container').removeClass('hovrcr_date');
     $('.signature_container').removeClass('hovrcr_check');
     $('.signature_container').removeClass('hovrcr_initials');
+    this.setState({active_tab:'signpad'});
     console.log('clicked on Signature Button')
   } 
 
@@ -441,7 +453,7 @@ class Signature extends Component {
     this.setState({doc_id:doc_id});
   }
 
-  updateSignField(sign){
+  updateSignField(sign){ console.log(sign)
     this.setState({sign_image:sign});
     this.setState({bind_signature: false});
   }
@@ -474,15 +486,24 @@ class Signature extends Component {
     }
     if(e.target.name == 'exist_signer'){
       if(e.target.value){
+        this.setState({signer_id: $(e.target).children(":selected").attr("id")});
         $('input[name="signer"]').attr('readonly','readonly');
       }else{
         $('input[name="signer"]').removeAttr('readonly');
       }
     }
+    if(e.target.name == 'field_required'){
+      if($(e.target).is(":checked")){
+        this.setState({[e.target.name]: e.target.value});
+      }else{
+        this.setState({[e.target.name]: ''});
+      }
+    }else{
       this.setState({[e.target.name]: e.target.value});
+    }
   }
 
-  appendSignature = (e) => {
+  appendSignature = (e) => { console.log(this.state.active_tab);
     if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
       this.setState({bind_signature: true});
     }else{
@@ -513,7 +534,7 @@ class Signature extends Component {
     //   this.state.inputFields.push('sign_text');
     // }
   }
-  render() {
+  render() { 
     // debugger;
     let dashboard = '';
     let docs = this.state.docs || localStorage.getItem('files_array'); 
@@ -646,6 +667,8 @@ class Signature extends Component {
       top={this.state.top}
       left={this.state.left}
       doc_id={this.state.doc_id}
+      signer_id={this.state.signer_id}
+      field_required={this.state.field_required}
       />
     </div>
     <div className="modal signmodal" id="Signfiled">
@@ -766,14 +789,14 @@ class Signature extends Component {
                                         <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
                                         <select name="exist_signer" id="exist_signer" onChange={this.handleChange}>
                                         <option value=''>Select Signer</option>
-                                        {this.state.signers.map((person) => <option key={person._id}>{person.name}</option>)}
+                                        {this.state.signers.map((person) => <option id={person._id} key={person._id}>{person.name}</option>)}
                                         </select>
                                       </div>
                                     </div>
                                     <div className="form-group">
                                       <div className="input-group">
                                       <label className="input-group-addon">Field Required</label>
-                                        <input name="field_required" onChange={this.handleChange} className="form-control"  type="checkbox" />
+                                        <input name="field_required" onChange={this.handleChange} className="form-control" value="required"  type="checkbox" />
                                       </div>
                                     </div>
                                     <div className="form-group">

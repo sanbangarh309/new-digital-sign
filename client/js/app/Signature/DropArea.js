@@ -138,7 +138,7 @@ class DropArea extends React.Component {
         let h = 70;
         let w = 100;
         let alreday = false;
-        let list = this.state.items; console.log(this.props.field_type)
+        let list = this.state.items; 
         let key___c = this.props.field_type.slice(this.props.field_type.length - 1);
         key___ = key___c[0];
         if(key___ == 'sign'){
@@ -146,7 +146,7 @@ class DropArea extends React.Component {
         }else{
           this.props.getSignPosition(y,x,doc_id);
         }
-         
+         console.log(key___)
         if(key___ == 'signer'){
           $('#add_signer').modal('show');
           return false;
@@ -234,10 +234,14 @@ class DropArea extends React.Component {
             txt = this.props.sign_texts.text;
             fnt = this.props.sign_texts.font;
           }
-  
-          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:false,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr});
           
-          Object.assign(newobj, this.state.field_lists); 
+          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});  
+          if(Array.isArray(list)){
+            let new_arr = list.concat(this.state.field_lists); 
+            Object.assign(newobj, new_arr);
+          }else{
+            Object.assign(newobj, this.state.field_lists);
+          }
           this.setState({show_field:true});
           if(e.target.id && e.target.id !=''){
             this.setState({doc_key:doc_id});
@@ -273,9 +277,14 @@ class DropArea extends React.Component {
           height: doc.h,
           backgroundImage:"url(/files/docs/" + doc.name + ")"
         };
-        if(doc.drag_data && Object.keys(fields).length <= 0){
-          fields = doc.drag_data;
+        // && Object.keys(fields).length <= 0
+        if(doc.drag_data){
+          // let nerwstate = fields = Object.assign({}, doc.drag_data); console.log(nerwstate); console.log(fields) 
+          // fields = Object.assign(fields, nerwstate);
+          // fields = doc.drag_data;
+          // fields.concat(doc.drag_data);
         }
+        
         if((this.state.doc_key == key_) || doc.drag_data){
           // if(Object.keys(fields).length == 0){
           //   this.state.list = [];
@@ -290,7 +299,7 @@ class DropArea extends React.Component {
             //   }
             // }
             // && !fields[key].isDragging && !fields[key].isResizing
-            console.log(fields[key])
+            
             if(!fields[key].isHide){ 
                 if(this.state.chkduplicacy.includes(key)){
                   // delete this.state.list[fields[key].id];
@@ -306,6 +315,8 @@ class DropArea extends React.Component {
                 }
                 let signimg = '';
                 if(fields[key].type == 'sign'){
+                  console.log(fields[key])
+                  console.log(this.props.sign_image)
                   signimg = fields[key].sign_img || this.props.sign_image;
                 }
                 items.push(
@@ -318,9 +329,11 @@ class DropArea extends React.Component {
                     fieldType={fields[key].type}
                     signer_field={fields[key].content}
                     sign_image={signimg}
+                    field_required={fields[key].required}
                     sign_text={fields[key].sign_text}
                     sign_font={fields[key].sign_font}
                     sign_color={fields[key].sign_color}
+                    signer_id={fields[key].signer_id}
                     top={fields[key].top}
                     left={fields[key].left}
                     width={fields[key].width}
@@ -353,6 +366,7 @@ class DropArea extends React.Component {
             // }
             
           });
+          console.log(items);
           DropJgah.push(<div
             className="drop-area container doc-bg signature_container hovrcr_sign" 
             onDragOver={this.onDragOver.bind(this)}
@@ -486,12 +500,12 @@ class DropArea extends React.Component {
       dateField = month + '/' + date + '/' + year;
     }
     let sign_image_style = {};
-    let img_src = this.props.sign_image ? this.props.sign_image.src : '';
+    let img_src = this.props.sign_image ? (this.props.sign_image.src || this.props.sign_image) : ''; console.log(this.props.sign_image)
     if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){ 
       if(this.props.sign_image.canvas){
         styles['width'] = this.props.sign_image.canvas.width;
         styles['height'] = this.props.sign_image.canvas.height;
-        img_src = this.props.sign_image.src;
+        img_src = this.props.sign_image.src;  
       }else{
         img_src = this.props.sign_image;
       }
@@ -503,12 +517,11 @@ class DropArea extends React.Component {
       styles['width'] = this.props.width;
       styles['height'] = this.props.height;
     }
-    
     if(this.props.fieldType == 'check'){
       // styles['width'] = '60px';
       // styles['height'] = '60px';
     }
-    
+   
     if(this.props.fieldType == 'sign_text'){
       dateField = this.props.sign_text;
       cusstyle['fontFamily'] = this.props.sign_font;
@@ -541,6 +554,7 @@ class DropArea extends React.Component {
         this.props.fieldType = 'text';
         this.props.signer_field = '';
       }
+      console.log(this.props.signer_id)
       // let draggable = "true";
       // // {this.props.isDragging}
       // if(this.props.isResizing){
@@ -562,10 +576,10 @@ class DropArea extends React.Component {
           style={styles}>
         {(() => { 
           switch (this.props.fieldType) { 
-            case "sign": return (<img src={this.props.sign_image ? img_src : ''} class="preventClicking" style={sign_image_style}></img>);
+            case "sign": return (<img src={img_src} class="preventClicking" style={sign_image_style}></img>);
             case "check": return (<img src={'/assets/img/checkmark.png'} class="preventClicking" style={{width:this.props.width,height:this.props.height}}></img>);
-            case "signer_added": return (<span class="preventClicking" style={textstyle}>{this.props.signer_field}</span>);
-            case "signer": return (<span class="preventClicking" style={textstyle}>{this.props.signer_field}</span>);
+            case "signer_added": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
+            case "signer": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType+" preventClicking"}>{this.props.sign_text}</span>);
             default: return (<textarea className="form-control" defaultValue={dateField} style={cusstyle}></textarea>);
           }
@@ -611,21 +625,21 @@ class DropArea extends React.Component {
     }
     componentDidMount(){
       const x = document.getElementById("signature_container_"+this.props.docId);
-      // if(x){
-      //   x.addEventListener('mousemove', this.onMouseMove.bind(this), false);
-      //   x.addEventListener('mouseup', this.onMouseUp.bind(this), false);
-      // }
-      window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
-      window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+      if(x){
+        x.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+        x.addEventListener('mouseup', this.onMouseUp.bind(this), false);
+      }
+      // window.addEventListener('mousemove', this.onMouseMove.bind(this), false);
+      // window.addEventListener('mouseup', this.onMouseUp.bind(this), false);
     }
     componentWillUnmount(){
       const x = document.getElementById("signature_container_"+this.props.docId);
-      // if(x){
-      //   x.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
-      //   x.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
-      // }
-      window.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
-      window.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
+      if(x){
+        x.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
+        x.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
+      }
+      // window.removeEventListener('mousemove', this.onMouseMove.bind(this), false);
+      // window.removeEventListener('mouseup', this.onMouseUp.bind(this), false);
     }
     onMouseDown(e) {
       console.log("Resizer.onMouseDown");

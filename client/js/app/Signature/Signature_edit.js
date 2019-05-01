@@ -57,7 +57,7 @@ class Signature_edit extends Component {
         clear:false,
         revoke:false
       },
-      doc_for_sign: this.props.location.query.sign ? true : false,
+      doc_for_sign: this.props.location.query.sign ? this.props.location.query.sign : false,
       signer:null,
       exist_signer:null,
       signers_err:null,
@@ -196,10 +196,16 @@ class Signature_edit extends Component {
             $("#signature_container_"+i+" .unselectable").each(function( index ) {
               let key___ = inputfields.slice(inputfields.length - 1);
               let field = $( this ).data('id') || key___[0];
-              let type = $( this ).find('span').text() ? 'signer' : field; 
+              let type = $( this ).data('id') || field; 
               let img = $( this ).find('img').attr('src');
+              let w=$(this).width();
+              let h=$(this).height();
+              let font = $(this).css("font-size");
+              let fontfamily = $(this).find('span').css('font-family');
+              let clr = $(this).find('span').css('color');
+              let signer_id = $(this).find('span').attr('id');
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:200, height:50, fontSize:'1.8vw',isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:false,sign_img:img});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:false,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
@@ -542,7 +548,7 @@ class Signature_edit extends Component {
                 <li className="nav-item active">
 							   <a className="nav-link save-link"  target="_blank" id="pdf-download-link" href="javascript:void(0)"><i className="material-icons">save_alt</i></a>
 							</li>
-							<li className="nav-item dropdown notify">
+							{/* <li className="nav-item dropdown notify">
 								<a className="nav-link" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								  <i className="material-icons">mail_outline</i>
 								  <span className="notification">5</span>
@@ -557,7 +563,7 @@ class Signature_edit extends Component {
 								  <a className="dropdown-item" href="#">Another Notification</a>
 								  <a className="dropdown-item" href="#">Another One</a>
 								</div>
-							</li>
+							</li> */}
 							<li className="nav-item dropdown user-nv">
 								<a className="nav-link profile-button" href="javascript:void(0);"data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 									<span className="avatar-status avatar-online">
@@ -783,8 +789,6 @@ class Signature_edit extends Component {
             </div>
           </div>
        </div>
-
-
     </div>)
   }
 }

@@ -1,5 +1,6 @@
 const Doc = require.main.require('./models/Doc');
 const Signer = require.main.require('./models/Signer');
+const Que = require.main.require('./models/Que');
 const Template = require.main.require('./models/Template');
 const jwt = require('jwt-then');
 const mongoose = require('mongoose');
@@ -140,8 +141,25 @@ module.exports = (app) => {
     });
 
     app.post('/api/sendemail', (req, res, next) => {
-      let link = 'http://'+req.headers.host+'/signature/'+req.body.id+'?sign=true';
-      Doc.findById(req.body.id)
+      let link = 'http://'+req.headers.host+'/signature/'+req.body.id+'?sign=';
+      console.log(req.body.emails.length)
+      if(req.body.id && req.body.emails.length > 0){
+        let order = 0;
+        req.body.emails.forEach(el => {
+          let que = new Que();
+          que.signer_id = el.signer_id;
+          que.doc_id = req.body.id;
+          que.order = order;
+          if(order == 0){
+            que.email_sent = 'yes';
+          }
+          que.link = link+el.signer_id;
+          que.save();
+          order++;
+        });
+        let email_to = req.body.emails[0].email;
+        link += req.body.emails[0].signer_id;
+        Doc.findById(req.body.id)
         .exec()
         .then((doc) => {
           let img = '';
@@ -150,21 +168,23 @@ module.exports = (app) => {
           }else{
             return false;
           }
+          console.log(link)
           // doc.shared_with = [];
           // doc.save();
-          if(!doc.shared_with.includes(req.body.email_to)){
-            doc.shared_with.push(req.body.email_to);
-            doc.save();
-          }
+          // if(!doc.shared_with.includes(email_to)){
+          //   doc.shared_with.push(email_to);
+          //   // doc.save();
+          // }
           var mailOptions = {
             from: 'sandeep.digittrix@gmail.com',
-            to: req.body.email_to,
+            to: email_to,
             subject: req.body.subject,
-            html: '<div><b><font style="font-family:tahoma;font-size:8pt">Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
+            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center">"'+ req.body.message+'"</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
           };
           San_Function.sanSendMail(req, res, mailOptions);
-          res.json(doc);
+          return res.json(doc);
         }).catch((err) => next(err));
+      }
     });
 
     app.delete('/api/doc/:id', (req, res, next) => {
