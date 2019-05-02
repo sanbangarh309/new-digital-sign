@@ -113,6 +113,7 @@ class Signature_edit extends Component {
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
         this.setState({signer_field: res.data.name+' '+fld});
+        this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
         setTimeout(() => {
           $(".signature_container").click();
@@ -238,8 +239,8 @@ class Signature_edit extends Component {
                           
                         });
                     }
-                    return <Redirect to='/dashboard'  />
                     swal("Saved!", "Your doc file has been saved", "success");
+                    return <Redirect to='/dashboard'  />
                   }
                 });
               },500);
@@ -484,7 +485,6 @@ class Signature_edit extends Component {
       this.setState({active_tab:'initial'});
     }
   }
-
   handleChange(e) {
     if(e.target.name == 'signer'){
       if(e.target.value){
@@ -495,15 +495,24 @@ class Signature_edit extends Component {
     }
     if(e.target.name == 'exist_signer'){
       if(e.target.value){
+        this.setState({signer_id: $(e.target).children(":selected").attr("id")});
         $('input[name="signer"]').attr('readonly','readonly');
       }else{
         $('input[name="signer"]').removeAttr('readonly');
       }
     }
-    this.setState({[e.target.name]: e.target.value});
+    if(e.target.name == 'field_required'){
+      if($(e.target).is(":checked")){
+        this.setState({[e.target.name]: e.target.value});
+      }else{
+        this.setState({[e.target.name]: ''});
+      }
+    }else{
+      this.setState({[e.target.name]: e.target.value});
+    }
   }
 
-  render() {
+  render() { console.log(this.state.signer_id)
     let dashboard = '';
     let docs = localStorage.getItem('files_array')  || this.state.docs 
     try {
@@ -643,6 +652,7 @@ class Signature_edit extends Component {
       top={this.state.top}
       left={this.state.left}
       doc_id={this.state.doc_id}
+      signer_id={this.state.signer_id}
       />
     </div>
     <div className="modal signmodal signature_modal" id="Signfiled">
@@ -764,7 +774,7 @@ class Signature_edit extends Component {
                                         <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
                                         <select name="exist_signer" id="exist_signer" onChange={this.handleChange}>
                                         <option value=''>Select Signer</option>
-                                        {this.state.signers.map((person) => <option key={person._id}>{person.name}</option>)}
+                                        {this.state.signers.map((person) => <option id={person._id} key={person._id}>{person.name}</option>)}
                                         </select>
                                       </div>
                                     </div>

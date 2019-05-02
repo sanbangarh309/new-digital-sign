@@ -118,7 +118,7 @@ export default class ModalComponent extends React.Component {
       } 
     });
     // this.state.signers_email.push(e.target.value);
-    let uniqueemails = [...new Set(emails)];console.log(this.state.message);
+    let uniqueemails = [...new Set(emails)];
     if(uniqueemails.length > 0 && id){
       axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id}).then((res) => {
         this.setState({

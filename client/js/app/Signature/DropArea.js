@@ -48,6 +48,9 @@ class DropArea extends React.Component {
     }
     onDrop(e) {
       console.log("DropArea.onDrop");
+      if(this.props.doc_for_sign){
+        return; 
+      }
       let fields = this.props.signer_field || '';
       let list = this.state.items; 
       try {
@@ -109,6 +112,9 @@ class DropArea extends React.Component {
       }
     }
     funcResizing(id, clientX, clientY, field=''){
+      if(this.props.doc_for_sign){
+        return; 
+      }
       let element = this.refs[field+'_'+ this.state.doc_key+'_'+ id];
       let list = this.state.items;
       let position = element.refs.node.getBoundingClientRect();
@@ -127,6 +133,11 @@ class DropArea extends React.Component {
       this.setState({currentNode:e.target.nodeName});
       this.setState({currentText:e.target.innerText});
       e.preventDefault();
+      if(this.props.doc_for_sign && e.target.nodeName == 'SPAN'){
+        e.target.parentElement.remove();
+        $('#Signfiled').modal('show');
+        return; 
+      }
       let key___ = ''
       if( !e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer') && !e.target.className.includes('preventClicking')){
         console.log('new element created')
@@ -146,7 +157,6 @@ class DropArea extends React.Component {
         }else{
           this.props.getSignPosition(y,x,doc_id);
         }
-         console.log(key___)
         if(key___ == 'signer'){
           $('#add_signer').modal('show');
           return false;
@@ -236,7 +246,20 @@ class DropArea extends React.Component {
           }
           
           this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});  
-          if(Array.isArray(list)){
+          if(Object.prototype.toString.call(list) === '[object Object]'){
+            // const listArray = Object.keys(list).map(i => list[i]);
+            let fieldlist = this.state.field_lists;
+            const listArray = Object.keys(list).map(function(key) {
+              for(var key2 in fieldlist){
+                if(list[key].top == fieldlist[key2].top && list[key].left == fieldlist[key2].left){
+                  delete fieldlist[key2];
+                }
+              }
+              return list[key];
+            });
+            let new_arr = listArray.concat(fieldlist); 
+            Object.assign(newobj, new_arr);
+          }else if(Array.isArray(list)){
             let new_arr = list.concat(this.state.field_lists); 
             Object.assign(newobj, new_arr);
           }else{
@@ -255,6 +278,9 @@ class DropArea extends React.Component {
     }
 
     removeFieldBox(id,doc_id){
+      if(this.props.doc_for_sign){
+        return; 
+      }
       let list = this.state.items;
       delete list[id];
       delete this.state.field_lists[id];
@@ -313,10 +339,9 @@ class DropArea extends React.Component {
                     // console.log('current:key- '+this.state.doc_key);
                     // console.log('org:key- '+key_);
                 }
+                // console.log(fields[key])
                 let signimg = '';
                 if(fields[key].type == 'sign'){
-                  console.log(fields[key])
-                  console.log(this.props.sign_image)
                   signimg = fields[key].sign_img || this.props.sign_image;
                 }
                 items.push(
@@ -366,7 +391,6 @@ class DropArea extends React.Component {
             // }
             
           });
-          console.log(items);
           DropJgah.push(<div
             className="drop-area container doc-bg signature_container hovrcr_sign" 
             onDragOver={this.onDragOver.bind(this)}
@@ -500,7 +524,7 @@ class DropArea extends React.Component {
       dateField = month + '/' + date + '/' + year;
     }
     let sign_image_style = {};
-    let img_src = this.props.sign_image ? (this.props.sign_image.src || this.props.sign_image) : ''; console.log(this.props.sign_image)
+    let img_src = this.props.sign_image ? (this.props.sign_image.src || this.props.sign_image) : '';
     if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){ 
       if(this.props.sign_image.canvas){
         styles['width'] = this.props.sign_image.canvas.width;
@@ -541,7 +565,7 @@ class DropArea extends React.Component {
     // }
     let textstyle = {
       // fontSize: '42px',
-      marginLeft: '50px'
+      marginLeft: '7px'
     }
     if((this.props.fieldType == 'signer_added' || this.props.fieldType == 'signer') && this.props.currentNode !='SPAN'){
       // styles['width'] = this.props.isResizing ? this.props.width : '230px';
@@ -550,11 +574,12 @@ class DropArea extends React.Component {
       textstyle['width'] = this.props.width;
       textstyle['height'] = this.props.height;
     }
+    // console.log(this.props.fieldType);
+    // console.log(textstyle);
       if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){ 
         this.props.fieldType = 'text';
         this.props.signer_field = '';
       }
-      console.log(this.props.signer_id)
       // let draggable = "true";
       // // {this.props.isDragging}
       // if(this.props.isResizing){
@@ -563,7 +588,7 @@ class DropArea extends React.Component {
       // class={"signer_field_"+this.props.fieldType+'_' + this.props.id}
       // style={{width:this.props.width,height:this.props.height}}
       return (
-        <div className={"text-field-box item unselectable "+this.props.fieldType}
+        <div className={"text-field-box item unselectable "+this.props.fieldType+' '+this.props.signer_id}
           ref={"node"}
           data-id={this.props.fieldType}
           draggable= {this.props.isDragging}
