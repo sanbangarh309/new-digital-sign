@@ -112,7 +112,7 @@ class Signature_edit extends Component {
         this.state.inputFields.push('signer_added');
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
-        this.setState({signer_field: res.data.name+' '+fld});
+        this.setState({signer_field: fld});
         this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
         setTimeout(() => {
@@ -126,7 +126,7 @@ class Signature_edit extends Component {
       // let unique = [...new Set(this.state.inputFields)];
       // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
-      this.setState({signer_field: sgn+' '+fld});
+      this.setState({signer_field: fld});
       $('#add_signer').modal('hide');
       setTimeout(() => {
         $(".signature_container").click();
@@ -448,16 +448,7 @@ class Signature_edit extends Component {
     $('li.card').css('color',this.state.color);
   }
 
-  appendSignature = (e) => {
-    if(this.state.inputFields.includes('sign')){
-      this.setState({bind_signature: true});
-    }
-    if(this.state.sign_text){
-      this.state.inputFields.push('sign_text');
-    }
-    $('#close_btn').click();
-    this.setState({active_tab:'initial'});
-  }
+
 
   setSignerField = (field) => {
     this.setState({signer_field: field});
@@ -468,13 +459,20 @@ class Signature_edit extends Component {
   appendSignature = (e) => {
     if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
       this.setState({bind_signature: true});
-    }else{
+    }else{ 
       if(this.state.sign_text && this.state.active_tab == 'initial'){
+        // this.state.sign_texts.push({text:this.state.sign_text,font:this.state.sign_font,color:this.state.color});
         this.setState({sign_texts: {text:this.state.sign_text,font:this.state.sign_font,color:this.state.color}});
         this.state.inputFields.push('sign_text');
       }
     }
     $('#close_btn').click();
+    this.setState({active_tab:'initial'});
+    if(this.state.doc_for_sign){  
+      setTimeout(() => { console.log(this.state.sign_texts);
+        $(".signature_container").click();
+      }, 1000);
+    }
   }
 
   resetTabs = (e) => {
@@ -512,7 +510,7 @@ class Signature_edit extends Component {
     }
   }
 
-  render() { console.log(this.state.signer_id)
+  render() {
     let dashboard = '';
     let docs = localStorage.getItem('files_array')  || this.state.docs 
     try {
@@ -641,7 +639,8 @@ class Signature_edit extends Component {
       <DropArea 
       docs={docs}
       field_type={this.state.inputFields} 
-      getSignPosition={this.getSignPosition.bind(this)} 
+      getSignPosition={this.getSignPosition.bind(this)}
+      showInitialField={this.showInitialField.bind(this)} 
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text}
       sign_texts={this.state.sign_texts} 

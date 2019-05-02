@@ -128,7 +128,7 @@ class Signature extends Component {
         this.state.inputFields.push('signer_added');
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
-        this.setState({signer_field: res.data.name+' '+fld});
+        this.setState({signer_field: fld});
         this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
         setTimeout(() => {
@@ -142,7 +142,7 @@ class Signature extends Component {
       // let unique = [...new Set(this.state.inputFields)];
       // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
-      this.setState({signer_field: sgn+' '+fld});
+      this.setState({signer_field: fld});
       $('#add_signer').modal('hide');
       setTimeout(() => {
         $(".signature_container").click();
@@ -236,8 +236,8 @@ class Signature extends Component {
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
             });
-            console.log(drag_data);
-            debugger;
+            // console.log(drag_data);
+            // debugger;
             docs[parseInt(i)-1].drag_data = drag_data;
             // docs[parseInt(i)-1].saved_dom = saved_dom;
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
@@ -503,7 +503,7 @@ class Signature extends Component {
     }
   }
 
-  appendSignature = (e) => { console.log(this.state.active_tab);
+  appendSignature = (e) => {
     if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
       this.setState({bind_signature: true});
     }else{
@@ -658,6 +658,7 @@ class Signature extends Component {
       docs={docs} 
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)} 
+      showInitialField={this.showInitialField.bind(this)}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text} 
       sign_font={this.state.sign_font}

@@ -133,54 +133,89 @@ class DropArea extends React.Component {
       this.setState({currentNode:e.target.nodeName});
       this.setState({currentText:e.target.innerText});
       e.preventDefault();
-      if(this.props.doc_for_sign && e.target.nodeName == 'SPAN'){
-        e.target.parentElement.remove();
-        $('#Signfiled').modal('show');
-        return; 
-      }
       let key___ = ''
-      if( !e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer') && !e.target.className.includes('preventClicking')){
+      let doc_id = e.target.id.replace ( /[^\d.]/g, '' ) || 1;
+      if(this.props.doc_for_sign && e.target.nodeName == 'SPAN'){
+        if(e.target.innerText.trim().includes("initial")){
+          e.target.parentElement.remove();
+          key___ = 'sign_text';
+          this.props.showInitialField(e);
+          this.props.getSignPosition(e.target.parentElement.style.top,e.target.parentElement.style.left,doc_id);
+          $('#Signfiled').modal('show');
+          console.log('clicked');
+          return;
+        }
+        if(e.target.innerText.trim().includes("text")){
+          e.target.parentElement.remove();
+          key___ = e.target.innerText.trim();
+          // return;
+        }
+        // e.target.parentElement.remove();
+        // $('#Signfiled').modal('show'); 
+      }
+      console.log(e.target.className);
+      if( (!e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer') && !e.target.className.includes('preventClicking')) || key___ !=''){
         console.log('new element created')
         this.setState({add_new:true});
         let position = e.target.getBoundingClientRect();
         var x = e.clientX - position.left; //x position within the element.
         var y = e.clientY - position.top;
-        let doc_id = e.target.id.replace ( /[^\d.]/g, '' ) || 1;
         let h = 70;
         let w = 100;
         let alreday = false;
         let list = this.state.items; 
-        let key___c = this.props.field_type.slice(this.props.field_type.length - 1);
-        key___ = key___c[0];
-        if(key___ == 'sign'){
+        let key___c = [];
+        if(key___ == ''){
+          key___c = this.props.field_type.slice(this.props.field_type.length - 1);
+          key___ = key___c[0];
+        } 
+        if(key___ == 'sign' || (this.props.doc_for_sign && e.target.parentElement.style.top)){
           this.props.getSignPosition(e.target.parentElement.style.top,e.target.parentElement.style.left,doc_id);
+          y = e.target.parentElement.style.top;
+          x = e.target.parentElement.style.left;
+          if(key___ == 'text'){
+            w = 230
+            h = 40 
+          }
         }else{
-          this.props.getSignPosition(y,x,doc_id);
+          this.props.getSignPosition(y-10,x,doc_id);
+        }
+        
+        if(key___ == 'sign_text' && this.props.doc_for_sign){
+          y = this.props.top;
+          x = this.props.left;
+          var index = this.props.field_type.indexOf('sign_text');
+          var index2 = this.props.field_type.indexOf('initials');
+          if (index > -1) {
+            this.props.field_type.splice(index, 1);
+            this.props.field_type.splice(index2, 1);
+          }
         }
         if(key___ == 'signer'){
           $('#add_signer').modal('show');
           return false;
         }
-        
-        if(key___c.length <= 0 || key___c == 'initials'){
-          // $('.sign-btn').click();
-          if(this.props.doc_for_sign && e.target.nodeName == 'SPAN'){
-            if(e.target.innerText == 'sign'){ 
-              e.target.parentElement.remove();
-              $('#Signfiled').modal('show');
-              return false
-            }
-            key___ = e.target.innerText;
-          }else if(!this.props.doc_for_sign){
-            $('#Signfiled').modal('show');
-          } 
-          return false
+        if(key___c == 'initials' && !this.props.doc_for_sign){
+          $('#Signfiled').modal('show');
         }
-
+        
+        // if(key___c.length <= 0 || key___c == 'initials'){
+        //   // $('.sign-btn').click();
+        //   if(this.props.doc_for_sign && e.target.nodeName == 'SPAN'){
+        //     if(e.target.innerText == 'sign'){ 
+        //       e.target.parentElement.remove();
+        //       $('#Signfiled').modal('show');
+        //       return false
+        //     }
+        //     key___ = e.target.innerText;
+        //   }else if(!this.props.doc_for_sign){
+        //     $('#Signfiled').modal('show');
+        //   } 
+        //   return false
+        // }
         // if(key___.includes('sign')){
 
         // }
-        
         
         if(e.target.nodeName == 'SPAN'){
           key___ = e.target.innerText;
@@ -210,8 +245,12 @@ class DropArea extends React.Component {
             Object.assign(newobj, new_list);
             this.setState({items:newobj});
           }
-        let fontsize = '1.8vw';
-        if(!alreday){
+        let fontsize = '1.8vw'; 
+        if(!x && !y){
+          return;
+        }
+        
+        if(!alreday){ 
           // this.setState((state) => ({ field_count: state.field_count + 1})); 
           let items = []
           let text = '';
@@ -219,9 +258,9 @@ class DropArea extends React.Component {
             x = this.props.left
             y = this.props.top
             text = this.props.signer_field;
-            w = 230;
-            h = 40;
-            fontsize = '2.4vw';
+            w = 140;
+            h = 30;
+            fontsize = '1.6vw';
           }
           if(key___ == 'date'){
             w = 100;
@@ -243,8 +282,7 @@ class DropArea extends React.Component {
             clr = this.props.sign_texts.color;
             txt = this.props.sign_texts.text;
             fnt = this.props.sign_texts.font;
-          }
-          
+          } 
           this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});  
           if(Object.prototype.toString.call(list) === '[object Object]'){
             // const listArray = Object.keys(list).map(i => list[i]);
@@ -294,7 +332,7 @@ class DropArea extends React.Component {
     render() {
       let DropJgah = []
       let key_ = 1;
-      let fields = this.state.items;
+      let fields = this.state.items; console.log(fields);
       let doc_key = this.state.doc_key;
       this.props.docs.map(doc => {
         let items = [];
@@ -499,6 +537,7 @@ class DropArea extends React.Component {
         width:  this.props.width,
         height: this.props.height,
         fontSize: this.props.fontSize,
+        textAlign: 'center',
         display:'table'
       };
       let cusstyle = {
@@ -565,20 +604,34 @@ class DropArea extends React.Component {
     // }
     let textstyle = {
       // fontSize: '42px',
-      marginLeft: '7px'
+      // marginLeft: '7px'
     }
     if((this.props.fieldType == 'signer_added' || this.props.fieldType == 'signer') && this.props.currentNode !='SPAN'){
       // styles['width'] = this.props.isResizing ? this.props.width : '230px';
       // textstyle['fontSize'] = '2.8vw';
-      textstyle['marginLeft'] = '7px';
+      // textstyle['marginLeft'] = '7px';
       textstyle['width'] = this.props.width;
       textstyle['height'] = this.props.height;
     }
-    // console.log(this.props.fieldType);
-    // console.log(textstyle);
+    
       if(this.props.doc_for_sign && this.props.currentNode =='SPAN' && this.props.currentText == 'text'){ 
-        this.props.fieldType = 'text';
-        this.props.signer_field = '';
+        // this.props.fieldType = 'text';
+        // this.props.signer_field = '';
+      }
+      let boxeStyle = {
+        zIndex:'90',
+      }
+
+      let chkStyle = {width:this.props.width,height:this.props.height};
+
+      if(this.props.doc_for_sign && (this.props.fieldType == 'sign' || this.props.fieldType == 'check' || this.props.fieldType == 'sign_text')){
+        styles['background'] = 'transparent';
+        // sign_image_style['backgroundColor'] = 'transparent !important';
+        // cusstyle['backgroundColor'] = 'transparent !important';
+        // chkStyle['backgroundColor'] = 'transparent !important';
+        boxeStyle['display'] = 'none';
+      }else if(this.props.doc_for_sign){
+        styles['background'] = 'rgba(34, 176, 20, 0.2)';
       }
       // let draggable = "true";
       // // {this.props.isDragging}
@@ -602,17 +655,17 @@ class DropArea extends React.Component {
         {(() => { 
           switch (this.props.fieldType) { 
             case "sign": return (<img src={img_src} class="preventClicking" style={sign_image_style}></img>);
-            case "check": return (<img src={'/assets/img/checkmark.png'} class="preventClicking" style={{width:this.props.width,height:this.props.height}}></img>);
+            case "check": return (<img src={'/assets/img/checkmark.png'} class="preventClicking" style={chkStyle}></img>);
             case "signer_added": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "signer": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+this.props.fieldType+" preventClicking"}>{this.props.sign_text}</span>);
             default: return (<textarea className="form-control" defaultValue={dateField} style={cusstyle}></textarea>);
           }
         })()}
-        <div className="round-sml btn-removebox1" onClick={this.removeField.bind(this)}>✕</div>
-        <div className="round-sml ui-resizable-handle ui-resizable-nw" style={{zIndex: '90'}}></div>
-        <div className="round-sml ui-resizable-handle ui-resizable-sw" style={{zIndex: '90'}}></div>
-        <div className="round-sml ui-resizable-handle ui-resizable-se" style={{zIndex: '90'}}></div>
+        <div className="round-sml btn-removebox1" onClick={this.removeField.bind(this)} style={boxeStyle}>✕</div>
+        <div className="round-sml ui-resizable-handle ui-resizable-nw" style={boxeStyle}></div>
+        <div className="round-sml ui-resizable-handle ui-resizable-sw" style={boxeStyle}></div>
+        <div className="round-sml ui-resizable-handle ui-resizable-se" style={boxeStyle}></div>
         <Resizer
             ref={"resizerNode"}
             id={this.props.id}
@@ -620,6 +673,7 @@ class DropArea extends React.Component {
             docId={this.props.docId}
             isResizing={this.props.isResizing}
             fieldtype={this.props.fieldType}
+            doc_for_sign={this.props.doc_for_sign}
             resizerWidth={16}
             resizerHeight={16}
             updateStateResizing={this.props.updateStateResizing}
@@ -687,6 +741,9 @@ class DropArea extends React.Component {
         width:  this.props.resizerWidth,
         height: this.props.resizerHeight,
       };
+      if(this.props.doc_for_sign){
+        style['display'] = 'none';
+      }
       return (
         <div className="resizer"
               style={style}
@@ -703,6 +760,5 @@ class DropArea extends React.Component {
     resizerWidth:         PropTypes.number.isRequired,
     resizerHeight:        PropTypes.number.isRequired
   };
-  
   export default DropArea;
   
