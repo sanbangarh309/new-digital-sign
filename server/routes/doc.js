@@ -179,7 +179,7 @@ module.exports = (app) => {
             from: 'sandeep.digittrix@gmail.com',
             to: email_to,
             subject: req.body.subject,
-            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center">"'+ req.body.message+'"</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
+            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
           };
           San_Function.sanSendMail(req, res, mailOptions);
           return res.json(doc);

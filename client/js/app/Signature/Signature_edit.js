@@ -62,7 +62,8 @@ class Signature_edit extends Component {
       exist_signer:null,
       signers_err:null,
       active_tab:'initial',
-      signers:[]
+      signers:[],
+      first_attempt:false
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -105,6 +106,10 @@ class Signature_edit extends Component {
     }
   }
 
+  closeAttempt(){
+    this.setState({first_attempt: false});
+  }
+
   addField(e){
     let fld = this.state.signer_field;
     if(this.state.signer){
@@ -113,6 +118,7 @@ class Signature_edit extends Component {
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
         this.setState({signer_field: fld});
+        this.setState({first_attempt: true});
         this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
         setTimeout(() => {
@@ -123,6 +129,7 @@ class Signature_edit extends Component {
       });
     }else if(this.state.exist_signer){
       this.state.inputFields.push('signer_added');
+      this.setState({first_attempt: true});
       // let unique = [...new Set(this.state.inputFields)];
       // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
@@ -353,6 +360,7 @@ class Signature_edit extends Component {
     $('.signature_container').removeClass('hovrcr_date');
     $('.signature_container').removeClass('hovrcr_check');
     $('.signature_container').removeClass('hovrcr_sign');
+    this.setState({active_tab:'initial'});
     console.log('clicked on Initial Button')
   }
 
@@ -382,6 +390,7 @@ class Signature_edit extends Component {
     $('.signature_container').removeClass('hovrcr_date');
     $('.signature_container').removeClass('hovrcr_check');
     $('.signature_container').removeClass('hovrcr_initials');
+    this.setState({active_tab:'signpad'});
     console.log('clicked on Signature Button')
   } 
 
@@ -483,6 +492,11 @@ class Signature_edit extends Component {
       this.setState({active_tab:'initial'});
     }
   }
+
+  updateTab(tab){
+    this.setState({active_tab:tab});
+  }
+
   handleChange(e) {
     if(e.target.name == 'signer'){
       if(e.target.value){
@@ -510,6 +524,10 @@ class Signature_edit extends Component {
     }
   }
 
+  enterData = (e) => {
+    console.log('next');
+  }
+
   render() {
     let dashboard = '';
     let docs = localStorage.getItem('files_array')  || this.state.docs 
@@ -523,6 +541,10 @@ class Signature_edit extends Component {
       return <Redirect to='/'  />
     }else{
       dashboard = <li><NavLink  className="btn" id="dashboard" to='/dashboard'>Dasboard</NavLink></li>
+    }
+    let save_btn = (<a className="btn btn-done nav-link" onClick={this.saveData.bind(this)} href="javascript:void(0)">Save</a>);
+    if(this.state.doc_for_sign){
+      save_btn = (<a className="btn btn-done nav-link" onClick={this.enterData.bind(this)} href="javascript:void(0)">Start</a>);
     }
     let required_msg = this.state.signers_err ? (<h3 className="text-center" style={{color:'red'}}>{this.state.signers_err}</h3>) : '';
     return (
@@ -549,7 +571,7 @@ class Signature_edit extends Component {
                    <a className="nav-link" href="#" target="_blank" id="pdf-download-link"><i className="fa fa-download"></i></a>
                 </li> */}
                 <li className="nav-item">
-                   <a className="btn btn-done nav-link" onClick={this.saveData.bind(this)} href="javascript:void(0)">Save</a>
+                   {save_btn}
                 </li>
 
                 <li className="nav-item active">
@@ -625,7 +647,7 @@ class Signature_edit extends Component {
                                 <li><a href="javascript:void(0)" id="date_field" className="btn" onClick={this.createDateField.bind(this)}><span class="material-icons">insert_invitation</span> Date</a></li>
                                 <li><a href="javascript:void(0)" id="initial_field" className="btn" onClick={this.showInitialField.bind(this)}><span class="material-icons">adjust</span> Initials</a></li>
                                 <li><a href="javascript:void(0)" id="check_field" className="btn" onClick={this.showCheckField.bind(this)}><span class="material-icons">done_all</span> Check</a></li>
-                                <li><a href="javascript:void(0)" id="clear_field" className="btn" onClick={this.clearContainer.bind(this)}>Clear</a></li>
+                                <li><a href="javascript:void(0)" id="clear_field" className="btn" onClick={this.clearContainer.bind(this)}><span class="material-icons">clear_all</span> Clear</a></li>
                               </ol>
                             </div>
                           </div>
@@ -641,6 +663,8 @@ class Signature_edit extends Component {
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)}
       showInitialField={this.showInitialField.bind(this)} 
+      closeAttempt={this.closeAttempt.bind(this)}
+      updateTab={this.updateTab.bind(this)}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text}
       sign_texts={this.state.sign_texts} 
@@ -652,6 +676,7 @@ class Signature_edit extends Component {
       left={this.state.left}
       doc_id={this.state.doc_id}
       signer_id={this.state.signer_id}
+      first_attempt={this.state.first_attempt}
       />
     </div>
     <div className="modal signmodal signature_modal" id="Signfiled">

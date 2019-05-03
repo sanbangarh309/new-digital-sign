@@ -64,7 +64,8 @@ class Signature extends Component {
       signers:[],
       signers_err:null,
       active_tab:'initial',
-      template_id:this.props.location.query.temp || null
+      template_id:this.props.location.query.temp || null,
+      first_attempt:false
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -121,11 +122,16 @@ class Signature extends Component {
   });
   }
 
+  closeAttempt(){
+    this.setState({first_attempt: false});
+  }
+
   addField(e){
     let fld = this.state.signer_field;
     if(this.state.signer){
       axios.post('/api/addfield',this.state).then((res) => {
         this.state.inputFields.push('signer_added');
+        this.setState({first_attempt: true});
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
         this.setState({signer_field: fld});
@@ -139,6 +145,7 @@ class Signature extends Component {
       });
     }else if(this.state.exist_signer){
       this.state.inputFields.push('signer_added');
+      this.setState({first_attempt: true});
       // let unique = [...new Set(this.state.inputFields)];
       // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
@@ -453,7 +460,7 @@ class Signature extends Component {
     this.setState({doc_id:doc_id});
   }
 
-  updateSignField(sign){ console.log(sign)
+  updateSignField(sign){
     this.setState({sign_image:sign});
     this.setState({bind_signature: false});
   }
@@ -526,6 +533,10 @@ class Signature extends Component {
     }
   }
 
+  updateTab(tab){
+    this.setState({active_tab:tab});
+  }
+
   setSignerField = (field) => {
     this.setState({signer_field: field});
     // this.state.signer_field.push(field);
@@ -534,7 +545,7 @@ class Signature extends Component {
     //   this.state.inputFields.push('sign_text');
     // }
   }
-  render() { 
+  render() {
     // debugger;
     let dashboard = '';
     let docs = this.state.docs || localStorage.getItem('files_array'); 
@@ -643,7 +654,7 @@ class Signature extends Component {
                                 <li><a href="javascript:void(0)" id="date_field" className="btn" onClick={this.createDateField.bind(this)}><span class="material-icons">insert_invitation</span> Date</a></li>
                                 <li><a href="javascript:void(0)" id="initial_field" className="btn" onClick={this.showInitialField.bind(this)}><span class="material-icons">adjust</span> Initials</a></li>
                                 <li><a href="javascript:void(0)" id="check_field" className="btn" onClick={this.showCheckField.bind(this)}><span class="material-icons">done_all</span> Check</a></li>
-                                <li><a href="javascript:void(0)" id="clear_field" className="btn" onClick={this.clearContainer.bind(this)}>Clear</a></li>
+                                <li><a href="javascript:void(0)" id="clear_field" className="btn" onClick={this.clearContainer.bind(this)}><span class="material-icons">clear_all</span> Clear</a></li>
                               </ol>
                             </div>
                           </div>
@@ -659,6 +670,8 @@ class Signature extends Component {
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)} 
       showInitialField={this.showInitialField.bind(this)}
+      closeAttempt={this.closeAttempt.bind(this)}
+      updateTab={this.updateTab.bind(this)}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text} 
       sign_font={this.state.sign_font}
@@ -670,6 +683,7 @@ class Signature extends Component {
       doc_id={this.state.doc_id}
       signer_id={this.state.signer_id}
       field_required={this.state.field_required}
+      first_attempt={this.state.first_attempt}
       />
     </div>
     <div className="modal signmodal" id="Signfiled">

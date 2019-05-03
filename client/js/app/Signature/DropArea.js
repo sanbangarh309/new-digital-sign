@@ -142,18 +142,38 @@ class DropArea extends React.Component {
           this.props.showInitialField(e);
           this.props.getSignPosition(e.target.parentElement.style.top,e.target.parentElement.style.left,doc_id);
           $('#Signfiled').modal('show');
-          console.log('clicked');
+          return;
+        }
+        if(e.target.innerText.trim().includes("sign")){
+          e.target.parentElement.remove();
+          key___ = 'sign';
+          this.props.getSignPosition(e.target.parentElement.style.top,e.target.parentElement.style.left,doc_id);
+          $('#Signfiled').modal('show');
           return;
         }
         if(e.target.innerText.trim().includes("text")){
           e.target.parentElement.remove();
           key___ = e.target.innerText.trim();
-          // return;
+        }
+        if(e.target.innerText.trim().includes("date")){
+          e.target.parentElement.remove();
+          key___ = e.target.innerText.trim();
+        }
+        if(e.target.innerText.trim().includes("check")){
+          e.target.parentElement.remove();
+          key___ = 'check';
         }
         // e.target.parentElement.remove();
         // $('#Signfiled').modal('show'); 
       }
-      console.log(e.target.className);
+      
+      if(this.props.doc_for_sign && this.props.field_type.length <=0 && e.target.className.includes('signature_container')){
+        return;
+      }
+      console.log(this.props.field_type);
+      // for(var value of e.target.classList.values()) {
+      //   console.log(value);
+      // }
       if( (!e.target.className.includes('btn-removebox1') && !e.target.className.includes('form-control') && !e.target.className.includes('unselectable') && !e.target.className.includes('sign_image') && !e.target.className.includes('resizer') && !e.target.className.includes('preventClicking')) || key___ !=''){
         console.log('new element created')
         this.setState({add_new:true});
@@ -168,20 +188,22 @@ class DropArea extends React.Component {
         if(key___ == ''){
           key___c = this.props.field_type.slice(this.props.field_type.length - 1);
           key___ = key___c[0];
-        } 
+        }
         if(key___ == 'sign' || (this.props.doc_for_sign && e.target.parentElement.style.top)){
           this.props.getSignPosition(e.target.parentElement.style.top,e.target.parentElement.style.left,doc_id);
-          y = e.target.parentElement.style.top;
-          x = e.target.parentElement.style.left;
+          if(this.props.doc_for_sign && e.target.parentElement.style.top){
+            y = e.target.parentElement.style.top;
+            x = e.target.parentElement.style.left;
+          }
           if(key___ == 'text'){
             w = 230
             h = 40 
           }
-        }else{
+        }else if(key___ != 'signer_added'){
           this.props.getSignPosition(y-10,x,doc_id);
         }
         
-        if(key___ == 'sign_text' && this.props.doc_for_sign){
+        if(key___ == 'sign_text' && this.props.doc_for_sign){ 
           y = this.props.top;
           x = this.props.left;
           var index = this.props.field_type.indexOf('sign_text');
@@ -190,7 +212,7 @@ class DropArea extends React.Component {
             this.props.field_type.splice(index, 1);
             this.props.field_type.splice(index2, 1);
           }
-        }
+        } 
         if(key___ == 'signer'){
           $('#add_signer').modal('show');
           return false;
@@ -217,7 +239,13 @@ class DropArea extends React.Component {
 
         // }
         
-        if(e.target.nodeName == 'SPAN'){
+        if(key___c.length <= 0 && !this.props.doc_for_sign){
+          this.props.updateTab('signpad');
+          $('#Signfiled').modal('show');
+          return;
+        }
+        
+        if(e.target.nodeName == 'SPAN' &&  !this.props.doc_for_sign){
           key___ = e.target.innerText;
         }
         
@@ -245,26 +273,32 @@ class DropArea extends React.Component {
             Object.assign(newobj, new_list);
             this.setState({items:newobj});
           }
-        let fontsize = '1.8vw'; 
+        let fontsize = '1.2vw';
         if(!x && !y){
           return;
-        }
-        
+        } 
         if(!alreday){ 
           // this.setState((state) => ({ field_count: state.field_count + 1})); 
           let items = []
           let text = '';
           if(key___ == 'signer_added'){
-            x = this.props.left
-            y = this.props.top
+            if(this.props.first_attempt){
+              x = this.props.left
+              y = this.props.top
+              this.props.closeAttempt();
+            }else{
+              y = y-28;
+            }
+            
             text = this.props.signer_field;
             w = 140;
             h = 30;
-            fontsize = '1.6vw';
+            fontsize = '1.0vw'; 
           }
           if(key___ == 'date'){
             w = 100;
             h = 50;
+            fontsize = '1.4vw';
           }
           if(key___ == 'sign_text'){
             w = 230;
@@ -282,27 +316,43 @@ class DropArea extends React.Component {
             clr = this.props.sign_texts.color;
             txt = this.props.sign_texts.text;
             fnt = this.props.sign_texts.font;
-          } 
-          this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_image:null,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});  
-          if(Object.prototype.toString.call(list) === '[object Object]'){
-            // const listArray = Object.keys(list).map(i => list[i]);
-            let fieldlist = this.state.field_lists;
-            const listArray = Object.keys(list).map(function(key) {
-              for(var key2 in fieldlist){
-                if(list[key].top == fieldlist[key2].top && list[key].left == fieldlist[key2].left){
-                  delete fieldlist[key2];
-                }
-              }
-              return list[key];
-            });
-            let new_arr = listArray.concat(fieldlist); 
-            Object.assign(newobj, new_arr);
-          }else if(Array.isArray(list)){
-            let new_arr = list.concat(this.state.field_lists); 
-            Object.assign(newobj, new_arr);
-          }else{
-            Object.assign(newobj, this.state.field_lists);
           }
+          if(key___ == 'sign' && this.props.sign_image && this.props.sign_image.canvas){
+            w = this.props.sign_image.canvas.width;
+            h = this.props.sign_image.canvas.height;
+          }
+          if(key___ == 'sign' && this.props.sign_image && this.props.isResizing){
+            w = this.props.width;
+            h = this.props.height;
+          }
+          let listArray = [];
+          if(Object.prototype.toString.call(list) === '[object Object]'){
+            listArray = Object.keys(list).map(i => list[i]);
+          }else{
+            listArray = list; 
+          }
+          // this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_img:this.props.sign_image,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});
+          listArray.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_img:this.props.sign_image,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});  
+          // if(Object.prototype.toString.call(list) === '[object Object]'){
+          //   // const listArray = Object.keys(list).map(i => list[i]);
+          //   let fieldlist = this.state.field_lists;
+          //   const listArray = Object.keys(list).map(function(key) {
+          //     for(var key2 in fieldlist){
+          //       if(list[key].top == fieldlist[key2].top && list[key].left == fieldlist[key2].left){
+          //         delete fieldlist[key2];
+          //       }
+          //     }
+          //     return list[key];
+          //   });
+          //   let new_arr = listArray.concat(fieldlist); 
+          //   Object.assign(newobj, new_arr);
+          // }else if(Array.isArray(list)){
+          //   let new_arr = list.concat(this.state.field_lists); 
+          //   Object.assign(newobj, new_arr);
+          // }else{
+          //   Object.assign(newobj, this.state.field_lists);
+          // }
+          Object.assign(newobj, listArray);
           this.setState({show_field:true});
           if(e.target.id && e.target.id !=''){
             this.setState({doc_key:doc_id});
@@ -321,7 +371,7 @@ class DropArea extends React.Component {
       }
       let list = this.state.items;
       delete list[id];
-      delete this.state.field_lists[id];
+      // delete this.state.field_lists[id];
       let newState = Object.assign(
         this.state, {
           items : list
@@ -331,8 +381,12 @@ class DropArea extends React.Component {
 
     render() {
       let DropJgah = []
+      let dropjgah_classes = ['drop-area', 'container', 'doc-bg', 'signature_container'];
+      if(!this.props.doc_for_sign){
+        dropjgah_classes.push('hovrcr_sign');
+      }
       let key_ = 1;
-      let fields = this.state.items; console.log(fields);
+      let fields = this.state.items;
       let doc_key = this.state.doc_key;
       this.props.docs.map(doc => {
         let items = [];
@@ -378,10 +432,10 @@ class DropArea extends React.Component {
                     // console.log('org:key- '+key_);
                 }
                 // console.log(fields[key])
-                let signimg = '';
-                if(fields[key].type == 'sign'){
-                  signimg = fields[key].sign_img || this.props.sign_image;
-                }
+                // let signimg = '';
+                // if(fields[key].type == 'sign'){
+                //   signimg = fields[key].sign_img;
+                // }
                 items.push(
                   <Draggable 
                     ref={fields[key].type +'_'+key_+'_'+ key}
@@ -391,7 +445,7 @@ class DropArea extends React.Component {
                     docId={key_}
                     fieldType={fields[key].type}
                     signer_field={fields[key].content}
-                    sign_image={signimg}
+                    sign_image={fields[key].sign_img}
                     field_required={fields[key].required}
                     sign_text={fields[key].sign_text}
                     sign_font={fields[key].sign_font}
@@ -429,8 +483,9 @@ class DropArea extends React.Component {
             // }
             
           });
+          
           DropJgah.push(<div
-            className="drop-area container doc-bg signature_container hovrcr_sign" 
+            className={dropjgah_classes.join(' ')} 
             onDragOver={this.onDragOver.bind(this)}
             id={'signature_container_'+key_}
             onDrop={this.onDrop.bind(this)} 
@@ -441,7 +496,7 @@ class DropArea extends React.Component {
           </div>)
         }else{
           DropJgah.push(<div
-            className="drop-area container doc-bg signature_container hovrcr_sign"
+            className={dropjgah_classes.join(' ')}
             onDragOver={this.onDragOver.bind(this)}
             id={'signature_container_'+key_}
             onDrop={this.onDrop.bind(this)} 
@@ -566,8 +621,8 @@ class DropArea extends React.Component {
     let img_src = this.props.sign_image ? (this.props.sign_image.src || this.props.sign_image) : '';
     if(this.props.fieldType == 'sign' && this.props.sign_image && !this.state.resized_div.includes(this.props.fieldType+'_' + this.props.id)){ 
       if(this.props.sign_image.canvas){
-        styles['width'] = this.props.sign_image.canvas.width;
-        styles['height'] = this.props.sign_image.canvas.height;
+        // styles['width'] = this.props.sign_image.canvas.width;
+        // styles['height'] = this.props.sign_image.canvas.height;
         img_src = this.props.sign_image.src;  
       }else{
         img_src = this.props.sign_image;
@@ -576,14 +631,14 @@ class DropArea extends React.Component {
     }else{
       sign_image_style = {width:this.props.width,height:this.props.height};
     } 
-    if(this.props.fieldType == 'sign' && this.props.sign_image && this.props.isResizing){
-      styles['width'] = this.props.width;
-      styles['height'] = this.props.height;
-    }
-    if(this.props.fieldType == 'check'){
-      // styles['width'] = '60px';
-      // styles['height'] = '60px';
-    }
+    // if(this.props.fieldType == 'sign' && this.props.sign_image && this.props.isResizing){
+    //   styles['width'] = this.props.width;
+    //   styles['height'] = this.props.height;
+    // }
+    // if(this.props.fieldType == 'check'){
+    //   // styles['width'] = '60px';
+    //   // styles['height'] = '60px';
+    // }
    
     if(this.props.fieldType == 'sign_text'){
       dateField = this.props.sign_text;
@@ -626,12 +681,13 @@ class DropArea extends React.Component {
 
       if(this.props.doc_for_sign && (this.props.fieldType == 'sign' || this.props.fieldType == 'check' || this.props.fieldType == 'sign_text')){
         styles['background'] = 'transparent';
-        // sign_image_style['backgroundColor'] = 'transparent !important';
-        // cusstyle['backgroundColor'] = 'transparent !important';
-        // chkStyle['backgroundColor'] = 'transparent !important';
         boxeStyle['display'] = 'none';
+        styles['pointerEvents'] = 'none';
       }else if(this.props.doc_for_sign){
         styles['background'] = 'rgba(34, 176, 20, 0.2)';
+      }
+      if(this.props.doc_for_sign && this.props.doc_for_sign != this.props.signer_id ){                        
+        // styles['pointerEvents'] = 'none';
       }
       // let draggable = "true";
       // // {this.props.isDragging}
