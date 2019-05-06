@@ -113,7 +113,6 @@ module.exports = (app) => {
           San_Function.pdfToImage(template.name, async (data) => {
             template.images = data.message;
             template.save();
-            console.log(data);
             return res.json(template);
           });
         }else{
@@ -124,19 +123,42 @@ module.exports = (app) => {
       }
     });
 
-    app.post('/api/addfield', (req, res, next) => {
-      const {signer} = req.body;
+    app.post('/api/addfield',async (req,res,next) => {
+      const {signer,signer_clr,docId} = req.body;
+      const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+      const userMatched = await User.findById(user.sub);
       let signer_user = new Signer();
       signer_user.name = signer;
+      signer_user.added_by = userMatched._id;
+      signer_user.color = signer_clr;
+      if(!signer_user.shared_with.includes(docId)){
+        signer_user.shared_with.push(docId);
+      }
       signer_user.save();
       res.json(signer_user);
     });
 
-    app.get('/api/signers', async (req, res, next) => {
-        let query = {};
+    app.post('/api/signers', async (req, res, next) => {
+      let query = {};
+      if(req.body.token){
+        const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+        const userMatched = await User.findById(user.sub);
+        query = { 'added_by': ObjectId(userMatched._id) };
         Signer.find(query)
         .exec()
         .then((signers) => res.json(signers))
+        .catch((err) => next(err));
+      }else{
+        res.json({success:false})
+      }
+    });
+
+    app.get('/api/signer/:id', async (req,res,next) => {
+      Signer.findById(req.params.id)
+        .exec()
+        .then((signer) => {
+          res.json(signer);
+        })
         .catch((err) => next(err));
     });
 

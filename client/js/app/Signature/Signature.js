@@ -59,13 +59,16 @@ class Signature extends Component {
         revoke:false
       },
       signer:null,
+      signer_clr:null,
       exist_signer:null,
       field_required:null,
       signers:[],
       signers_err:null,
       active_tab:'initial',
       template_id:this.props.location.query.temp || null,
-      first_attempt:false
+      first_attempt:false,
+      token:localStorage.getItem('jwtToken'),
+      field_count:0
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -78,6 +81,17 @@ class Signature extends Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
+  refreshSigners(){
+    axios.post('/api/signers/',{token:this.state.token}).then((res) => {
+      this.setState({
+        signers: res.data
+      });
+     
+    }).catch(error => {
+      console.log(error.response);
+    });
+  }
+
   componentWillMount() {
     let docs = localStorage.getItem('files_array') || this.state.docs
     try {
@@ -86,7 +100,7 @@ class Signature extends Component {
 
     }
 
-    axios.get('/api/signers').then((res) => {
+    axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
         signers: res.data
       });
@@ -126,10 +140,21 @@ class Signature extends Component {
     this.setState({first_attempt: false});
   }
 
+  getRandomColor = () => {
+    var letters = '0123456789ABCDEF';
+    var color = '#';
+    for (var i = 0; i < 6; i++) {
+      color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+  }
+
   addField(e){
     let fld = this.state.signer_field;
     if(this.state.signer){
-      axios.post('/api/addfield',this.state).then((res) => {
+      this.state.signer_clr = this.getRandomColor();
+      this.setState({signer_clr: this.getRandomColor()});
+      axios.post('/api/addfield',{signer:this.state.signer,signer_clr:this.state.signer_clr,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');
         this.setState({first_attempt: true});
         // let unique = [...new Set(this.state.inputFields)];
@@ -150,11 +175,21 @@ class Signature extends Component {
       // this.setState({inputFields:unique});
       let sgn = this.state.exist_signer;
       this.setState({signer_field: fld});
-      $('#add_signer').modal('hide');
-      setTimeout(() => {
-        $(".signature_container").click();
-      }, 1000);
-      
+      axios.get('/api/signer/'+this.state.signer_id).then((res) => {  
+        if(res.data.color){
+          this.setState({signer_clr: res.data.color});
+          console.log(res.data.color)
+          console.log('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count)
+          $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
+        }
+        this.state.field_count += 1;
+        $('#add_signer').modal('hide');
+        setTimeout(() => {
+          $(".signature_container").click();
+        }, 1000);
+      }).catch(error => {
+        console.log(error.response);
+      });
     }else{
       this.setState({signers_err: 'Signer is Required'});
       // debugger;
@@ -233,12 +268,13 @@ class Signature extends Component {
               let fontfamily = $(this).find('span').css('font-family') || null;
               let clr = $(this).find('span').css('color') || null;
               let signer_id = $(this).find('span').attr('id') || null;
+              let bgcolor = $(this).attr('data-color');
               let reqrd = false;
               if($(this).find('span').hasClass('required')){
                 reqrd = true;
               } 
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
@@ -416,6 +452,10 @@ class Signature extends Component {
     $('.signature_container').removeClass('hovrcr_date');
     $('.signature_container').removeClass('hovrcr_check');
     $('.signature_container').removeClass('hovrcr_initials');
+    var canvas = document.getElementById("sign_pad_tab");
+    var context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.restore();
     this.setState({active_tab:'signpad'});
     console.log('clicked on Signature Button')
   } 
@@ -672,6 +712,7 @@ class Signature extends Component {
       showInitialField={this.showInitialField.bind(this)}
       closeAttempt={this.closeAttempt.bind(this)}
       updateTab={this.updateTab.bind(this)}
+      refreshSigners={this.refreshSigners.bind(this)}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text} 
       sign_font={this.state.sign_font}
@@ -684,6 +725,7 @@ class Signature extends Component {
       signer_id={this.state.signer_id}
       field_required={this.state.field_required}
       first_attempt={this.state.first_attempt}
+      signer_clr={this.state.signer_clr}
       />
     </div>
     <div className="modal signmodal" id="Signfiled">

@@ -66,7 +66,7 @@ export default class ModalComponent extends React.Component {
     if(this.state.forgotid){
       $('#reset_pwd_save').modal('show');
     }
-    axios.get('/api/signers').then((res) => {
+    axios.post('/api/signers/',{token:localStorage.getItem('jwtToken')}).then((res) => {
       this.setState({
         signers: res.data
       });

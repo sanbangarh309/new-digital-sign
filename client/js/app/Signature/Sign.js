@@ -67,6 +67,10 @@ class Sign extends Component {
           window.addEventListener("resize",this.resizeCanvas);
       }
 
+      componentDidMount(){
+          this.sigCanvas.clear();
+      }
+
       trim(c) {
         var ctx = c.getContext('2d'),
           copy = document.createElement('canvas').getContext('2d'),
@@ -108,13 +112,19 @@ class Sign extends Component {
             }
           }
         } 
-        var trimHeight = bound.bottom - bound.top,
+        try {
+          var trimHeight = bound.bottom - bound.top,
             trimWidth = bound.right - bound.left,
             trimmed = ctx.getImageData(bound.left, bound.top, trimWidth, trimHeight);
-        copy.canvas.width = trimWidth;
-        copy.canvas.height = trimHeight;
-        copy.putImageData(trimmed, 0, 0);
-        return copy.canvas;
+          copy.canvas.width = trimWidth;
+          copy.canvas.height = trimHeight;
+          copy.putImageData(trimmed, 0, 0);
+          return copy.canvas;
+        }catch(e){
+          return copy.canvas;
+        }
+        
+        
       }
 
     //   componentDidMount(){
@@ -144,7 +154,7 @@ class Sign extends Component {
             <div class='col-md-12' style={{backgroundColor: 'darkgrey'}} id="signature_pad_draw">
             <SignaturePad 
                 penColor={this.props.color}
-                canvasProps={{width: this.props.w, height: this.props.h, className: 'sigCanvas sign_pad_tab'}} 
+                canvasProps={{width: this.props.w, height: this.props.h, className: 'sigCanvas sign_pad_tab' , id:'sign_pad_tab'}} 
                 onEnd={this.onEndSignature.bind(this)}
                 ref={(ref) => { this.sigCanvas = ref }}
                 velocityFilterWeight={0.1}
