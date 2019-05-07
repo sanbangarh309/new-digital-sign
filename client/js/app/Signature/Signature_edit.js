@@ -78,6 +78,8 @@ class Signature_edit extends Component {
   }
 
   refreshSigners(){
+    this.setState({signer: null});
+    this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
         signers: res.data
@@ -136,8 +138,9 @@ class Signature_edit extends Component {
   addField(e){
     let fld = this.state.signer_field;
     if(this.state.signer){
-      this.state.signer_clr = this.getRandomColor();
-      axios.post('/api/addfield',{signer:this.state.signer,signer_clr:this.state.signer_clr,docId:this.state.edit_id,token:this.state.token}).then((res) => {
+      let clr = this.getRandomColor();
+      this.setState({signer_clr: clr});
+      axios.post('/api/addfield',{signer:this.state.signer,signer_clr:clr,docId:this.state.edit_id,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
@@ -163,7 +166,8 @@ class Signature_edit extends Component {
           this.setState({signer_clr: res.data.color});
           console.log(res.data.color)
           console.log('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count)
-          $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
+          // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
+          $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
         this.state.field_count += 1;
         $('#add_signer').modal('hide');
@@ -625,8 +629,8 @@ class Signature_edit extends Component {
                 </li>
 
                 <li className="nav-item active">
-							   <a className="nav-link save-link"  target="_blank" id="pdf-download-link" href="javascript:void(0)"><i className="material-icons">save_alt</i></a>
-							</li>
+                  <a className="nav-link save-link"  target="_blank" id="pdf-download-link" href="javascript:void(0)"><i className="material-icons">save_alt</i></a>
+                </li>
 							{/* <li className="nav-item dropdown notify">
 								<a className="nav-link" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								  <i className="material-icons">mail_outline</i>

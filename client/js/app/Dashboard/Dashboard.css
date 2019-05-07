@@ -43,4 +43,47 @@
 	left: 0;
 	top: 0;
 	opacity: 0;
-  }
+	}
+	
+	#folder_structure ul,#folder_structure #myUL {
+		list-style-type: none;
+	}
+	
+	#folder_structure #myUL {
+		margin: 0;
+		padding: 0;
+	}
+	
+	#folder_structure .caret {
+		cursor: pointer;
+		-webkit-user-select: none; /* Safari 3.1+ */
+		-moz-user-select: none; /* Firefox 2+ */
+		-ms-user-select: none; /* IE 10+ */
+		user-select: none;
+	}
+	
+	#folder_structure .caret::before {
+		content: "\25B6";
+		color: black;
+		display: inline-block;
+		margin-right: 6px;
+	}
+	
+	#folder_structure .caret-down::before {
+		-ms-transform: rotate(90deg); /* IE 9 */
+		-webkit-transform: rotate(90deg); /* Safari */
+		transform: rotate(90deg);  
+	}
+	
+	#folder_structure .nested {
+		display: none;
+	}
+	
+	#folder_structure .active {
+		display: block;
+	}
+
+	#folder_structure li.activeClass {
+		background-color: slategray;
+		padding: 5px;
+	}

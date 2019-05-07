@@ -138,6 +138,67 @@ module.exports = (app) => {
       res.json(signer_user);
     });
 
+    app.post('/api/createfolder',async (req,res,next) => {
+      const {folder} = req.body;
+      var fs = require('fs');
+      var dir = config.directory+'/uploads/docs/'+folder;
+      if (!fs.existsSync(dir)){
+          fs.mkdirSync(dir);
+      }
+      res.json({success:true,msg:'Directory Created Successfully'});
+    });
+
+    app.post('/api/get_folders',async (req,res,next) => {
+      const {token} = req.body;
+      const user = await jwt.verify(token, config.JWT_SECRET);
+      const userMatched = await User.findById(user.sub);
+      let src = config.directory+'/uploads/docs/';
+      if(userMatched){
+        const { lstatSync, readdirSync } = require('fs')
+        const { join } = require('path')
+
+        const isDirectory  = source => lstatSync(source).isDirectory() 
+        // const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
+        const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
+        console.log(getDirectories);
+        res.json(getDirectories);
+      }
+    });
+
+    app.delete('/api/folder/:folder', (req, res, next) => {
+      var fs = require('fs');
+      let dir = config.directory+'/uploads/docs/'+req.params.folder;
+      if(fs.existsSync(dir)){
+        // fs.unlinkSync(req.params.folder).then(() => {
+        //   res.json({success:true,msg:'Directory Deleted Successfully'});
+        // }).catch(err => {
+        //   res.json({success:false,msg:'Wrong'});
+        //   console.error(err)
+        // })
+        fs.rmdirSync(dir);
+        res.json({success:true,msg:'Directory Deleted Successfully'});
+      }else{
+        res.json({success:false,msg:'Wrong'});
+      }
+    });
+
+    app.put('/api/folder', (req, res, next) => {
+      var fs = require('fs');
+      let olddir = config.directory+'/uploads/docs/'+req.body.old_folder;
+      let newdir = config.directory+'/uploads/docs/'+req.body.folder;
+      if(fs.existsSync(olddir)){
+        try {
+          fs.renameSync(olddir, newdir)
+          res.json({success:true,msg:'Directory Renamed Successfully'});
+        } catch (err) {
+          res.json({success:false,msg:'Wrong'});
+          console.error(err)
+        }
+      }else{
+        res.json({success:false,msg:'Wrong'});
+      }
+    });
+
     app.post('/api/signers', async (req, res, next) => {
       let query = {};
       if(req.body.token){

@@ -49,7 +49,7 @@ export default class ModalComponent extends React.Component {
           forgotid: forgotid,
           signer:null,
           signers:[],
-          drag:null
+          drag:null,
       };
       // This binding is necessary to make `this` work in the callback
       this.Register = this.Register.bind(this);
@@ -66,14 +66,16 @@ export default class ModalComponent extends React.Component {
     if(this.state.forgotid){
       $('#reset_pwd_save').modal('show');
     }
-    axios.post('/api/signers/',{token:localStorage.getItem('jwtToken')}).then((res) => {
-      this.setState({
-        signers: res.data
+    if(localStorage.getItem('jwtToken')){
+      axios.post('/api/signers/',{token:localStorage.getItem('jwtToken')}).then((res) => {
+        this.setState({
+          signers: res.data
+        });
+       
+      }).catch(error => {
+        console.log(error.response);
       });
-     
-    }).catch(error => {
-      console.log(error.response);
-    });
+    }
   }
 
   handleDelete (i) {
@@ -260,6 +262,26 @@ export default class ModalComponent extends React.Component {
     $(document).mousemove(move).mouseup(up);
   }
 
+  // createFolder = (e) => {
+  //   e.preventDefault();
+  //   if(this.state.folder){
+  //     axios.post('/api/createfolder',{folder:this.state.folder}).then((res) => {
+  //       this.setState({
+  //         added: true,
+  //         alert: 'alert alert-success',
+  //         msg: 'Folder Created Successfully.',
+  //       });
+  //     }).catch(error => {
+  //       this.setState({
+  //         added: true,
+  //         alert: 'alert alert-danger',
+  //         msg: error.response.data.error,
+  //       });
+  //     });
+  //     setTimeout(() => this.setState({ navigate: true }), 1000)
+  //   }
+  // }
+
 
   render() {
     let cusClass = ['modal','fade','auth-modal','no-guest-checkout'];
@@ -283,6 +305,7 @@ export default class ModalComponent extends React.Component {
         });
       }
      }, 4000);
+   
      this.state.added = false;
     return (
       <div>
@@ -560,6 +583,9 @@ export default class ModalComponent extends React.Component {
             </div>
           </div>
        </div>
+
+       
+
         </div>
     );
   }

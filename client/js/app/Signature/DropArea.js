@@ -112,11 +112,14 @@ class DropArea extends React.Component {
         this.setState(newState);
       }
     }
-    funcResizing(id, clientX, clientY, field=''){
+    funcResizing(id, clientX, clientY, field='',docId=''){
       if(this.props.doc_for_sign){
         return; 
       }
-      let element = this.refs[field+'_'+ this.state.doc_key+'_'+ id];
+      if(docId){
+        this.state.doc_key = docId;
+      }
+      let element = this.refs[field+'_'+ this.state.doc_key+'_'+ id]; console.log(field+'_'+ this.state.doc_key+'_'+ id); console.log(this.refs)
       let list = this.state.items;
       let position = element.refs.node.getBoundingClientRect();
       let w = clientX - position.left + (16 / 2);
@@ -835,7 +838,7 @@ class DropArea extends React.Component {
     onMouseMove(e) {
       if( this.props.isResizing ){
         console.log("Resizer.onMouseMove");
-        this.props.funcResizing( this.props.drag_id, e.clientX, e.clientY,this.props.fieldtype);
+        this.props.funcResizing( this.props.drag_id, e.clientX, e.clientY,this.props.fieldtype,this.props.docId);
       }
     }
     onMouseUp(e) {

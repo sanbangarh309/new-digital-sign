@@ -82,6 +82,8 @@ class Signature extends Component {
   }
 
   refreshSigners(){
+    this.setState({signer: null});
+    this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
         signers: res.data
@@ -150,11 +152,12 @@ class Signature extends Component {
   }
 
   addField(e){
+    e.preventDefault();
     let fld = this.state.signer_field;
     if(this.state.signer){
-      this.state.signer_clr = this.getRandomColor();
-      this.setState({signer_clr: this.getRandomColor()});
-      axios.post('/api/addfield',{signer:this.state.signer,signer_clr:this.state.signer_clr,token:this.state.token}).then((res) => {
+      let clr = this.getRandomColor();
+      this.setState({signer_clr: clr});
+      axios.post('/api/addfield',{signer:this.state.signer,signer_clr:clr,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');
         this.setState({first_attempt: true});
         // let unique = [...new Set(this.state.inputFields)];
@@ -180,9 +183,9 @@ class Signature extends Component {
           this.setState({signer_clr: res.data.color});
           console.log(res.data.color)
           console.log('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count)
-          $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
+          // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
+          $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
-        this.state.field_count += 1;
         $('#add_signer').modal('hide');
         setTimeout(() => {
           $(".signature_container").click();
@@ -194,6 +197,7 @@ class Signature extends Component {
       this.setState({signers_err: 'Signer is Required'});
       // debugger;
     }
+    this.state.field_count += 1;
   }
 
   chkFileType = (doc) => {
@@ -629,22 +633,6 @@ class Signature extends Component {
 
                 <li className="nav-item active">
 							   <a className="nav-link save-link"  target="_blank" id="pdf-download-link" href="javascript:void(0)"><i className="material-icons">save_alt</i></a>
-							</li>
-							<li className="nav-item dropdown notify">
-								<a className="nav-link" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								  <i className="material-icons">mail_outline</i>
-								  <span className="notification">5</span>
-								  <p className="d-lg-none d-md-block">
-									Some Actions
-								  </p>
-								<div className="ripple-container"></div></a>
-								<div className="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-								  <a className="dropdown-item" href="#">Mike John responded to your email</a>
-								  <a className="dropdown-item" href="#">You have 5 new tasks</a>
-								  <a className="dropdown-item" href="#">You're now friend with Andrew</a>
-								  <a className="dropdown-item" href="#">Another Notification</a>
-								  <a className="dropdown-item" href="#">Another One</a>
-								</div>
 							</li>
 							<li className="nav-item dropdown user-nv">
 								<a className="nav-link profile-button" href="javascript:void(0);"data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
