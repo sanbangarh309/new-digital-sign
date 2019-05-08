@@ -739,7 +739,19 @@ class DropArea extends React.Component {
         styles['background'] = 'rgba(34, 176, 20, 0.2)';
       }
       if(this.props.doc_for_sign && this.props.doc_for_sign != this.props.signer_id && !['sign','check','sign_text'].includes(field)){                        
-        // styles['display'] = 'none';
+        styles['display'] = 'none';
+      }
+      if(this.props.doc_for_sign && field == 'text'){
+        // cusstyle['flexWrap'] = 'nowrap';
+        cusstyle['textOverflow'] = 'ellipsis';
+        cusstyle['whiteSpace'] = 'ellipsis';
+        // cusstyle['textAlign'] = 'left';
+        // cusstyle['minHeight'] = 'inherit';
+        // cusstyle['maxHeight'] = '50px';
+        // cusstyle['height'] = '48px';
+        cusstyle['fontSize'] = '33.8px';
+        styles['display'] = 'flex';
+        styles['height'] = '44px';
       }
       // console.log(field + ':- '+this.props.signer_id)
       // let draggable = "true";
@@ -749,12 +761,16 @@ class DropArea extends React.Component {
       // }
       // class={"signer_field_"+this.props.fieldType+'_' + this.props.id}
       // style={{width:this.props.width,height:this.props.height}}
+      // let draggable = this.props.isDragging;
+      // if(this.props.doc_for_sign){
+      //   draggable = "false";
+      // }
       return (
         <div className={"text-field-box item unselectable "+field+' '+this.props.signer_id+' '+this.props.field_required}
           ref={"node"}
           data-id={field}
           data-color={this.props.signer_clr}
-          draggable= {this.props.isDragging}
+          draggable= {this.props.doc_for_sign ? "false" : this.props.isDragging}
           id={ field+'_' + this.props.id }
           fieldtype={field}
           onMouseDown={this.onMouseDown.bind(this)}
@@ -769,7 +785,7 @@ class DropArea extends React.Component {
             case "signer_added": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "signer": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+field+" preventClicking"} id={this.props.drag_id}>{this.props.sign_text}</span>);
-            case "checkbox": return (<input type="checkbox" class={"class_"+field+" preventClicking"} id={this.props.drag_id} style={cusstyle} />);
+            case "checkbox": return (<div className="checkwrap"><input type="checkbox" class={"class_"+field+" preventClicking"} id={this.props.drag_id} style={cusstyle} /><label></label></div>);
             default: return (<textarea className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
           }
         })()}

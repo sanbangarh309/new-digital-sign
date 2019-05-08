@@ -48,7 +48,6 @@ export default class ModalComponent extends React.Component {
           tag: '',
           forgotid: forgotid,
           signer:null,
-          signers:[],
           drag:null,
       };
       // This binding is necessary to make `this` work in the callback
@@ -56,8 +55,6 @@ export default class ModalComponent extends React.Component {
       this.Login = this.Login.bind(this);
       this.closePopUp = this.closePopUp.bind(this);
       this.handleChange = this.handleChange.bind(this);
-      this.sendEmail = this.sendEmail.bind(this);
-      this.handleChangeEmail = this.handleChangeEmail.bind(this);
       this.forgotpwd = this.forgotpwd.bind(this);
       this.submitForgot = this.submitForgot.bind(this);
   }
@@ -65,16 +62,6 @@ export default class ModalComponent extends React.Component {
   componentDidMount() {
     if(this.state.forgotid){
       $('#reset_pwd_save').modal('show');
-    }
-    if(localStorage.getItem('jwtToken')){
-      axios.post('/api/signers/',{token:localStorage.getItem('jwtToken')}).then((res) => {
-        this.setState({
-          signers: res.data
-        });
-       
-      }).catch(error => {
-        console.log(error.response);
-      });
     }
   }
 
@@ -99,44 +86,10 @@ export default class ModalComponent extends React.Component {
       this.setState({[e.target.name]: e.target.value});
   }
 
-  handleChangeEmail(e){
-    e.preventDefault();
-    this.setState({[e.target.name]: e.target.value});
-  }
-
   forgotpwd(e){
     e.preventDefault();
     this.closePopUp();
     $('#forgot_pwd').modal('show');
-  }
-
-  sendEmail(e){
-    e.preventDefault();
-    let id = $('#emailModal form').find('#doc_id').val();
-    let emails = [];
-    $( "#email_table #signersPanel tr input" ).each(function( index ) {
-      if($( this ).val() && $.trim($( this ).val()) !=''){
-        emails.push({signer_id:$( this ).attr('id'),email:$( this ).val()});
-      } 
-    });
-    // this.state.signers_email.push(e.target.value);
-    let uniqueemails = [...new Set(emails)];
-    if(uniqueemails.length > 0 && id){
-      axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id}).then((res) => {
-        this.setState({
-          added: true,
-          alert: 'alert alert-success',
-          msg: 'Document Shared Successfully',
-        });
-      }).catch(error => {
-        this.setState({
-          added: true,
-          alert: 'alert alert-danger',
-          msg: error.response.data.error,
-        });
-      });
-    }
-    return false;
   }
 
   Register(event){
@@ -224,42 +177,6 @@ export default class ModalComponent extends React.Component {
       alert: '',
       msg: '',
     });
-  }
-
-
-
-  reOrder = (e) => { 
-    var tr = $(e.target).closest("TR"), si = tr.index(), sy = e.pageY, b = $(document.body); 
-    // if (si == 0) return;
-    b.addClass("grabCursor").css("userSelect", "none");
-    tr.addClass("grabbed");
-    const move = (e) => {
-      let drag = this.state.drag;
-      if (!drag && Math.abs(e.pageY - sy) < 10) return;
-      this.setState({drag: true});
-      tr.siblings().each(function() {
-            var s = $(this), i = s.index(), y = s.offset().top;
-            if (i > 0 && e.pageY >= y && e.pageY < y + s.outerHeight()) {
-                if (i < tr.index())
-                    tr.insertAfter(s);
-                else
-                    tr.insertBefore(s);
-                return false;
-            }
-        });
-    }
-    
-    const up = (e) => {
-      let drag = this.state.drag;
-      if (drag && si != tr.index()) {
-        this.setState({drag: false});
-        console.log("moved!");
-      }
-      $(document).unbind("mousemove", move).unbind("mouseup", up);
-      b.removeClass("grabCursor").css("userSelect", "none");
-      tr.removeClass("grabbed");
-    }
-    $(document).mousemove(move).mouseup(up);
   }
 
   // createFolder = (e) => {
@@ -438,74 +355,6 @@ export default class ModalComponent extends React.Component {
                  </div>
               </div>
            </div>
-        </div>
-
-        <div id="emailModal" className="modal fade" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" aria-hidden="true">
-        <div className="modal-dialog modal-lg">
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">×</button>
-                        <h4 className="modal-title"><legend>Email Form</legend></h4>
-                    </div>
-                    <div className="modal-body">
-                        <div className="containter">
-                             <div className="row">
-                             
-							    <div className="col-md-12 col-md-offset-4">
-                  {addedAlert}
-							      <form className="form-horizontal" role="form" onSubmit={this.sendEmail} id="email_modal_form">
-                    <table id="email_table" className="sendEmailDialogPanel" cellpadding="2" style= {{width: '100%',float: 'left'}}>
-                      <tbody>
-                          <tr>
-                            <td>
-                                <span className="signersPanel">
-                                  <span className="setSignOrderPanel">
-                                      <span className="setSignOrderMessage">Set signing order</span>
-                                  </span>
-                                  <div className="form-group signersTable">
-                                      <div className="ui-datatable-tablewrapper">
-                                        <table role="grid" id="signersPanel" style= {{width: '100%',float: 'left'}}>
-                                            <tbody id="invitationForm:signers_data" className="ui-datatable-data ui-widget-content ui-sortable">
-                                            {this.state.signers.map((person) => <tr id={person._id} className="ui-widget-content ui-datatable-even" role="row">
-                                                  <td class="grab" onMouseDown={this.reOrder.bind(this)}>&#9776;</td>
-                                                  <td role="gridcell" className="roleSignersColumn handle ui-sortable-handle">{person.name}</td>
-                                                  <td role="gridcell" className="emailSignersColumn">
-                                                  {/* onChange={this.collectSignerEmails} */}
-                                                    <span id="invitationForm_signer" className="signerEmail" role="application"><input id={person._id} value={this.value} type="text" className="form-control" placeholder="email@example.com" /><span role="status" aria-live="polite" className="ui-autocomplete-status ui-helper-hidden-accessible"></span></span>
-                                                    <div id="signerMessages" aria-live="polite" className=""></div>
-                                                  </td>
-                                              </tr>)}
-                                            </tbody>
-                                        </table>
-                                      </div>
-                                  </div>
-                                  <div id="invitationForm:signersMessages" aria-live="polite" className="ui-message"></div>
-                                  <a id="invitationForm:addCcEmails" href="#" className="addCcEmailsButton" onclick="">Add CC</a>
-                                </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                                <span id="invitationForm:emailSubjectAndMessagePanel" className="emailSubjectAndMessagePanel">
-                                  <label className="sendEmailDialogLabel" >Subject &amp; Message</label><input id="subject" name="subject" type="text" value={this.state.subject} onChange={this.handleChangeEmail} required className="form-control emailSubject" />
-                                  <div id="invitationForm:emailSubjectMessages" aria-live="polite" className="ui-message"></div>
-                                  <textarea cols="20" rows="5" maxlength="2147483647" required className="form-control emailText" value={this.state.message} onChange={this.handleChangeEmail} name="message"></textarea>
-                                  <div id="invitationForm:emailTextMessages" aria-live="polite" className="ui-message"></div>
-                                </span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td><span className=""><button id="cancelButton" data-dismiss="modal" style={{width: '24%',float: 'left'}} className="btn btn-danger cancelButton" type="button"><span className="ui-button-text ui-c">Cancel</span></button><button id="inviteButton" style={{width: '24%',float: 'right'}} name="inviteButton" className="btn btn-success" type="submit"><span className="">Send Document</span></button></span></td>
-                          </tr>
-                      </tbody>
-                    </table>
-							      </form>
-							    </div>
-							</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div className="modal fade" id="forgot_pwd" role="dialog">

@@ -131,9 +131,9 @@ module.exports = (app) => {
       signer_user.name = signer;
       signer_user.added_by = userMatched._id;
       signer_user.color = signer_clr;
-      if(!signer_user.shared_with.includes(docId)){
-        signer_user.shared_with.push(docId);
-      }
+      // if(!signer_user.shared_with.includes(docId)){
+      //   signer_user.shared_with.push(docId);
+      // }
       signer_user.save();
       res.json(signer_user);
     });
@@ -156,11 +156,8 @@ module.exports = (app) => {
       if(userMatched){
         const { lstatSync, readdirSync } = require('fs')
         const { join } = require('path')
-
         const isDirectory  = source => lstatSync(source).isDirectory() 
-        // const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
         const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
-        console.log(getDirectories);
         res.json(getDirectories);
       }
     });
@@ -199,12 +196,32 @@ module.exports = (app) => {
       }
     });
 
+    app.get('/api/get_files/:folder', async (req,res,next) => {
+      const fs = require('fs'); 
+      let src = config.directory+'/uploads/docs/'+req.params.folder;
+      let files_ = [];
+      fs.readdir(src, (err, files) => {
+        if(files.length <=0){
+          return res.json({success:false,msg:'Documents Not Found'});
+        }
+        files.forEach(file => {
+          files_.push(file);
+        });
+        return res.json({success:true,msg:files_});
+      });
+    });
+
     app.post('/api/signers', async (req, res, next) => {
       let query = {};
+      if(req.body.ids){ console.log(req.body.ids);
+        query['_id'] = { $in: req.body.ids };
+        // query = { field: { $in: req.body.ids } };
+      }
       if(req.body.token){
         const user = await jwt.verify(req.body.token, config.JWT_SECRET);
         const userMatched = await User.findById(user.sub);
-        query = { 'added_by': ObjectId(userMatched._id) };
+        query['added_by'] = ObjectId(userMatched._id); console.log(query);
+        // query = { 'added_by': ObjectId(userMatched._id) };
         Signer.find(query)
         .exec()
         .then((signers) => res.json(signers))
@@ -225,48 +242,50 @@ module.exports = (app) => {
 
     app.post('/api/sendemail', (req, res, next) => {
       let link = 'http://'+req.headers.host+'/signature/'+req.body.id+'?sign=';
-      console.log(req.body.emails.length)
+      let img = "http://"+req.headers.host+"/assets/img/fina-logo.png";
       if(req.body.id && req.body.emails.length > 0){
         let order = 0;
         req.body.emails.forEach(el => {
           let que = new Que();
+          que.email = el.email;
           que.signer_id = el.signer_id;
           que.doc_id = req.body.id;
           que.order = order;
-          if(order == 0){
+          // if(order == 0){
             que.email_sent = 'yes';
-          }
+          // }
           que.link = link+el.signer_id;
           que.save();
           order++;
-        });
-        let email_to = req.body.emails[0].email;
-        link += req.body.emails[0].signer_id;
-        Doc.findById(req.body.id)
-        .exec()
-        .then((doc) => {
-          let img = '';
-          if(doc.images){
-            img = "http://"+req.headers.host+"/files/docs/"+doc.images[0].name;
-          }else{
-            return false;
-          }
-          console.log(link)
-          // doc.shared_with = [];
-          // doc.save();
-          // if(!doc.shared_with.includes(email_to)){
-          //   doc.shared_with.push(email_to);
-          //   // doc.save();
-          // }
+          link = link+el.signer_id;
           var mailOptions = {
             from: 'sandeep.digittrix@gmail.com',
-            to: email_to,
+            to: el.email,
             subject: req.body.subject,
             html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
           };
           San_Function.sanSendMail(req, res, mailOptions);
-          return res.json(doc);
-        }).catch((err) => next(err));
+        });
+        return res.json({success:true,msg:'Document Shared Successfully'});
+        // Doc.findById(req.body.id)
+        // .exec()
+        // .then((doc) => {
+        //   let img = '';
+        //   if(doc.images){
+        //     // img = "http://"+req.headers.host+"/files/docs/"+doc.images[0].name;
+            
+        //   }else{
+        //     return false;
+        //   }
+        //   var mailOptions = {
+        //     from: 'sandeep.digittrix@gmail.com',
+        //     to: email_to,
+        //     subject: req.body.subject,
+        //     html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
+        //   };
+        //   San_Function.sanSendMail(req, res, mailOptions);
+        //   return res.json(doc);
+        // }).catch((err) => next(err));
       }
     });
 
@@ -321,15 +340,13 @@ module.exports = (app) => {
     });
 
     app.put('/api/doc/:id', (req, res, next) => {
+      var fs = require('fs');
       San_Function.uploadFinalDoc(req.body.base64Data, async (buffer)=> {
         Doc.findById(ObjectId(req.params.id))
         .exec()
         .then((doc) => {
-            if(!doc){
-              
-            }
-            if(doc.file){
-              require('fs').unlinkSync(config.directory + "/uploads/docs/"+doc.file)
+            if(doc.file && fs.existsSync(config.directory + "/uploads/docs/"+doc.file)){
+              fs.unlinkSync(config.directory + "/uploads/docs/"+doc.file);
             }
             doc.images = req.body.docs;
             doc.title = buffer.name;

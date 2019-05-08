@@ -598,6 +598,13 @@ class Signature extends Component {
     }catch(e){
 
     }
+    const Fields = this.state.signers.map((person) =>
+        (<li 
+        key={person._id}
+        >
+        <a href="javascript:void(0)" id={'signer_'+person._id} className="btn sign-btn" className="btn"><span class="material-icons">border_color</span>{person.name}</a>
+        </li>)
+    );
     if (!localStorage.getItem('jwtToken')) {
       return <Redirect to='/'  />
     }else{
@@ -692,6 +699,27 @@ class Signature extends Component {
                   </ul>);
           }
         })()}
+        <ul className="btn-list">
+            <li>
+            <div id="accordion" className="inner-accordian">
+                <div className="card">
+                <div className="card-header" id="headingTwo">
+                    <button className="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                    Signers List
+                    {/* <span className="btn-helper">for signers</span> */}
+                    </button>
+                </div>
+                <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
+                    <div className="card-body">
+                    <ol className="btn-mainlist">
+                        {Fields}
+                    </ol>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </li>
+        </ul>
       </div>
       <DropArea 
       docs={docs} 

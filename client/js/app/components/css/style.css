@@ -164,12 +164,12 @@
 	header .header-template a.navbar-brand img{max-width: 100px;}
 	.wrapper {padding-top: 40px;}
 	.main-wrapper {background:#EAEAEA;width:100%; padding:55px 0 0 0;}
-	.left-sidebar {  position: fixed; width: 240px;  height: 100%;   top: 76px;}
+	.left-sidebar {  position: fixed; width: 240px;  height: 90%;   top: 76px;overflow-y: auto;}
 	.right-maintemplate{margin-left: 230px;}
 	.btn-list{float: left;margin-top: 20px;margin-left:0;background-color: #fff;padding:0 10px 5px 10px;width: 170px;border: 1px solid #AED0EA;-moz-border-radius: 2px;-webkit-border-radius: 2px;border-radius: 2px;z-index: 1;}
 	.btn-list li {margin: 0;list-style: none;position: relative;}
 	.inner-accordian .btn-link {   font-weight: 600; color: #fff !important; text-decoration: none; width: 100%;position: relative; font-size: 14px;    background: #2d993f !important;
-    border-radius: 0;   padding: 15px 0;}
+    border-radius: 0;padding: 15px 10px;	text-align: left;}
 	.inner-accordian .btn-link span {display: block;text-transform: none;font-weight: 100;border-bottom: solid 1px #AED0EA;padding-bottom: 5px;margin-bottom: 5px;}
 	.inner-accordian .btn-link.collapsed::after {content:"\F0D8"; position: absolute;font-family: 'Fontawesome';}
 	.inner-accordian .btn-link::after {
@@ -994,11 +994,25 @@ nav.navbar .menu-btn.active span:last-of-type {
 .hamburger-btn.open .cross span:nth-child(1) {height: 30px;transition-delay: .5s;background:#fff;}
 .hamburger-btn.open .cross span:nth-child(2) {width: 30px;transition-delay: .3s;background:#fff;}
 .show-moble{display:none;}
-
-
-
-
-
+.checkwrap{position: relative}
+.checkwrap input[type="checkbox"] {position: absolute;width: 100%;height: 100%;opacity: 0;z-index: 999;cursor: pointer;}
+.checkwrap input[type="checkbox"] + label::after {content: "";position: absolute;left: -4px;width: 34px;height: 32px;	border: solid 2px #ccc;
+	top: -15px;transition: all 0.3s ease 0s;}
+	.checkwrap input[type="checkbox"] + label::before {
+		content: "";
+		position: absolute;
+		width: 12px;
+		height: 18px;
+		border: solid 2px;
+		border-color: transparent #fff #fff transparent;
+		transform: rotate(0) scale(1.8);
+		left: 7px;
+		top: -11px;
+		opacity: 0;
+		transition: all 0.3s ease 0s;
+	}
+	.checkwrap input[type="checkbox"]:checked + label::after{background: tomato;border-color:tomato;}
+	.checkwrap input[type="checkbox"]:checked + label::before{opacity: 1;transform: rotate(36deg) scale(1);}
 
 @media(max-width:767px){
 	nav.navbar .menu-btn {padding: 0;background: transparent !important;	display: block;margin-top:0;position: relative;left: 15px;z-index: 999;float: left;min-width: 50px;height: 40px;}

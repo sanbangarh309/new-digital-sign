@@ -34,6 +34,9 @@ class Dashboard extends Component {
     super(props);
   //  console.log(tab);debugger;
     this.state = {
+      added: false,
+      msg: '',
+      alert: '',
       page:'Dashboard',
       redirect: false,
       docs:[],
@@ -45,7 +48,13 @@ class Dashboard extends Component {
       old_folder:null,
       disabled_fields:{pointerEvents:'none',color:'#c9c2c2'},
       checked_values:[],
-      move_to:null
+      move_to:null,
+      folder_data:[],
+      email_to:'',
+      subject:'',
+      message:'',
+      drag:null,
+      signers:[],
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
@@ -68,6 +77,18 @@ class Dashboard extends Component {
         });
       }
     }, 1000);
+  }
+
+  getSigners  = (ids) => {
+    console.log(ids);
+    axios.post('/api/signers/',{ids:ids,token:localStorage.getItem('jwtToken')}).then((res) => {
+      this.setState({
+        signers: res.data
+      });
+     
+    }).catch(error => {
+      console.log(error.response);
+    });
   }
 
   docUpload = (e) => {
@@ -104,6 +125,16 @@ class Dashboard extends Component {
   }
 
   appendId = (e) => {
+    // this.getSigners();
+    let ids = [];
+    let dragData = JSON.parse($(e.target).attr('data-string'));
+    Object.keys(dragData).forEach(function(key){
+      if(dragData[key].type == "signer_added"){
+        ids.push(dragData[key].signer_id);
+      }
+    });
+    
+    this.getSigners([...new Set(ids)]);
     $('#emailModal').modal('show');
     if(!$('#doc_id').hasClass('hidden_doc')){
       $('#email_modal_form').append('<input type="hidden" value="'+e.target.id+'" class="hidden_doc" id="doc_id"/>');
@@ -152,6 +183,77 @@ class Dashboard extends Component {
         }); 
       }
     });
+  }
+
+  sendEmail(e){
+    e.preventDefault();
+    let id = $('#emailModal form').find('#doc_id').val();
+    let emails = [];
+    $( "#email_table #signersPanel tr input" ).each(function( index ) {
+      if($( this ).val() && $.trim($( this ).val()) !=''){
+        emails.push({signer_id:$( this ).attr('id'),email:$( this ).val()});
+      } 
+    });
+    // this.state.signers_email.push(e.target.value);
+    let uniqueemails = [...new Set(emails)];
+    if(uniqueemails.length > 0 && id){
+      axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id}).then((res) => {
+        this.setState({
+          added: true,
+          alert: 'alert alert-success',
+          msg: 'Document Shared Successfully',
+        });
+      }).catch(error => {
+        this.setState({
+          added: true,
+          alert: 'alert alert-danger',
+          msg: error.response.data.error,
+        });
+      });
+    }
+    return false;
+  }
+
+  reOrder = (e) => { 
+    var tr = $(e.target).closest("TR"), si = tr.index(), sy = e.pageY, b = $('#email_modal_form'); 
+    // if (si == 0) return;
+    b.addClass("grabCursor").css("userSelect", "none");
+    tr.addClass("grabbed");
+    const move = (e) => {
+      let drag = this.state.drag;
+      if (!drag && Math.abs(e.pageY - sy) < 10) return;
+      this.setState({drag: true});
+      tr.siblings().each(function() { 
+            var s = $(this), i = s.index(), y = s.offset().top; //console.log('I :-  '+i); console.log('Y :-  '+y);console.log('e.pageY :-  '+e.pageY);console.log('outerHeight :-  '+(y + s.outerHeight()));
+            if (i >= 0 && e.pageY >= y && e.pageY < y + s.outerHeight()) {
+                if(tr.index() == 0){
+                  tr.insertAfter(s);
+                  return false;
+                }
+                if(i == 0){
+                  tr.insertBefore(s);
+                  return false;
+                }
+                if (i < tr.index())
+                    tr.insertAfter(s);
+                else
+                    tr.insertBefore(s);
+                return false;
+            }
+        });
+    }
+    
+    const up = (e) => {
+      let drag = this.state.drag;
+      if (drag && si != tr.index()) {
+        this.setState({drag: false});
+        console.log("moved!");
+      }
+      $('#email_modal_form').unbind("mousemove", move).unbind("mouseup", up);
+      b.removeClass("grabCursor").css("userSelect", "none");
+      tr.removeClass("grabbed");
+    }
+    $('#email_modal_form').mousemove(move).mouseup(up);
   }
 
   createFolder = (e) => {
@@ -239,18 +341,47 @@ class Dashboard extends Component {
     }
   }
 
+  openFolder = (folder,e) => {
+    if(!folder){
+      this.setState({folder:null});
+      this.setState({folder_data:[...new Set([])]});
+      return;
+    }
+    this.setState({folder:folder});
+    axios.get('/api/get_files/'+folder).then((res) => {
+      this.setState({
+        folder_data: res.data.msg
+      });
+    }).catch(error => {
+      console.log(error.response);
+    });
+  }
+
   onChange(e){
     this.setState({[e.target.name]:e.target.value});
   }
 
   render() {
     // const {docs} = this.props;
-    // console.log(this.props);
+    let addedAlert;
+    if (this.state.added) {
+      addedAlert = <div className={this.state.alert} style={{textAlign:'center'}}>
+      <strong>{this.state.msg}</strong>   
+      </div>;
+      // this.closePopUp()
+    }
     if (!localStorage.getItem('jwtToken')) {
       return <Redirect to='/'  />
     }
     if (this.state.redirect) {
       return (<Redirect to={this.state.redirect}/>)
+    }
+    let folder_path = '';
+    if(typeof this.state.folder_data == 'string'){
+      folder_path = (<div class="folderPath">
+      <a href="javascript:void(0)" onClick={this.openFolder.bind(this, null)} class="folderLink">Documents</a>
+      <span class="folderSeparator" style={{padding: '5px'}}>›</span>{this.state.folder}              
+    </div>);
     }
       return (
         <div className="dash_board">
@@ -274,7 +405,7 @@ class Dashboard extends Component {
                     <NavLink to='/logout' className="btn btn-default btn-flat"><i className="fa fa-sign-out"></i>Logout</NavLink>
                   </li>
                 </ul>
-                </li>
+              </li>
             </ul>
           </div>
         </div>
@@ -298,6 +429,7 @@ class Dashboard extends Component {
         </aside>
         <div className="right-maintemplate admin-right">
           <div className="page container-fluid">
+          {folder_path}
             <div className="col-sm-6"><h3 className="text-uppercase">Documents</h3></div>
             <div className="box-body">
               <div className="col-sm-12">
@@ -322,69 +454,82 @@ class Dashboard extends Component {
                       <li><a href="#"><i className="fa fa-filter"></i></a></li>
                     </ul>
                   </div>
-                  <div className="card-body">
-                    <ol className="od-list">
-                    {this.state.folders.map((value, index) => {
-                      let img = "/assets/img/folder.jpg";
-                      let folder = value.substr(value.lastIndexOf('/') + 1);
-                      return (<li key={index}>
-                                 <ul className="list-inline top-box-list">
-                                    <li><input type="checkbox" value={folder} /><span></span></li>
-                                    <li className="doc-box">
-                                      <a href="#">
-                                        <div className="fig-left">
-                                          <img src={img} alt="No Thumb" className="doc-pic"/>
-                                        </div>
-                                        <div className="doc-info">
-                                          <p><span className="date-doc small">{folder}</span></p>
-                                        </div>
-                                      </a>
-                                    </li>
-                                    <li><NavLink to={'signature/'+folder} className="btn btn-default btn-flat">Open</NavLink></li>
-                                    <li>
-                                    <div class="dropdown">
-                                      <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
-                                      <span class="caret"></span></button>
-                                      <ul class="dropdown-menu">
-                                        <li><a onClick={this.deleteFolder.bind(this, folder)} href="javascript:void(0)">Delete</a></li>
-                                        <li><a onClick={this.showRenamePop.bind(this, folder)} href="javascript:void(0)">Rename</a></li>
-                                      </ul>
-                                    </div>
-                                    </li>
-                                 </ul>
-                            </li>)
-                    })}
-                    </ol>
-                  </div>
-                  <div className="card-body">
-                    <ol className="od-list">
-                    {this.state.docs.map((value, index) => {
-                      let img = "/files/docs/"+value.images[0].name || "/assets/img/doc-1.png";
-                      return (<li key={index}>
-                                 <ul className="list-inline top-box-list">
-                                    <li><input onClick={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
-                                    <li className="doc-box">
-                                      <a href="#">
-                                        <div className="fig-left">
-                                          <img src={img} alt="No Thumb" className="doc-pic"/>
-                                        </div>
-                                        <div className="doc-info">
-                                          <p>Document<span className="date-doc small">{value.created_at}</span></p>
-                                        </div>
-                                      </a>
-                                    </li>
-                                    <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat">SIGN</NavLink></li>
-                                    {/* data-toggle="modal" data-target="#emailModal" */}
-                                    <li><a href="javascript:void(0)" id={value._id} onClick={this.appendId}>SEND FOR SIGNING </a></li>
-                                    <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
-                                    {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
-                                    <li><a href={'files/docs/'+value.file} target="_blank"><i className="fa fa-download"></i></a></li>
-                                    <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
-                                </ul>
-                            </li>)
-                    })}
-                    </ol>
-                  </div>
+                  {(() => {
+                    switch (typeof this.state.folder_data) {
+                      case "string":   return (<div className="card-body">
+                                                  <ol className="od-list">
+                                                    <li key='not_found'>
+                                                      <div className="doc-info" style={{textAlign: 'center',padding: '29px'}}>
+                                                          <p><span className="date-doc small" style={{fontSize: '22px'}}>{this.state.folder_data}</span></p>
+                                                      </div>
+                                                    </li>
+                                                  </ol>
+                                                </div>);
+                      default:  return (<div><div className="card-body">
+                                              <ol className="od-list">
+                                              {this.state.folders.map((value, index) => {
+                                                let img = "/assets/img/folder.jpg";
+                                                let folder = value.substr(value.lastIndexOf('/') + 1);
+                                                return (<li key={index}>
+                                                          <ul className="list-inline top-box-list">
+                                                              <li><input type="checkbox" value={folder} /><span></span></li>
+                                                              <li className="doc-box">
+                                                                <a href="javascript:void(0)" onClick={this.openFolder.bind(this, folder)}>
+                                                                  <div className="fig-left">
+                                                                    <img src={img} alt="No Thumb" className="doc-pic"/>
+                                                                  </div>
+                                                                  <div className="doc-info">
+                                                                    <p><span className="date-doc small">{folder}</span></p>
+                                                                  </div>
+                                                                </a>
+                                                              </li>
+                                                              <li><NavLink to={'signature/'+folder} className="btn btn-default btn-flat">Open</NavLink></li>
+                                                              <li>
+                                                              <div class="dropdown">
+                                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
+                                                                <span class="caret"></span></button>
+                                                                <ul class="dropdown-menu">
+                                                                  <li><a onClick={this.deleteFolder.bind(this, folder)} href="javascript:void(0)">Delete</a></li>
+                                                                  <li><a onClick={this.showRenamePop.bind(this, folder)} href="javascript:void(0)">Rename</a></li>
+                                                                </ul>
+                                                              </div>
+                                                              </li>
+                                                          </ul>
+                                                      </li>)
+                                              })}
+                                              </ol>
+                                            </div>
+                                            <div className="card-body">
+                                              <ol className="od-list">
+                                              {this.state.docs.map((value, index) => {
+                                                let img = "/files/docs/"+value.images[0].name || "/assets/img/doc-1.png";
+                                                return (<li key={index}>
+                                                          <ul className="list-inline top-box-list">
+                                                              <li><input onClick={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
+                                                              <li className="doc-box">
+                                                                <a href="#">
+                                                                  <div className="fig-left">
+                                                                    <img src={img} alt="No Thumb" className="doc-pic"/>
+                                                                  </div>
+                                                                  <div className="doc-info">
+                                                                    <p>Document<span className="date-doc small">{value.created_at}</span></p>
+                                                                  </div>
+                                                                </a>
+                                                              </li>
+                                                              <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat">SIGN</NavLink></li>
+                                                              {/* data-toggle="modal" data-target="#emailModal" */}
+                                                              <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
+                                                              <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
+                                                              {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
+                                                              <li><a href={'files/docs/'+value.file} target="_blank"><i className="fa fa-download"></i></a></li>
+                                                              <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
+                                                          </ul>
+                                                      </li>)
+                                              })}
+                                              </ol>
+                                            </div></div>);
+                    }
+                  })()}
                 </div>
               </div>
             </div>
@@ -510,6 +655,72 @@ class Dashboard extends Component {
             </div>
           </div>
        </div>
+
+       <div id="emailModal" className="modal fade" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div className="modal-dialog modal-lg">
+                <div className="modal-content">
+                    <div className="modal-header">
+                        <button type="button" className="close" data-dismiss="modal" aria-hidden="true">×</button>
+                        <h4 className="modal-title"><legend>Email Form</legend></h4>
+                    </div>
+                    <div className="modal-body">
+                        <div className="containter">
+                             <div className="row">
+                             
+							    <div className="col-md-12 col-md-offset-4">
+                  {addedAlert}
+							      <form className="form-horizontal" role="form" onSubmit={this.sendEmail.bind(this)} id="email_modal_form">
+                    <table id="email_table" className="sendEmailDialogPanel" cellpadding="2" style= {{width: '100%',float: 'left'}}>
+                      <tbody>
+                          <tr>
+                            <td>
+                                <span className="signersPanel">
+                                  <span className="setSignOrderPanel">
+                                      <span className="setSignOrderMessage">Set signing order</span>
+                                  </span>
+                                  <div className="form-group signersTable">
+                                      <div className="ui-datatable-tablewrapper">
+                                        <table role="grid" id="signersPanel" style= {{width: '100%',float: 'left'}}>
+                                            <tbody>
+                                            {this.state.signers.map((person) => <tr id={person._id} role="row">
+                                                  <td class="grab" onMouseDown={this.reOrder.bind(this)}>&#9776;</td>
+                                                  <td role="gridcell">{person.name}</td>
+                                                  <td role="gridcell">
+                                                  {/* onChange={this.collectSignerEmails} */}
+                                                    <span  className="signerEmail" role="application"><input id={person._id} value={this.value} type="text" className="form-control" placeholder="email@example.com" /></span>
+                                                  </td>
+                                              </tr>)}
+                                            </tbody>
+                                        </table>
+                                      </div>
+                                  </div>
+                                  {/* <a id="invitationForm:addCcEmails" href="#" className="addCcEmailsButton" onclick="">Add CC</a> */}
+                                </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>
+                                <span>
+                                  <label>Subject &amp; Message</label><input id="subject" name="subject" type="text" value={this.state.subject} onChange={this.onChange} required className="form-control emailSubject" />
+                                  <div id="invitationForm:emailSubjectMessages" aria-live="polite" className="ui-message"></div>
+                                  <textarea cols="20" rows="5" maxlength="2147483647" required className="form-control emailText" value={this.state.message} onChange={this.onChange} name="message"></textarea>
+                                  <div aria-live="polite" className="ui-message"></div>
+                                </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td><span className=""><button id="cancelButton" data-dismiss="modal" style={{width: '24%',float: 'left'}} className="btn btn-danger cancelButton" type="button"><span className="ui-button-text ui-c">Cancel</span></button><button id="inviteButton" style={{width: '24%',float: 'right'}} name="inviteButton" className="btn btn-success" type="submit"><span className="">Send Document</span></button></span></td>
+                          </tr>
+                      </tbody>
+                    </table>
+							      </form>
+							    </div>
+							</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
       </div>

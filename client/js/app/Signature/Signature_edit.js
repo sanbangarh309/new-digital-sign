@@ -66,7 +66,8 @@ class Signature_edit extends Component {
       signers:[],
       first_attempt:false,
       onStartCount:0,
-      token:localStorage.getItem('jwtToken')
+      token:localStorage.getItem('jwtToken'),
+      signer_ids:[]
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -99,6 +100,17 @@ class Signature_edit extends Component {
     return color;
   }
 
+  getSigners  = (ids) => {
+    axios.post('/api/signers/',{ids:ids,token:localStorage.getItem('jwtToken')}).then((res) => {
+      this.setState({
+        signers: res.data
+      });
+     
+    }).catch(error => {
+      console.log(error.response);
+    });
+  }
+
   componentDidMount() {
     let docs = localStorage.getItem('files_array') || this.state.docs
     try {
@@ -107,20 +119,32 @@ class Signature_edit extends Component {
 
     }
 
-    axios.post('/api/signers/',{token:this.state.token}).then((res) => {
-      this.setState({
-        signers: res.data
-      });
+    // axios.post('/api/signers/',{token:this.state.token}).then((res) => {
+    //   this.setState({
+    //     signers: res.data
+    //   });
      
-    }).catch(error => {
-      console.log(error.response);
-    });
+    // }).catch(error => {
+    //   console.log(error.response);
+    // });
 
     if (this.state.edit_id) {
       axios.get('/api/doc/'+this.state.edit_id).then((res) => {
         this.setState({
           docs: res.data.images
         });
+        let ids = [];
+        Object.keys(res.data.images).forEach(function(key){ 
+          Object.keys(res.data.images[key].drag_data).forEach(function(key2){
+            if(res.data.images[key].drag_data[key2].type == "signer_added"){ console.log(res.data.images[key].drag_data[key2])
+              ids.push(res.data.images[key].drag_data[key2].signer_id);
+            }
+          });
+        });
+        this.setState({
+          signer_ids: [...new Set(ids)]
+        });
+        this.getSigners([...new Set(ids)]);
       }).catch(error => {
         console.log(error.response);
       });
@@ -164,8 +188,6 @@ class Signature_edit extends Component {
       axios.get('/api/signer/'+this.state.signer_id).then((res) => {  
         if(res.data.color){
           this.setState({signer_clr: res.data.color});
-          console.log(res.data.color)
-          console.log('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count)
           // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
           $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
@@ -590,7 +612,13 @@ class Signature_edit extends Component {
     }catch(e){
 
     }
-    
+    const Fields = this.state.signers.map((person) =>
+        (<li 
+        key={person._id}
+        >
+        <a href="javascript:void(0)" id={'signer_'+person._id} className="btn sign-btn" className="btn"><span class="custom-icons" style={{'backgroundColor':person.color,'padding':'5px'}}></span><span style={{paddingLeft:'5px'}}>{person.name}</span></a>
+        </li>)
+    );
     if (!localStorage.getItem('jwtToken') && !this.state.doc_for_sign) {
       return <Redirect to='/'  />
     }else{
@@ -711,6 +739,30 @@ class Signature_edit extends Component {
                   </ul>);
           }
         })()}
+        <ul className="btn-list">
+            <li>
+            <div id="accordion" className="inner-accordian">
+                <div className="card">
+                <div className="card-header" id="headingTwo">
+                    <button className="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                    Signers List
+                    {/* <span className="btn-helper">for signers</span> */}
+                    </button>
+                </div>
+                <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
+                    <div className="card-body">
+                    <ol className="btn-mainlist">
+                        {Fields}
+                    </ol>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </li>
+        </ul>
+        {/* <AddedSigners
+          signer_ids={this.state.signer_ids}
+        /> */}
       </div>
       <DropArea 
       docs={docs}
