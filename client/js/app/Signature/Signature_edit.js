@@ -144,7 +144,9 @@ class Signature_edit extends Component {
         this.setState({
           signer_ids: [...new Set(ids)]
         });
-        this.getSigners([...new Set(ids)]);
+        if(localStorage.getItem('jwtToken')){
+          this.getSigners([...new Set(ids)]);
+        }
       }).catch(error => {
         console.log(error.response);
       });
