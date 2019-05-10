@@ -73,11 +73,60 @@ module.exports = (app) => {
     });
 
     app.post('/api/savedata',function(req,res){
+        var fs = require('fs');
+        San_Function.uploadFinalDoc(req.body.base64Data,function(buffer){
+          return res.json(buffer)
+        });
+    });
+
+  app.post('/api/movefile', async (req, res, next) => {
+    const fs = require('fs');
+    let query = {};
+    const { docIds, move_to } = req.body;
+    if (docIds) {
+      query['_id'] = { $in: docIds};
+    }
+    const moveFile = (file, dir2) => {
+      //include the fs, path modules
       var fs = require('fs');
-      San_Function.uploadFinalDoc(req.body.base64Data,function(buffer){
-        return res.json(buffer)
+      var path = require('path');
+
+      //gets file name and adds it to dir2
+      var f = path.basename(file);
+      var dest = path.resolve(dir2, f);
+
+      fs.rename(file, dest, (err) => {
+        if (err) throw err;
+        else console.log('Successfully moved');
       });
-  })
+    };
+    const docs = await Doc.find(query);
+    let doc_key = 0;
+    docs.forEach(doc => {
+      doc.path = move_to;
+      // for (var key in doc.images) {
+      //   console.log(doc.images[key]);
+      // }
+      let key = 0;
+      doc.images.forEach(data => {
+        data['path'] = move_to;
+        doc.images[key] = data;
+        if (fs.existsSync(config.directory + '/uploads/docs/' + data.name)){
+          moveFile(config.directory + '/uploads/docs/' + data.name, config.directory + '/uploads/docs/' + move_to + '/');
+        }
+        key++;
+      });
+      if (fs.existsSync(config.directory + '/uploads/docs/' + doc.file)) {
+        moveFile(config.directory + '/uploads/docs/' + doc.file, config.directory + '/uploads/docs/' + move_to + '/');
+      }
+      doc.save();
+      docs['doc_key'] = doc;
+      console.log(doc);
+      // console.log(img);
+      doc_key++;
+    });
+    res.json(docs);
+  });
 
     app.post('/api/add_doc', (req, res, next) => {
         San_Function.uploadFinalDoc(req.body.base64Data, async (buffer)=> { 
@@ -213,7 +262,7 @@ module.exports = (app) => {
 
     app.post('/api/signers', async (req, res, next) => {
       let query = {};
-      if(req.body.ids){ console.log(req.body.ids);
+      if(req.body.ids){
         query['_id'] = { $in: req.body.ids };
         // query = { field: { $in: req.body.ids } };
       }
@@ -240,10 +289,12 @@ module.exports = (app) => {
         .catch((err) => next(err));
     });
 
-    app.post('/api/sendemail', (req, res, next) => {
+    app.post('/api/sendemail', async (req,res,next) => {
       let link = 'http://'+req.headers.host+'/signature/'+req.body.id+'?sign=';
       let img = "http://"+req.headers.host+"/assets/img/fina-logo.png";
-      if(req.body.id && req.body.emails.length > 0){
+      if(req.body.id && req.body.emails.length > 0 && req.body.token){
+        const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+        const userMatched = await User.findById(user.sub);
         let order = 0;
         req.body.emails.forEach(el => {
           let que = new Que();
@@ -259,7 +310,7 @@ module.exports = (app) => {
           order++;
           link = link+el.signer_id;
           var mailOptions = {
-            from: 'sandeep.digittrix@gmail.com',
+            from: userMatched.email,
             to: el.email,
             subject: req.body.subject,
             html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'

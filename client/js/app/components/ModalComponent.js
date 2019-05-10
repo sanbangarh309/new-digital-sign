@@ -89,6 +89,7 @@ export default class ModalComponent extends React.Component {
   forgotpwd(e){
     e.preventDefault();
     this.closePopUp();
+    $('#auth-modal').modal('hide');
     $('#forgot_pwd').modal('show');
   }
 
@@ -122,7 +123,7 @@ export default class ModalComponent extends React.Component {
         this.setState({
           added: true,
           alert: 'alert alert-success',
-          msg: this.state.email ? 'Please Check Your Email' : 'Password Changed Successfully.',
+          msg: this.state.email ? 'Please Check Your Email as well as spam folder' : 'Password Changed Successfully.',
         });
       }).catch(error => {
         this.setState({
@@ -211,6 +212,30 @@ export default class ModalComponent extends React.Component {
       </div>;
       // this.closePopUp()
     }
+    let forgot_pwd_html = '';
+    if(!this.state.added){
+      forgot_pwd_html = (<div className="panel panel-default">
+                          <div className="panel-body">
+                            <div className="text-center">
+                                <h3><i className="fa fa-lock fa-4x"></i></h3>
+                                <h2 className="text-center">Forgot Password?</h2>
+                                <p>You can reset your password here.</p>
+                                <div className="panel-body">
+                                    <div className="form-group">
+                                      <div className="input-group">
+                                        <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
+                                        <input id="email" name="email" placeholder="email address" onChange={this.handleChange} className="form-control"  type="email" />
+                                      </div>
+                                    </div>
+                                    <div className="form-group">
+                                      <input name="recover-submit" className="btn btn-lg btn-primary btn-block" value="Reset Password" onClick={this.submitForgot} type="button" />
+                                    </div>
+                                </div>
+                            </div>
+                          </div>
+                        </div>);
+    }
+    
     
     setTimeout(function() { 
       // $(".alert").fadeTo(500, 0).slideUp(500, function(){
@@ -239,14 +264,14 @@ export default class ModalComponent extends React.Component {
                   <div className="login-register-content-block tab-content">
                   <div id="login" className="tab-pane active show">
                   {addedAlert}
-                    <div className="facebook-login-container">
+                    {/* <div className="facebook-login-container">
                        <a href="https://www.facebook.com/v2.8/dialog/oauth?client_id=1441869016037016&amp;state=afe9c619d8712b868b886f6354651c21&amp;response_type=code&amp;sdk=php-sdk-5.4.4&amp;redirect_uri=https%3A%2F%2Fwww.foodpanda.in%2Ffacebook-login-callback%3FfacebookRedirectUrl%3DL2NvbnRlbnRzL2Fib3V0Lmh0bQ%253D%253D&amp;scope=email%2Cpublic_profile" className="init-facebook-login btn btn-lg btn-block js-modal-ignore">
                        Continue with Facebook
                        </a>
                        <div className="or-separator">
                         <span>OR</span>
                        </div>
-                    </div>
+                    </div> */}
                     <form className="login">
                        <div className="form-group login__email">
                         <label className="control-label sr-only required" for="customer_login_email"> Email
@@ -286,14 +311,14 @@ export default class ModalComponent extends React.Component {
                   <div id="register" className="tab-pane fade">
                     <div className="login-register-content-block">
                     {addedAlert}
-                      <div className="facebook-login-container">
+                      {/* <div className="facebook-login-container">
                         <a href="https://www.facebook.com/v2.8/dialog/oauth?client_id=1441869016037016&amp;state=afe9c619d8712b868b886f6354651c21&amp;response_type=code&amp;sdk=php-sdk-5.4.4&amp;redirect_uri=https%3A%2F%2Fwww.foodpanda.in%2Ffacebook-login-callback%3FfacebookRedirectUrl%3DL2NvbnRlbnRzL2Fib3V0Lmh0bQ%253D%253D&amp;scope=email%2Cpublic_profile" className="init-facebook-login btn btn-lg btn-block js-modal-ignore">
                         Continue with Facebook
                         </a>
                         <div className="or-separator">
                           <span>OR</span>
                         </div>
-                      </div>
+                      </div>*/}
                       <form role="form" noValidate="novalidate" className="sign-up">
                           <div className="form-group">
                            <div className="col-12 p-0 raw">
@@ -363,26 +388,7 @@ export default class ModalComponent extends React.Component {
               <div className="modal-body">
                   <div className="col-md-12 col-md-offset-4">
                   {addedAlert}
-                        <div className="panel panel-default">
-                          <div className="panel-body">
-                            <div className="text-center">
-                                <h3><i className="fa fa-lock fa-4x"></i></h3>
-                                <h2 className="text-center">Forgot Password?</h2>
-                                <p>You can reset your password here.</p>
-                                <div className="panel-body">
-                                    <div className="form-group">
-                                      <div className="input-group">
-                                        <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
-                                        <input id="email" name="email" placeholder="email address" onChange={this.handleChange} className="form-control"  type="email" />
-                                      </div>
-                                    </div>
-                                    <div className="form-group">
-                                      <input name="recover-submit" className="btn btn-lg btn-primary btn-block" value="Reset Password" onClick={this.submitForgot} type="button" />
-                                    </div>
-                                </div>
-                            </div>
-                          </div>
-                        </div>
+                  {forgot_pwd_html}
                   </div>
               </div>
               <div className="modal-footer">
@@ -432,8 +438,6 @@ export default class ModalComponent extends React.Component {
             </div>
           </div>
        </div>
-
-       
 
         </div>
     );

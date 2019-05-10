@@ -87,3 +87,10 @@
 		background-color: slategray;
 		padding: 5px;
 	}
+
+	.dash_board .card-header ul{
+		font-family: inherit;
+		font-size: 0.9rem;
+		line-height: 1.6;
+		list-style-position: outside;
+	}

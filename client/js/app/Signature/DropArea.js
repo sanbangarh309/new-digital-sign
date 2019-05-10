@@ -289,6 +289,9 @@ class DropArea extends React.Component {
             this.setState({items:newobj});
           }
         let fontsize = '1.2vw';
+        if(key___ == 'text'){
+          fontsize = '2.2vw';
+        }
         if(!x && !y){
           return;
         } 
@@ -323,6 +326,9 @@ class DropArea extends React.Component {
           if(key___ == 'check'){
             w = 60;
             h = 60;
+          }
+          if(key___ == 'text'){
+            h = 50;
           }
           let clr = null;
           let txt = null;
@@ -580,13 +586,13 @@ class DropArea extends React.Component {
       this.props.removeFieldBox(this.props.drag_id,this.props.docId)
     }
 
-    adjustWidth = (e) => {
+    adjustWidth = (e) => { console.log(e.target.value.length)
       if(e.target.value.length >= 0 && e.target.value.length < 3){
         e.target.parentElement.style.width = '33px'; 
         e.target.style.width = '33px';
       }else{
-        e.target.parentElement.style.width = (e.target.value.length) * 7.3 + "px";
-        e.target.style.width = (e.target.value.length) * 7.3 + "px";
+        e.target.parentElement.style.width = (e.target.value.length) * 8.3 + "px";
+        e.target.style.width = (e.target.value.length) * 8.3 + "px";
       }
     }
 
@@ -786,7 +792,8 @@ class DropArea extends React.Component {
             case "signer": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
             case "sign_text": return (<span style={cusstyle} class={"class_"+field+" preventClicking"} id={this.props.drag_id}>{this.props.sign_text}</span>);
             case "checkbox": return (<div className="checkwrap"><input type="checkbox" class={"class_"+field+" preventClicking"} id={this.props.drag_id} style={cusstyle} /><label></label></div>);
-            default: return (<textarea className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
+            // default: return (<textarea rows="1" className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
+            default: return (<input className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle} />);
           }
         })()}
         <div className="round-sml btn-removebox1" onClick={this.removeField.bind(this)} style={boxeStyle}>✕</div>

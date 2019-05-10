@@ -22,7 +22,7 @@ const WebpackConfigure = require('../webpack.config');
 
 const auth = require.main.require('./auth');
 const requireAuth = auth.passport.authenticate('jwt', {session: false});
-console.log(devMode);
+
 // Configurations
 // ================================================================================================
 const app = express();

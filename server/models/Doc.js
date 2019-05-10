@@ -8,6 +8,7 @@ const schema = new mongoose.Schema({
   description: String,
   file: String,
   images: [],
+  path:String,
   shared_with: [],
   filethumb: String,
   created_at:{ type: Date, default: Date.now },

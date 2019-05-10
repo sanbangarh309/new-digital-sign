@@ -119,15 +119,6 @@ class Signature_edit extends Component {
 
     }
 
-    // axios.post('/api/signers/',{token:this.state.token}).then((res) => {
-    //   this.setState({
-    //     signers: res.data
-    //   });
-     
-    // }).catch(error => {
-    //   console.log(error.response);
-    // });
-
     if (this.state.edit_id) {
       axios.get('/api/doc/'+this.state.edit_id).then((res) => {
         this.setState({
@@ -136,7 +127,7 @@ class Signature_edit extends Component {
         let ids = [];
         Object.keys(res.data.images).forEach(function(key){ 
           Object.keys(res.data.images[key].drag_data).forEach(function(key2){
-            if(res.data.images[key].drag_data[key2].type == "signer_added"){ console.log(res.data.images[key].drag_data[key2])
+            if(res.data.images[key].drag_data[key2].type == "signer_added"){
               ids.push(res.data.images[key].drag_data[key2].signer_id);
             }
           });

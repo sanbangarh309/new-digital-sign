@@ -133,6 +133,16 @@ class Dashboard extends Component {
         ids.push(dragData[key].signer_id);
       }
     });
+
+    $("#email_table #signersPanel tr input").each(function (index) {
+      if ($(this).val() && $.trim($(this).val()) != '') {
+        $(this).val('');
+      }
+    });
+    this.setState({subject:''});
+    this.setState({message: '' });
+    // $("#email_table input.emailSubject").val('');
+    // $("#email_table textarea.emailText").val('');
     
     this.getSigners([...new Set(ids)]);
     $('#emailModal').modal('show');
@@ -197,7 +207,7 @@ class Dashboard extends Component {
     // this.state.signers_email.push(e.target.value);
     let uniqueemails = [...new Set(emails)];
     if(uniqueemails.length > 0 && id){
-      axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id}).then((res) => {
+      axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id,token:localStorage.getItem('jwtToken')}).then((res) => {
         this.setState({
           added: true,
           alert: 'alert alert-success',
@@ -295,15 +305,16 @@ class Dashboard extends Component {
     // e.preventDefault();
     let new_arr = [];
     if(e.target.checked){
-      new_arr.push(e.target.value);
-      let unique = [...new Set(new_arr)];
+      this.state.checked_values.push(e.target.value);
+      let unique = [...new Set(this.state.checked_values)];
       this.setState({checked_values:unique});
     }else{
-      new_arr = new_arr.filter(function(ele){
+      this.state.checked_values = this.state.checked_values.filter(function(ele){
           return ele != e.target.value;
       });
     }
-    if(new_arr.length > 0){
+    console.log(this.state.checked_values)
+    if (this.state.checked_values.length > 0){
       this.setState({disabled_fields:{}});
     }else{
       this.setState({disabled_fields:{pointerEvents:'none',color:'#c9c2c2'}});
@@ -357,12 +368,44 @@ class Dashboard extends Component {
     });
   }
 
+  multiSend = (e) => {
+    console.log('multi send');
+    // let ids = [];
+    // let dragData = JSON.parse($(e.target).attr('data-string'));
+    // Object.keys(dragData).forEach(function (key) {
+    //   if (dragData[key].type == "signer_added") {
+    //     ids.push(dragData[key].signer_id);
+    //   }
+    // });
+
+    // $("#email_table #signersPanel tr input").each(function (index) {
+    //   if ($(this).val() && $.trim($(this).val()) != '') {
+    //     $(this).val('');
+    //   }
+    // });
+    // this.setState({ subject: '' });
+    // this.setState({ message: '' });
+    // // $("#email_table input.emailSubject").val('');
+    // // $("#email_table textarea.emailText").val('');
+
+    // this.getSigners([...new Set(ids)]);
+    // $('#emailModal').modal('show');
+    // if (!$('#doc_id').hasClass('hidden_doc')) {
+    //   $('#email_modal_form').append('<input type="hidden" value="' + e.target.id + '" class="hidden_doc" id="doc_id"/>');
+    // } else {
+    //   $('#doc_id').val(e.target.id);
+    // }
+  }
+
   onChange(e){
     this.setState({[e.target.name]:e.target.value});
   }
 
   render() {
     // const {docs} = this.props;
+    let modalCss = {
+      top: '65px'
+    }
     let addedAlert;
     if (this.state.added) {
       addedAlert = <div className={this.state.alert} style={{textAlign:'center'}}>
@@ -414,12 +457,12 @@ class Dashboard extends Component {
         <div className="container-fluid main-wrapper">
         <aside className="main-sidebar">
           <div className="user-panel">
-            <div className="pull-left image">
+            {/* <div className="pull-left image">
               <img src="/assets/img/user2.jpg" className="img-circle" alt="User Image"/>
-            </div>
-            <div className="pull-left info">
+            </div> */}
+            {/* <div className="pull-left info">
               <p>DIGISIGN <span className="small">Founder of App</span></p>
-            </div>
+            </div> */}
            </div>
            <ul className="sidebar-menu tree" data-widget="tree">
             <li><NavLink activeClassName='active' to='/dashboard'><i className="fa fa-dashboard"></i> <span>Documentation</span></NavLink></li>
@@ -436,12 +479,12 @@ class Dashboard extends Component {
                 <div className="card box-spice">
                   <div className="card-header">
                     <ul className="list-inline top-box-list">
-                      <li><input type="checkbox"/><span></span></li>
-                      <li><a href="javascript:void(0)" onClick={this.createFolder}>NEW FOLDER</a></li>
+                      <li><input type="checkbox"/><span></span></li> 
+                          <li><a href="javascript:void(0)" onClick={this.createFolder}>NEW FOLDER <i className="fa fa-plus"></i></a></li>
                       {/* <li><a href="javascript:void(0)">FOLDER SEND </a></li> */}
-                      <li><a href="javascript:void(0)" style={this.state.disabled_fields}>SEND FOR SIGNING</a></li>
-                      <li><a href="javascript:void(0)" onClick={this.folderStructure} style={this.state.disabled_fields}>MOVE TO</a></li>
-                      <li className="delete-row"><a className="fa fa-trash danger" href="javascript:void(0)"></a></li>
+                          <li><a href="javascript:void(0)" style={this.state.disabled_fields} onClick={this.multiSend}>SEND FOR SIGNING <i className="fa fa-send-o"></i></a></li>
+                          <li><a href="javascript:void(0)" onClick={this.folderStructure} style={this.state.disabled_fields}>MOVE TO <i className="fa fa-arrows"></i></a></li>
+                          <li className="delete-row" style={this.state.disabled_fields}><a href="javascript:void(0)">Trash <i className="fa fa-trash danger"></i></a></li>
                       {/* <li className="search-row">
                         <form id="example1_filter" className="dataTables_filter">
                           <label className="filter_search">
@@ -450,8 +493,8 @@ class Dashboard extends Component {
                           </label>
                         </form>
                       </li> */}
-                      <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload}  /><i className="fa fa-upload"></i></li>
-                      <li><a href="#"><i className="fa fa-filter"></i></a></li>
+                          <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload} />Upload <i className="fa fa-upload"></i></li>
+                          <li><a href="#">Filter <i className="fa fa-filter"></i></a></li>
                     </ul>
                   </div>
                   {(() => {
@@ -466,12 +509,12 @@ class Dashboard extends Component {
                                                   </ol>
                                                 </div>);
                       default:  return (<div><div className="card-body">
-                                              <ol className="od-list">
+                                              <ol className="od-list-2">
                                               {this.state.folders.map((value, index) => {
                                                 let img = "/assets/img/folder.jpg";
                                                 let folder = value.substr(value.lastIndexOf('/') + 1);
                                                 return (<li key={index}>
-                                                          <ul className="list-inline top-box-list">
+                                                          <ul className="list-inline top-box-list-2">
                                                               <li><input type="checkbox" value={folder} /><span></span></li>
                                                               <li className="doc-box">
                                                                 <a href="javascript:void(0)" onClick={this.openFolder.bind(this, folder)}>
@@ -483,14 +526,14 @@ class Dashboard extends Component {
                                                                   </div>
                                                                 </a>
                                                               </li>
-                                                              <li><NavLink to={'signature/'+folder} className="btn btn-default btn-flat">Open</NavLink></li>
+                                                              <li><a href="javascript:void(0)" onClick={this.openFolder.bind(this, folder)}>Open</a></li>
                                                               <li>
                                                               <div class="dropdown">
                                                                 <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
                                                                 <span class="caret"></span></button>
-                                                                <ul class="dropdown-menu">
-                                                                  <li><a onClick={this.deleteFolder.bind(this, folder)} href="javascript:void(0)">Delete</a></li>
-                                                                  <li><a onClick={this.showRenamePop.bind(this, folder)} href="javascript:void(0)">Rename</a></li>
+                                                        <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
+                                                          <li><a className="btn btn-default" style={{ border: 'solid 1px'}} onClick={this.deleteFolder.bind(this, folder)} href="javascript:void(0)">Delete</a></li>
+                                                          <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.showRenamePop.bind(this, folder)} href="javascript:void(0)">Rename</a></li>
                                                                 </ul>
                                                               </div>
                                                               </li>
@@ -501,31 +544,31 @@ class Dashboard extends Component {
                                             </div>
                                             <div className="card-body">
                                               <ol className="od-list">
-                                              {this.state.docs.map((value, index) => {
-                                                let img = "/files/docs/"+value.images[0].name || "/assets/img/doc-1.png";
-                                                return (<li key={index}>
-                                                          <ul className="list-inline top-box-list">
-                                                              <li><input onClick={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
-                                                              <li className="doc-box">
-                                                                <a href="#">
-                                                                  <div className="fig-left">
-                                                                    <img src={img} alt="No Thumb" className="doc-pic"/>
-                                                                  </div>
-                                                                  <div className="doc-info">
-                                                                    <p>Document<span className="date-doc small">{value.created_at}</span></p>
-                                                                  </div>
-                                                                </a>
-                                                              </li>
-                                                              <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat">SIGN</NavLink></li>
-                                                              {/* data-toggle="modal" data-target="#emailModal" */}
-                                                              <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
-                                                              <li><NavLink to={'signature/'+value._id} className="btn btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
-                                                              {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
-                                                              <li><a href={'files/docs/'+value.file} target="_blank"><i className="fa fa-download"></i></a></li>
-                                                              <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
-                                                          </ul>
-                                                      </li>)
-                                              })}
+                                                {this.state.docs.map((value, index) => {
+                                                  let img = "/files/docs/"+value.images[0].name || "/assets/img/doc-1.png";
+                                                  return (<li key={index}>
+                                                            <ul className="list-inline top-box-list">
+                                                                <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
+                                                                <li className="doc-box">
+                                                                  <a href="#">
+                                                                    <div className="fig-left">
+                                                                      <img src={img} alt="No Thumb" className="doc-pic"/>
+                                                                    </div>
+                                                                    <div className="doc-info">
+                                                                      <p>Document<span className="date-doc small">{value.created_at}</span></p>
+                                                                    </div>
+                                                                  </a>
+                                                                </li>
+                                                                <li><NavLink to={'signature/'+value._id} className="btn-default btn-flat">SIGN</NavLink></li>
+                                                                {/* data-toggle="modal" data-target="#emailModal" */}
+                                                                <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
+                                                                <li><NavLink to={'signature/'+value._id} className="btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
+                                                                {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
+                                                                <li><a href={'files/docs/'+value.file} target="_blank"><i className="fa fa-download"></i></a></li>
+                                                                <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
+                                                            </ul>
+                                                        </li>);
+                                                })}
                                               </ol>
                                             </div></div>);
                     }
@@ -537,7 +580,7 @@ class Dashboard extends Component {
         </div>
       </div>
 
-      <div className="modal fade" id="create_folder" role="dialog">
+          <div className="modal fade" id="create_folder" role="dialog" style={modalCss}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-body">
@@ -570,7 +613,7 @@ class Dashboard extends Component {
           </div>
        </div>
 
-       <div className="modal fade" id="rename_folder" role="dialog">
+          <div className="modal fade san_custom" id="rename_folder" role="dialog" style={modalCss}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-body">
@@ -603,7 +646,7 @@ class Dashboard extends Component {
           </div>
        </div>
 
-       <div className="modal fade" id="folder_structure" role="dialog">
+          <div className="modal fade san_custom" id="folder_structure" role="dialog" style={modalCss}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-body">
@@ -656,7 +699,7 @@ class Dashboard extends Component {
           </div>
        </div>
 
-       <div id="emailModal" className="modal fade" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" aria-hidden="true">
+          <div id="emailModal" className="modal fade san_custom" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" style={modalCss}>
         <div className="modal-dialog modal-lg">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -686,8 +729,7 @@ class Dashboard extends Component {
                                                   <td class="grab" onMouseDown={this.reOrder.bind(this)}>&#9776;</td>
                                                   <td role="gridcell">{person.name}</td>
                                                   <td role="gridcell">
-                                                  {/* onChange={this.collectSignerEmails} */}
-                                                    <span  className="signerEmail" role="application"><input id={person._id} value={this.value} type="text" className="form-control" placeholder="email@example.com" /></span>
+                                                     <span  className="signerEmail" role="application"><input id={person._id} value={this.value} type="text" className="form-control" placeholder="email@example.com" /></span>
                                                   </td>
                                               </tr>)}
                                             </tbody>
@@ -721,8 +763,6 @@ class Dashboard extends Component {
                 </div>
             </div>
         </div>
-
-
       </div>
       );
   }

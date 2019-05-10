@@ -3,10 +3,20 @@ import {connect} from 'react-redux';
 import history from '../history';
 import  { Redirect } from 'react-router-dom'
 var NavLink = require('react-router-dom').NavLink;
+import auth from 'src/auth';
 const Header = () => {
-    if (localStorage.getItem('jwtToken')) {
-        return <Redirect to={'/dashboard'}  />
-    }
+	let forgotid = null;
+   if(history.location.query.forgot){
+      forgotid = history.location.query.id; 
+	}
+	// console.log(forgotid);debugger;
+	if(forgotid){
+		localStorage.setItem('jwtToken','');
+		auth.actions.logout();
+	}
+   if (localStorage.getItem('jwtToken')) {
+      return <Redirect to={'/dashboard'}  />
+   }
   let user_action = <a className="" href="javascript:void(0)" data-toggle="modal" data-target="#auth-modal">
   <span className="fa fa-unlock-alt"></span>
   Login</a>;
@@ -16,16 +26,16 @@ const Header = () => {
     Logout</a>;
   }
   return (
-    <header className="home-header">
-           <nav className="navbar navbar-expand-lg navbar-light custom-navheader" id="sroll-className">
-              <a className="navbar-brand d-lg-block d-md-block" href="./"><img src="/assets/img/fina-logo.png" alt=""/></a>
+   <header className="home-header">
+      <nav className="navbar navbar-expand-lg navbar-light custom-navheader" id="sroll-className">
+          <a className="navbar-brand d-lg-block d-md-block" href="./"><img src="/assets/img/fina-logo.png" alt=""/></a>
   			<button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
   				<span className="navbar-toggler-icon"></span>
   			</button>
         <div className="collapse navbar-collapse navigation-bar" id="navbarCollapse">
   				<ul className="navbar-nav ml-auto custom-nav">
   					<li className="nav-item">
-              <NavLink exact activeClassName='active' to='/'>
+                  <NavLink exact activeClassName='active' to='/'>
   					   <span className="fa fa-home"></span>
   					   Home</NavLink>
   					</li>
@@ -44,7 +54,7 @@ const Header = () => {
   					   Features</NavLink>
   					</li>
   					<li className="nav-item">
-              <NavLink activeClassName='active' to='/contact'>
+                  <NavLink activeClassName='active' to='/contact'>
   					   <span className="fa fa-file"></span>
   					   Contact</NavLink>
   					</li>
@@ -52,9 +62,9 @@ const Header = () => {
   					   {user_action}
   					</li>
   				</ul>
-              </div>
-           </nav>
-        </header>
+         </div>
+      </nav>
+   </header>
   );
 }
 
