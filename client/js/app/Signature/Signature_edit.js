@@ -67,7 +67,9 @@ class Signature_edit extends Component {
       first_attempt:false,
       onStartCount:0,
       token:localStorage.getItem('jwtToken'),
-      signer_ids:[]
+      signer_ids:[],
+      allOk:false,
+      redirect:false
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -230,13 +232,14 @@ class Signature_edit extends Component {
 
   convertHtmlToCanvas = (e) => {
     e.preventDefault();
-    let save = '';
+    let allgood = false;
     let doc = '';
     let width = '';
     let height = '';
     let edit_id = this.state.edit_id;
     let docs = this.state.docs;
     let inputfields = this.state.inputFields;
+    let sign_id = this.state.doc_for_sign;
     if(this.state.docs.length > 0){
       for(let i=1;i <=this.state.docs.length;i++){
         $("#signature_container_"+i).css('background-color','transparent');
@@ -265,14 +268,18 @@ class Signature_edit extends Component {
               let font = $(this).css("font-size");
               let fontfamily = $(this).find('span').css('font-family');
               let clr = $(this).find('span').css('color');
-              let signer_id = $(this).find('span').attr('id');
+              let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
               let bgcolor = $(this).attr('data-color');
               let reqrd = false;
+              let signed = false;
+              if (sign_id) {
+                signed = sign_id;
+              }
               if($(this).find('span').hasClass('required')){
                 reqrd = true;
               } 
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
+              drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: $(this).find('span').text(), doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
@@ -306,7 +313,7 @@ class Signature_edit extends Component {
                         });
                     }
                     swal("Saved!", "Your doc file has been saved", "success");
-                    return <Redirect to='/dashboard'  />
+                    allgood = true;
                   }
                 });
               },500);
@@ -314,6 +321,10 @@ class Signature_edit extends Component {
         });
       }
     }
+    if (allgood) {
+      this.setState({ redirect: 'dashboard'});
+    }
+    
   }
 
  
@@ -597,6 +608,11 @@ class Signature_edit extends Component {
     this.state.onStartCount += 1;
   }
 
+  checkAllOk = (ok) => {
+    this.setState({ allOk:ok});
+    console.log(ok);
+  }
+
   render() {
     let dashboard = '';
     let docs = localStorage.getItem('files_array')  || this.state.docs 
@@ -604,6 +620,9 @@ class Signature_edit extends Component {
       docs = JSON.parse(docs)
     }catch(e){
 
+    }
+    if (this.state.redirect) {
+      return (<Redirect to={'/' + this.state.redirect} />);
     }
     const Fields = this.state.signers.map((person) =>
         (<li 
@@ -618,7 +637,7 @@ class Signature_edit extends Component {
       dashboard = <li><NavLink  className="btn" id="dashboard" to='/dashboard'>Dasboard</NavLink></li>
     }
     let save_btn = (<a className="btn btn-done nav-link" onClick={this.saveData.bind(this)} href="javascript:void(0)">Save</a>);
-    if(this.state.doc_for_sign){
+    if (this.state.doc_for_sign && !this.state.allOk){
       save_btn = (<a className="btn btn-done nav-link" onClick={this.enterData.bind(this)} href="javascript:void(0)">Start</a>);
     }
     let required_msg = this.state.signers_err ? (<h3 className="text-center" style={{color:'red'}}>{this.state.signers_err}</h3>) : '';
@@ -676,11 +695,7 @@ class Signature_edit extends Component {
 									<span className="fa fa-caret-down"></span>	
 								</a>
 								<div className="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-									 <a className="dropdown-item" href="user-profile-page.html"><i className="material-icons">person_outline</i> Profile</a>
-									<a className="dropdown-item" href="app-chat.html"><i className="material-icons pt-f">forum</i> Chat</a>
-									<a className="dropdown-item" href="page-faq.html"><i className="material-icons">help_outline</i> Help</a>
-									<a className="dropdown-item" href="user-lock-screen.html"><i className="material-icons">lock_outline</i> Lock</a>
-									<a className="dropdown-item" href="user-login.html"><i className="material-icons">keyboard_tab</i> Logout</a>
+                  <NavLink to='/logout' className="btn btn-default btn-flat"><i className="material-icons">keyboard_tab</i>Logout</NavLink>
 								</div>
 							</li>
               </ul>
@@ -732,27 +747,31 @@ class Signature_edit extends Component {
                   </ul>);
           }
         })()}
-        <ul className="btn-list">
-            <li>
-            <div id="accordion" className="inner-accordian">
-                <div className="card">
-                <div className="card-header" id="headingTwo">
-                    <button className="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
-                    Signers List
-                    {/* <span className="btn-helper">for signers</span> */}
-                    </button>
-                </div>
-                <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
-                    <div className="card-body">
-                    <ol className="btn-mainlist">
-                        {Fields}
-                    </ol>
-                    </div>
-                </div>
-                </div>
-            </div>
-            </li>
-        </ul>
+            {(() => {
+              if (!this.state.doc_for_sign) {
+                return (<ul className="btn-list">
+                          <li>
+                          <div id="accordion" className="inner-accordian">
+                              <div className="card">
+                              <div className="card-header" id="headingTwo">
+                                  <button className="btn btn-link" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                                  Signers List
+                                  {/* <span className="btn-helper">for signers</span> */}
+                                  </button>
+                              </div>
+                              <div id="collapseTwo" className="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
+                                  <div className="card-body">
+                                  <ol className="btn-mainlist">
+                                      {Fields}
+                                  </ol>
+                                  </div>
+                              </div>
+                              </div>
+                          </div>
+                          </li>
+                </ul>);
+              }
+            })()}
         {/* <AddedSigners
           signer_ids={this.state.signer_ids}
         /> */}
@@ -765,6 +784,7 @@ class Signature_edit extends Component {
       closeAttempt={this.closeAttempt.bind(this)}
       refreshSigners={this.refreshSigners.bind(this)}
       updateTab={this.updateTab.bind(this)}
+      checkAllOk={this.checkAllOk.bind(this)}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text}
       sign_texts={this.state.sign_texts} 

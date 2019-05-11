@@ -994,10 +994,10 @@ nav.navbar .menu-btn.active span:last-of-type {
 .hamburger-btn.open .cross span:nth-child(1) {height: 30px;transition-delay: .5s;background:#fff;}
 .hamburger-btn.open .cross span:nth-child(2) {width: 30px;transition-delay: .3s;background:#fff;}
 .show-moble{display:none;}
-.checkwrap{position: relative}
+.checkwrap{position: relative;height: 33px;}
 .checkwrap input[type="checkbox"] {position: absolute;width: 100%;height: 100%;opacity: 0;z-index: 999;cursor: pointer;}
 .checkwrap input[type="checkbox"] + label::after {content: "";position: absolute;left: -4px;width: 34px;height: 32px;	border: solid 2px #ccc;
-	top: -15px;transition: all 0.3s ease 0s;}
+	top: -15px;transition: all 0.3s ease 0s; border-radius:4px; }
 	.checkwrap input[type="checkbox"] + label::before {
 		content: "";
 		position: absolute;
@@ -1011,8 +1011,43 @@ nav.navbar .menu-btn.active span:last-of-type {
 		opacity: 0;
 		transition: all 0.3s ease 0s;
 	}
-	.checkwrap input[type="checkbox"]:checked + label::after{background: tomato;border-color:tomato;}
+	/* .checkwrap input[type="checkbox"]:checked + label::after{} */
 	.checkwrap input[type="checkbox"]:checked + label::before{opacity: 1;transform: rotate(36deg) scale(1);}
+
+.checkwrap > input {
+	position: absolute;
+	height: 39px !important;
+	width: 39px !important;
+	z-index: 2222;
+	opacity: 0 !important;
+	left: -2px;
+}
+.checkwrap input[type="checkbox"] + label {
+	position: relative;
+	margin-right: 0rem !important;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	margin-left: 0;
+	padding-left: 25px;
+	top: -37px;
+}
+.checkwrap input[type="checkbox"]:checked + label::after {
+	content: "\f00c";
+	position: absolute;
+	color:green;
+	font-family: fontAwesome;
+	font-weight: 900;
+	line-height: 29px;
+	font-size: 1.3rem;
+}
+
+.unselectable.checkbox {
+	background: none !important;
+}
+
+
 
 @media(max-width:767px){
 	nav.navbar .menu-btn {padding: 0;background: transparent !important;	display: block;margin-top:0;position: relative;left: 15px;z-index: 999;float: left;min-width: 50px;height: 40px;}

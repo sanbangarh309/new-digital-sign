@@ -18,7 +18,8 @@ class DropArea extends React.Component {
         chkduplicacy:[],
         currentNode:null,
         currentText:null,
-        removeDom:null
+        removeDom:null,
+        allOk:false
       };
     }
 
@@ -32,6 +33,7 @@ class DropArea extends React.Component {
             count++;
           });
         });
+        console.log(list)
         let newState = Object.assign(
           this.state, {
             items : list
@@ -138,8 +140,42 @@ class DropArea extends React.Component {
       this.setState({currentText:e.target.innerText});
       e.preventDefault();
       let key___ = ''
-      let allOk = false;
       let doc_id = e.target.id.replace ( /[^\d.]/g, '' ) || 1;
+      if (this.props.doc_for_sign) {
+        this.props.docs.map(doc => {
+          Object.keys(doc.drag_data).map(key => {
+            if (doc.drag_data[key].type == 'signer_added' && doc.drag_data[key].signer_id == this.props.doc_for_sign) {
+              let currentTarget = $('#' + doc.drag_data[key].content + '_doc_' + doc.drag_data[key].doc_id + '_' + doc.drag_data[key].id);
+              switch (doc.drag_data[key].content) {
+                case 'checkbox':
+                  if (currentTarget.find('input[type="checkbox"]:checked').length > 0) {
+                    this.setState({allOk:true});
+                  }else{
+                    this.setState({ allOk: false });
+                  }
+                  console.log(currentTarget.find('input[type="checkbox"]:checked'));
+                  break;
+
+                case 'text':
+                  if (currentTarget.find('input[type="text"]').val() !='') {
+                    this.setState({ allOk: true });
+                  } else {
+                    this.setState({ allOk: false });
+                  }
+                  console.log(currentTarget.find('input[type="checkbox"]:checked'));
+                  break;
+              
+                default:
+                  break;
+              }
+              // console.log(doc.drag_data[key])
+              // console.log('#' + doc.drag_data[key].content+'_doc_' + doc.drag_data[key].doc_id + '_' + doc.drag_data[key].id);
+              // console.log($('#' + doc.drag_data[key].content +'_doc_' + doc.drag_data[key].doc_id + '_' + doc.drag_data[key].id));
+            }
+          });
+        });
+        this.props.checkAllOk(this.state.allOk);
+      }
       if(this.props.doc_for_sign && (e.target.nodeName == 'SPAN' || e.target.className.includes('signer_added'))){
         if(e.target.innerText.trim().includes("initial")){
           this.state.removeDom = e.target.parentElement;
@@ -354,25 +390,6 @@ class DropArea extends React.Component {
           }
           // this.state.field_lists.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_img:this.props.sign_image,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id});
           listArray.push({ id: this.state.field_count, isDragging: false, isResizing: false, top:y, left: x,width:w, height:h, fontSize:fontsize,isHide:false, type:key___,appendOn:false,content:text,doc_id:doc_id,required:this.props.field_required,sign_img:this.props.sign_image,sign_text:txt,sign_font:fnt,sign_color:clr,signer_id:this.props.signer_id,signer_clr:this.props.signer_clr});  
-          // if(Object.prototype.toString.call(list) === '[object Object]'){
-          //   // const listArray = Object.keys(list).map(i => list[i]);
-          //   let fieldlist = this.state.field_lists;
-          //   const listArray = Object.keys(list).map(function(key) {
-          //     for(var key2 in fieldlist){
-          //       if(list[key].top == fieldlist[key2].top && list[key].left == fieldlist[key2].left){
-          //         delete fieldlist[key2];
-          //       }
-          //     }
-          //     return list[key];
-          //   });
-          //   let new_arr = listArray.concat(fieldlist); 
-          //   Object.assign(newobj, new_arr);
-          // }else if(Array.isArray(list)){
-          //   let new_arr = list.concat(this.state.field_lists); 
-          //   Object.assign(newobj, new_arr);
-          // }else{
-          //   Object.assign(newobj, this.state.field_lists);
-          // }
           Object.assign(newobj, listArray);
           this.setState({show_field:true});
           if(e.target.id && e.target.id !=''){
@@ -401,6 +418,7 @@ class DropArea extends React.Component {
     }
 
     render() {
+      console.log(this.state.allOk);
       let DropJgah = []
       let dropjgah_classes = ['drop-area', 'container', 'doc-bg', 'signature_container'];
       if(!this.props.doc_for_sign){
@@ -546,7 +564,8 @@ class DropArea extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-        resized_div : []
+        resized_div : [],
+        checked: false
       }
     }
     onMouseDown(e){
@@ -598,6 +617,12 @@ class DropArea extends React.Component {
 
     componentWillMount(){
       this.resizeContents(".class_"+this.props.fieldType,'#'+this.props.fieldType+'_' + this.props.id);
+    }
+
+    handleCheck = (e) => {
+      this.setState({
+        checked: e.target.checked
+      })
     }
     
 
@@ -744,10 +769,14 @@ class DropArea extends React.Component {
       }else if(this.props.doc_for_sign){
         styles['background'] = 'rgba(34, 176, 20, 0.2)';
       }
-      if(this.props.doc_for_sign && this.props.doc_for_sign != this.props.signer_id && !['sign','check','sign_text'].includes(field)){                        
+      if(this.props.doc_for_sign && this.props.doc_for_sign != this.props.signer_id && !['sign','check','sign_text'].includes(field)){                    
         styles['display'] = 'none';
       }
-      if(this.props.doc_for_sign && field == 'text'){
+      // if (this.props.doc_for_sign && this.props.doc_for_sign != this.props.signer_id && field == 'text') {
+      //   styles['display'] = 'none';
+      // }
+      // console.log(field);
+      if (this.props.doc_for_sign && this.props.doc_for_sign == this.props.signer_id && field == 'text'){
         // cusstyle['flexWrap'] = 'nowrap';
         cusstyle['textOverflow'] = 'ellipsis';
         cusstyle['whiteSpace'] = 'ellipsis';
@@ -758,6 +787,12 @@ class DropArea extends React.Component {
         cusstyle['fontSize'] = '33.8px';
         styles['display'] = 'flex';
         styles['height'] = '44px';
+      }
+      if (this.props.doc_for_sign && field == 'checkbox') {
+        styles['width'] = '40px';
+        styles['height'] = '30px';
+        cusstyle['width'] = '40px';
+        cusstyle['height'] = '30px';
       }
       // console.log(field + ':- '+this.props.signer_id)
       // let draggable = "true";
@@ -771,6 +806,10 @@ class DropArea extends React.Component {
       // if(this.props.doc_for_sign){
       //   draggable = "false";
       // }
+      let extra_class = '';
+      if (this.props.doc_for_sign) {
+        extra_class = 'signed_done';
+      }
       return (
         <div className={"text-field-box item unselectable "+field+' '+this.props.signer_id+' '+this.props.field_required}
           ref={"node"}
@@ -784,22 +823,22 @@ class DropArea extends React.Component {
           onDragStart={this.onDragStart.bind(this)}
           onDragEnd={this.onDragEnd.bind(this)} 
           style={styles}>
-        {(() => { 
-          switch (field) { 
-            case "sign": return (<img src={img_src} class="preventClicking" id={this.props.drag_id} style={sign_image_style}></img>);
-            case "check": return (<img src={'/assets/img/checkmark.png'} class="preventClicking" id={this.props.drag_id} style={chkStyle}></img>);
-            case "signer_added": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
-            case "signer": return (<span class={"preventClicking "+this.props.field_required} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
-            case "sign_text": return (<span style={cusstyle} class={"class_"+field+" preventClicking"} id={this.props.drag_id}>{this.props.sign_text}</span>);
-            case "checkbox": return (<div className="checkwrap"><input type="checkbox" class={"class_"+field+" preventClicking"} id={this.props.drag_id} style={cusstyle} /><label></label></div>);
-            // default: return (<textarea rows="1" className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
-            default: return (<input className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle} />);
-          }
-        })()}
-        <div className="round-sml btn-removebox1" onClick={this.removeField.bind(this)} style={boxeStyle}>✕</div>
-        <div className="round-sml ui-resizable-handle ui-resizable-nw" style={boxeStyle}></div>
-        <div className="round-sml ui-resizable-handle ui-resizable-sw" style={boxeStyle}></div>
-        <div className="round-sml ui-resizable-handle ui-resizable-se" style={boxeStyle}></div>
+          {(() => {
+            switch (field) { 
+              case "sign": return (<img src={img_src} className={"preventClicking "+extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={sign_image_style}></img>);
+              case "check": return (<img src={'/assets/img/checkmark.png'} class={"preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={chkStyle}></img>);
+              case "signer_added": return (<span className={"preventClicking " + this.props.field_required + " " + extra_class} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
+              case "signer": return (<span className={"preventClicking " + this.props.field_required + " " + extra_class} id={this.props.signer_id} style={textstyle}>{this.props.signer_field}</span>);
+              case "sign_text": return (<span style={cusstyle} class={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id}>{this.props.sign_text}</span>);
+              case "checkbox": return (<div className="checkwrap"><input type="checkbox" checked={this.state.checked} id={this.props.signer_id} onChange={this.handleCheck.bind(this)} className={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={cusstyle} /><label></label></div>);
+              // default: return (<textarea rows="1" className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
+              default: return (<input className={"form-control " + this.props.field_required + " " + extra_class} onKeyDown={this.adjustWidth.bind(this)} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle} />);
+            }
+          })()}
+          <div className="round-sml btn-removebox1" onClick={this.removeField.bind(this)} style={boxeStyle}>✕</div>
+          <div className="round-sml ui-resizable-handle ui-resizable-nw" style={boxeStyle}></div>
+          <div className="round-sml ui-resizable-handle ui-resizable-sw" style={boxeStyle}></div>
+          <div className="round-sml ui-resizable-handle ui-resizable-se" style={boxeStyle}></div>
         <Resizer
             ref={"resizerNode"}
             id={this.props.id}

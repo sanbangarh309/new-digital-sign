@@ -649,11 +649,7 @@ class Signature extends Component {
 									<span className="fa fa-caret-down"></span>	
 								</a>
 								<div className="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
-									 <a className="dropdown-item" href="user-profile-page.html"><i className="material-icons">person_outline</i> Profile</a>
-									<a className="dropdown-item" href="app-chat.html"><i className="material-icons pt-f">forum</i> Chat</a>
-									<a className="dropdown-item" href="page-faq.html"><i className="material-icons">help_outline</i> Help</a>
-									<a className="dropdown-item" href="user-lock-screen.html"><i className="material-icons">lock_outline</i> Lock</a>
-									<a className="dropdown-item" href="user-login.html"><i className="material-icons">keyboard_tab</i> Logout</a>
+                    <NavLink to='/logout' className="btn btn-default btn-flat"><i className="material-icons">keyboard_tab</i>Logout</NavLink>
 								</div>
 							</li>
               </ul>

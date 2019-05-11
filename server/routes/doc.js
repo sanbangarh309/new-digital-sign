@@ -112,16 +112,15 @@ module.exports = (app) => {
         data['path'] = move_to;
         doc.images[key] = data;
         if (fs.existsSync(config.directory + '/uploads/docs/' + data.name)){
-          moveFile(config.directory + '/uploads/docs/' + data.name, config.directory + '/uploads/docs/' + move_to + '/');
+          // moveFile(config.directory + '/uploads/docs/' + data.name, config.directory + '/uploads/docs/' + move_to + '/');
         }
         key++;
       });
       if (fs.existsSync(config.directory + '/uploads/docs/' + doc.file)) {
-        moveFile(config.directory + '/uploads/docs/' + doc.file, config.directory + '/uploads/docs/' + move_to + '/');
+        // moveFile(config.directory + '/uploads/docs/' + doc.file, config.directory + '/uploads/docs/' + move_to + '/');
       }
-      doc.save();
+      // doc.save();
       docs['doc_key'] = doc;
-      console.log(doc);
       // console.log(img);
       doc_key++;
     });

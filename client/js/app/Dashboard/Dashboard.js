@@ -426,6 +426,9 @@ class Dashboard extends Component {
       <span class="folderSeparator" style={{padding: '5px'}}>›</span>{this.state.folder}              
     </div>);
     }
+    if (typeof this.state.folder_data != 'string' && this.state.folder_data.length > 0) {
+      console.log(this.state.folder_data);
+    }
       return (
         <div className="dash_board">
           <header>
