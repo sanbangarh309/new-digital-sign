@@ -78,8 +78,8 @@
     width: 16px;
     height: 16px;
     position:absolute;
-    right:0;
-    bottom:0;
+    right: -9px;
+    bottom: -9px;
     cursor:se-resize;
     margin:5px;
     border-bottom: solid 2px #333;
@@ -90,3 +90,11 @@
   .drop-area .page{
     overflow: visible !important;
   }
+
+.left-sidebar .btn-list li{
+  padding-right: 7px !important;
+}
+
+.btn-mainlist li.current-btn a, .btn-mainlist li:hover a {
+	border: solid 1px;
+}

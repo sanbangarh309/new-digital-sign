@@ -29,14 +29,23 @@ module.exports = {
   {
     var matches = dataString.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     var response = {};
-
-    if (matches.length !== 3)
+    let type='';
+    let data='';
+    if (!matches || matches.length !== 3 )
     {
-      return new Error('Invalid input string');
+      var base64Data = dataString.replace(/^data:application\/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,/, "");
+      if (base64Data) {
+        type = 'vnd.openxmlformats-officedocument.wordprocessingml.document';
+        data = base64Data;
+      }else{
+        return new Error('Invalid input string');
+      }
+    }else{
+      type = matches[1];
+      data = matches[2];
     }
-
-    response.type = matches[1];
-    response.data = new Buffer(matches[2], 'base64');
+    response.type = type;
+    response.data = new Buffer(data, 'base64');
 
     return response;
   },
@@ -45,10 +54,12 @@ module.exports = {
     if (!base64Data) {
       return sb('');
     }
+    let base64Data_ = base64Data.doc_file;
+    let file_name = base64Data.file_name;
     var imageTypeRegularExpression = /\/(.*?)$/;
     // Generate random string
     var uniqueSHA1String = module.exports.san_Password()
-    var imageBuffer = module.exports.decodeBase64Image(base64Data);
+    var imageBuffer = module.exports.decodeBase64Image(base64Data_); console.log(imageBuffer);
     var uploafdf_dir = config.directory + "/uploads/docs/";
     var imageTypeDetected = imageBuffer.type.match(imageTypeRegularExpression);
     if(imageTypeDetected[1] == 'pdf'){
@@ -61,7 +72,14 @@ module.exports = {
     // console.log(imageTypeDetected);
     // debugger;
     var userUploadedImagePath = uploafdf_dir + uniqueRandomImageName + '.' + imageTypeDetected[1];
+    if (file_name) {
+      var userUploadedImagePath = uploafdf_dir + file_name;
+    }
+    
     var filename = uniqueRandomImageName + '.' + imageTypeDetected[1];
+    if (file_name) {
+      var filename = file_name;
+    }
     require('fs').writeFile(userUploadedImagePath, imageBuffer.data,
       function()
       {
@@ -73,25 +91,61 @@ module.exports = {
     if (!base64Data) {
       return sb('');
     }
+    const fs  = require('fs');
+    let base64Data_ = base64Data.doc_file;
+    let file_name = base64Data.file_name;
+    let file_type = base64Data.type;
     var imageTypeRegularExpression = /\/(.*?)$/;
     // Generate random string
     var uniqueSHA1String = module.exports.san_Password()
-    var imageBuffer = module.exports.decodeBase64Image(base64Data);
+    var imageBuffer = module.exports.decodeBase64Image(base64Data_);
     var uploafdf_dir = config.directory + "/uploads/docs/";
-    var imageTypeDetected = imageBuffer.type.match(imageTypeRegularExpression);
-    if(imageTypeDetected[1] == 'pdf'){
-      var uniqueRandomImageName = 'pdf_' + uniqueSHA1String;
-    }else{
-      var uniqueRandomImageName = 'image_' + uniqueSHA1String;
+    if (file_type == 'template') {
+      var uploafdf_dir = config.directory + "/uploads/templates/";
     }
-    var userUploadedImagePath = uploafdf_dir + uniqueRandomImageName + '.' + imageTypeDetected[1];
-    var filename = uniqueRandomImageName + '.' + imageTypeDetected[1];
+    let file_without_ext ='';
+    let file_ext = '';
+    var imageTypeDetected = imageBuffer.type.match(imageTypeRegularExpression);
+    // console.log(file_name.split('.').slice(0, -1)[0]);
+    if (file_name.split('.').slice(0, -1)[0]) {
+      file_without_ext = file_name.split('.')[0];
+      file_ext = file_name.split('.')[1];
+    }
+    
+    if (imageTypeDetected && imageTypeDetected[1] == 'pdf'){
+      var uniqueRandomImageName = 'pdf_' + uniqueSHA1String;
+    } else if (imageTypeDetected){
+      var uniqueRandomImageName = 'image_' + uniqueSHA1String;
+    }else{
+      var uniqueRandomImageName = 'word_' + uniqueSHA1String;
+    }
+    if (imageTypeDetected) {
+      var userUploadedImagePath = uploafdf_dir + uniqueRandomImageName + '.' + imageTypeDetected[1];
+    }else{
+      var userUploadedImagePath = uploafdf_dir + uniqueRandomImageName + '.docx';
+    }
+    
+    if (file_name) {
+      var userUploadedImagePath = uploafdf_dir + file_name;
+    }
+    if (imageTypeDetected) {
+      var filename = uniqueRandomImageName + '.' + imageTypeDetected[1];
+    }else{
+      var filename = uniqueRandomImageName + '.docx';
+    }
+    
+    if (file_name) {
+      filename = file_name;
+    }
+    // console.log(file_name);
+    // console.log(filename);
+    // process.exit();
     try
     {
-        require('fs').writeFile(userUploadedImagePath, imageBuffer.data,
+      fs.writeFile(userUploadedImagePath, imageBuffer.data,
           function()
           {
-            if(imageTypeDetected[1] == 'pdf'){
+            if (imageTypeDetected && imageTypeDetected[1] == 'pdf'){
               // let PDF2Pic = require('pdf2pic')
               // let converter = new PDF2Pic({
               //   density: 100,           // output pixels per inch
@@ -120,16 +174,51 @@ module.exports = {
               });
               converter.convert(userUploadedImagePath)
                 .then(info => {
-                  console.log(info);
+                  info['type'] = imageTypeDetected ? imageTypeDetected[1] : 'docx';
                   sb(info);
                 })
                 .catch(err => {
                   console.error(err);
                 })
             }else{
-              sb({ result: 'success',
-              message: 
-               [ { name: filename } ] });
+              console.log(file_without_ext);
+              var toPdf = require("office-to-pdf");
+              var wordBuffer = imageBuffer.data;//fs.readFileSync(config.directory + "/uploads/templates/DGSign.docx")
+              toPdf(wordBuffer).then(
+                (pdfBuffer) => {
+                  fs.writeFileSync(config.directory + "/uploads/templates/" + file_without_ext+".pdf", pdfBuffer)
+                  const Pdf2Img = require('pdf2img-promises');
+                  let converter = new Pdf2Img();
+                  converter.on(filename, (msg) => {
+                    console.log('Received: ', msg);
+                  });
+                  converter.setOptions({
+                    type: 'jpg',                                // png or jpg, default jpg
+                    size: 1024,                                 // default 1024
+                    density: 600,                               // default 600
+                    quality: 100,                               // default 100
+                    outputdir: uploafdf_dir, // output folder, default null (if null given, then it will create folder name same as file name)
+                    outputname: uniqueRandomImageName + "_cnvrt",                       // output file name, dafault null (if null given, then it will create image name same as input name)
+                    page: null                                  // convert selected page, default null (if null given, then it will convert all pages)
+                  });
+                  converter.convert(config.directory + "/uploads/templates/" + file_without_ext + ".pdf")
+                    .then(info => {
+                      if (fs.existsSync(config.directory + "/uploads/templates/" + file_without_ext + ".pdf")) {
+                        fs.unlink(config.directory + "/uploads/templates/" + file_without_ext + ".pdf");
+                      }
+                      info['type'] = file_ext;
+                      sb(info);
+                    })
+                    .catch(err => {
+                      console.error(err);
+                    })
+                }, (err) => {
+                  console.log(err)
+                }
+              )
+              // sb({ result: 'success',
+              // message: 
+              //   [{ name: filename, type: imageTypeDetected ? imageTypeDetected[1] : 'docx' } ] });
             }
           });
       }

@@ -69,7 +69,8 @@ class Signature_edit extends Component {
       token:localStorage.getItem('jwtToken'),
       signer_ids:[],
       allOk:false,
-      redirect:false
+      redirect:false,
+      currentDocId:null
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -80,8 +81,9 @@ class Signature_edit extends Component {
     // console.log(this.state);debugger;
   }
 
-  refreshSigners(){
+  refreshSigners(doc_id){
     this.setState({signer: null});
+    this.setState({ currentDocId: doc_id });
     this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
@@ -167,8 +169,9 @@ class Signature_edit extends Component {
         this.setState({first_attempt: true});
         this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
+        let docid = this.state.currentDocId;
         setTimeout(() => {
-          $(".signature_container").click();
+          $("#signature_container_" + docid).click();
         }, 1000);
       }).catch(error => {
         
@@ -188,8 +191,9 @@ class Signature_edit extends Component {
         }
         this.state.field_count += 1;
         $('#add_signer').modal('hide');
+        let docid = this.state.currentDocId;
         setTimeout(() => {
-          $(".signature_container").click();
+          $("#signature_container_" + docid).click();
         }, 1000);
       }).catch(error => {
         console.log(error.response);
@@ -232,7 +236,6 @@ class Signature_edit extends Component {
 
   convertHtmlToCanvas = (e) => {
     e.preventDefault();
-    let allgood = false;
     let doc = '';
     let width = '';
     let height = '';
@@ -240,6 +243,7 @@ class Signature_edit extends Component {
     let docs = this.state.docs;
     let inputfields = this.state.inputFields;
     let sign_id = this.state.doc_for_sign;
+    const objThis = this;
     if(this.state.docs.length > 0){
       for(let i=1;i <=this.state.docs.length;i++){
         $("#signature_container_"+i).css('background-color','transparent');
@@ -288,7 +292,7 @@ class Signature_edit extends Component {
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
             if(i == this.state.docs.length){
               setTimeout(function() {
-                var blob = doc.output("blob");
+                var blob = doc.output("blob"); 
                 var blobURL = URL.createObjectURL(blob);
                 var downloadLink = document.getElementById('pdf-download-link');
                 downloadLink.href = blobURL;
@@ -307,13 +311,12 @@ class Signature_edit extends Component {
                     var reader = new FileReader();
                     reader.readAsDataURL(blob); 
                     reader.onloadend = function() {
-                        let base64data = reader.result;                
+                      let base64data = reader.result;              
                         axios.put('/api/doc/'+edit_id,{base64Data:base64data,token:localStorage.getItem('jwtToken'),docs:docs}).then((res) => {
-                          
+                          objThis.setState({ redirect: 'dashboard' });
                         });
                     }
                     swal("Saved!", "Your doc file has been saved", "success");
-                    allgood = true;
                   }
                 });
               },500);
@@ -321,10 +324,6 @@ class Signature_edit extends Component {
         });
       }
     }
-    if (allgood) {
-      this.setState({ redirect: 'dashboard'});
-    }
-    
   }
 
  
@@ -362,6 +361,13 @@ class Signature_edit extends Component {
     // document.getElementById("app").appendChild('<div class="modal-backdrop show"></div>');
     $(loader).css('display','block');
     this.convertHtmlToCanvas(e);
+    
+    // setTimeout(() => {
+    //   console.log(this.state.redirect);
+    //   if (this.state.redirect) {
+    //     return (<Redirect to={'/' + this.state.redirect} />);
+    //   }
+    // }, 1000);
   }
 
   createTextField(e){
@@ -552,7 +558,7 @@ class Signature_edit extends Component {
     $('#close_btn').click();
     this.setState({active_tab:'initial'});
     if(this.state.doc_for_sign){  
-      setTimeout(() => { console.log(this.state.sign_texts);
+      setTimeout(() => { 
         $(".signature_container").click();
       }, 1000);
     }
@@ -621,9 +627,11 @@ class Signature_edit extends Component {
     }catch(e){
 
     }
+    
     if (this.state.redirect) {
       return (<Redirect to={'/' + this.state.redirect} />);
     }
+    // console.log(this.state.redirect);
     const Fields = this.state.signers.map((person) =>
         (<li 
         key={person._id}

@@ -68,7 +68,9 @@ class Signature extends Component {
       template_id:this.props.location.query.temp || null,
       first_attempt:false,
       token:localStorage.getItem('jwtToken'),
-      field_count:0
+      field_count:0,
+      redirect:false,
+      currentDocId:null
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -81,8 +83,9 @@ class Signature extends Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
-  refreshSigners(){
+  refreshSigners(doc_id){
     this.setState({signer: null});
+    this.setState({ currentDocId: doc_id });
     this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
@@ -118,12 +121,13 @@ class Signature extends Component {
   useTemplate = (id) => {
     axios.get('/api/template/'+id).then((res) => {
       let fina_data = [];
+      localStorage.setItem('file_name', res.data.name);
       Object.keys(res.data.images).map(key => {
         var i = new Image(); 
         i.onload = function(){
           fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
         };
-        i.src = 'files/docs/'+res.data.images[key].name;
+        i.src = 'files/templates/'+res.data.images[key].name;
       });
       
       setTimeout(() => {
@@ -165,8 +169,9 @@ class Signature extends Component {
         this.setState({signer_field: fld});
         this.setState({signer_id: res.data._id});
         $('#add_signer').modal('hide');
+        let docid = this.state.currentDocId;
         setTimeout(() => {
-          $(".signature_container").click();
+          $("#signature_container_" + docid).click(); 
         }, 1000);
       }).catch(error => {
         
@@ -187,8 +192,9 @@ class Signature extends Component {
           $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
         $('#add_signer').modal('hide');
+        let docid = this.state.currentDocId; 
         setTimeout(() => {
-          $(".signature_container").click();
+          $("#signature_container_" + docid).click();
         }, 1000);
       }).catch(error => {
         console.log(error.response);
@@ -204,10 +210,11 @@ class Signature extends Component {
     // this.setState({
     //        doc_blob: doc
     // });
+    // console.log(localStorage.getItem('file_name')); debugger;
     var loader = document.getElementById('outer-barG');
     $('<div class="modal-backdrop show" id="modal_backdrop"></div>').appendTo('body');
     $(loader).css('display','block');
-    axios.post('/api/chktype',{doc_file:doc}).then((res) => {
+    axios.post('/api/chktype', { doc_file: doc, file_name: localStorage.getItem('file_name')}).then((res) => {
         localStorage.setItem('uploaded_doc','')
         let fina_data = [];
         Object.keys(res.data.message).map(key => {
@@ -231,6 +238,7 @@ class Signature extends Component {
   }
 
   convertHtmlToCanvas = () => {
+    const objThis = this;
     let save = '';
     let doc = '';
     let width = '';
@@ -245,13 +253,13 @@ class Signature extends Component {
     // });
     // debugger;
     if(this.state.docs.length > 0){
+      doc = new jsPDF('p', 'mm', 'a4');
       for(let i=1;i <=this.state.docs.length;i++){
         html2canvas(document.querySelector("#signature_container_"+i), { allowTaint: true }).then(canvas => { 
           var imgData = canvas.toDataURL(
             'image/jpeg',[0.0, 1.0]);      
             this.calculatePDF_height_width("#signature_container_"+i,0);
             if(i ==1){
-              doc = new jsPDF('p', 'mm', 'a4');
               width = doc.internal.pageSize.getWidth();
               height = doc.internal.pageSize.getHeight();
               doc.setFont("helvetica");
@@ -309,13 +317,14 @@ class Signature extends Component {
                     var reader = new FileReader();
                     reader.readAsDataURL(blob); 
                     reader.onloadend = function() {
-                        let base64data = reader.result;                
-                        axios.post('/api/add_doc',{base64Data:base64data,token:localStorage.getItem('jwtToken'),docs:docs}).then((res) => {
-                          
-                        });
+                      let base64data = reader.result;     
+                      axios.post('/api/add_doc', { base64Data: base64data, token: localStorage.getItem('jwtToken'), docs: docs, file_name: localStorage.getItem('file_name'), tempId: objThis.state.template_id}).then((res) => {
+                        localStorage.removeItem('file_name');
+                        objThis.setState({ redirect: 'dashboard' });
+                      });
                     }
+                    // debugger;
                     swal("Saved!", "Your doc file has been saved", "success");
-                    return <Redirect to='/dashboard'  />
                   }
                 });
               },500);
@@ -598,6 +607,9 @@ class Signature extends Component {
     }catch(e){
 
     }
+    if (this.state.redirect) {
+      return (<Redirect to={'/' + this.state.redirect} />);
+    }
     const Fields = this.state.signers.map((person) =>
         (<li 
         key={person._id}
@@ -738,6 +750,7 @@ class Signature extends Component {
       field_required={this.state.field_required}
       first_attempt={this.state.first_attempt}
       signer_clr={this.state.signer_clr}
+      template_id={this.state.template_id}
       />
     </div>
     <div className="modal signmodal" id="Signfiled">

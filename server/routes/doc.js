@@ -1,6 +1,7 @@
 const Doc = require.main.require('./models/Doc');
 const Signer = require.main.require('./models/Signer');
 const Que = require.main.require('./models/Que');
+const Folder = require.main.require('./models/Folder');
 const Template = require.main.require('./models/Template');
 const jwt = require('jwt-then');
 const mongoose = require('mongoose');
@@ -8,13 +9,14 @@ const ObjectId = mongoose.Types.ObjectId;
 const San_Function = require.main.require('./functions');
 const config = require.main.require('./custom_config');
 const User = require.main.require('./user').models.user;
+
 module.exports = (app) => {
     app.post('/api/get_docs', async (req, res, next) => {
         let query = {};
         if(req.body.token){
           const user = await jwt.verify(req.body.token, config.JWT_SECRET);
           const userMatched = await User.findById(user.sub);
-          query = { 'user_id': ObjectId(userMatched._id) };
+          query = { 'user_id': ObjectId(userMatched._id),folder_id:null };
         }
         Doc.find(query)
         .exec()
@@ -26,17 +28,19 @@ module.exports = (app) => {
       const user = await jwt.verify(req.body.token, config.JWT_SECRET);
       const userMatched = await User.findById(user.sub);
       if (userMatched) {
-        San_Function.uploadFinalDoc(req.body.base64Data,function(buffer){
-          if (buffer.name) {
+        const { base64Data, file_name } = req.body; console.log(file_name);
+        San_Function.uploadBase64Image({ doc_file: base64Data, file_name: file_name,type:'template' },function(buffer){
+          if (buffer.result == 'success') {
             let template = new Template();
             template.user_id = user.sub;
-            template.name = buffer.name;
-            template.path = buffer.name;
+            template.name = file_name;
+            template.path = file_name;
+            template.images = buffer.message;
             template.type = buffer.type;
             template.save();
             return res.json(template);
           }
-        }) 
+        }); 
       }
     });
 
@@ -66,8 +70,9 @@ module.exports = (app) => {
     });
 
     app.post('/api/chktype', (req, res, next) => {
-      let base64Data = req.body.doc_file;
-      San_Function.uploadBase64Image(base64Data,function(buffer){
+      // let base64Data = req.body.doc_file;
+      const { doc_file, file_name } = req.body;
+      San_Function.uploadBase64Image({ doc_file: doc_file, file_name: file_name, type: 'doc' },function(buffer){
         res.json(buffer)
       });
     });
@@ -80,55 +85,75 @@ module.exports = (app) => {
     });
 
   app.post('/api/movefile', async (req, res, next) => {
-    const fs = require('fs');
+    // const fs = require('fs');
     let query = {};
-    const { docIds, move_to } = req.body;
-    if (docIds) {
-      query['_id'] = { $in: docIds};
+    const { docs, move_to } = req.body; 
+    if (docs) {
+      query['_id'] = { $in: docs};
     }
-    const moveFile = (file, dir2) => {
-      //include the fs, path modules
-      var fs = require('fs');
-      var path = require('path');
-
-      //gets file name and adds it to dir2
-      var f = path.basename(file);
-      var dest = path.resolve(dir2, f);
-
-      fs.rename(file, dest, (err) => {
-        if (err) throw err;
-        else console.log('Successfully moved');
-      });
-    };
-    const docs = await Doc.find(query);
-    let doc_key = 0;
-    docs.forEach(doc => {
-      doc.path = move_to;
-      // for (var key in doc.images) {
-      //   console.log(doc.images[key]);
-      // }
-      let key = 0;
-      doc.images.forEach(data => {
-        data['path'] = move_to;
-        doc.images[key] = data;
-        if (fs.existsSync(config.directory + '/uploads/docs/' + data.name)){
-          // moveFile(config.directory + '/uploads/docs/' + data.name, config.directory + '/uploads/docs/' + move_to + '/');
+    let fldr = await Folder.findById(move_to);
+    let docs_ = await Doc.find(query);
+    if (fldr) {
+      docs.map(id => {
+        if (!fldr.docs.includes(id)) {
+          fldr.docs.push(id);
         }
-        key++;
       });
-      if (fs.existsSync(config.directory + '/uploads/docs/' + doc.file)) {
-        // moveFile(config.directory + '/uploads/docs/' + doc.file, config.directory + '/uploads/docs/' + move_to + '/');
-      }
-      // doc.save();
-      docs['doc_key'] = doc;
-      // console.log(img);
-      doc_key++;
-    });
-    res.json(docs);
+      console.log(fldr.docs);
+      // fldr.docs = docs;
+      fldr.save();
+      docs_.forEach(doc => {
+        doc.folder_id = move_to;
+        doc.save();
+      });
+      res.json(fldr);
+    }else{
+      res.json({success:false});
+    }
+    // const moveFile = (file, dir2) => {
+    //   //include the fs, path modules
+    //   var fs = require('fs');
+    //   var path = require('path');
+
+    //   //gets file name and adds it to dir2
+    //   var f = path.basename(file);
+    //   var dest = path.resolve(dir2, f);
+
+    //   fs.rename(file, dest, (err) => {
+    //     if (err) throw err;
+    //     else console.log('Successfully moved');
+    //   });
+    // };
+    // const docs = await Doc.find(query);
+    // let doc_key = 0;
+    // docs.forEach(doc => {
+    //   doc.path = move_to;
+    //   // for (var key in doc.images) {
+    //   //   console.log(doc.images[key]);
+    //   // }
+    //   let key = 0;
+    //   doc.images.forEach(data => {
+    //     data['path'] = move_to;
+    //     doc.images[key] = data;
+    //     if (fs.existsSync(config.directory + '/uploads/docs/' + data.name)){
+    //       // moveFile(config.directory + '/uploads/docs/' + data.name, config.directory + '/uploads/docs/' + move_to + '/');
+    //     }
+    //     key++;
+    //   });
+    //   if (fs.existsSync(config.directory + '/uploads/docs/' + doc.file)) {
+    //     // moveFile(config.directory + '/uploads/docs/' + doc.file, config.directory + '/uploads/docs/' + move_to + '/');
+    //   }
+    //   // doc.save();
+    //   docs['doc_key'] = doc;
+    //   // console.log(img);
+    //   doc_key++;
+    // });
+    
   });
 
     app.post('/api/add_doc', (req, res, next) => {
-        San_Function.uploadFinalDoc(req.body.base64Data, async (buffer)=> { 
+      const { base64Data, file_name, tempId } = req.body;
+      San_Function.uploadFinalDoc({ doc_file: base64Data, file_name: file_name }, async (buffer)=> { 
             const user = await jwt.verify(req.body.token, config.JWT_SECRET);
             const userMatched = await User.findById(user.sub);
             // console.log(userMatched);
@@ -142,6 +167,13 @@ module.exports = (app) => {
                   doc.file = buffer.name;
                   doc.images = req.body.docs;
                   doc.save();
+                  if (tempId) {
+                    var fs = require('fs-extra');
+                    const path = require('path');
+                    req.body.docs.forEach(img => {
+                      fs.copySync(path.resolve(__dirname, config.directory + '/uploads/templates/' + img.name), config.directory + '/uploads/docs/' + img.name);
+                    });
+                  }
                   return res.json(doc);
               }else{
                 return res.json({msg:'file not exist'});
@@ -158,11 +190,12 @@ module.exports = (app) => {
       if(userMatched){
         const template = await Template.findById(req.body.id);
         if(template){
-          San_Function.pdfToImage(template.name, async (data) => {
-            template.images = data.message;
-            template.save();
-            return res.json(template);
-          });
+          return res.json(template);
+          // San_Function.pdfToImage(template.name, async (data) => {
+          //   template.images = data.message;
+          //   template.save();
+          //   return res.json(template);
+          // });
         }else{
           return res.json('template not found');
         }
@@ -187,89 +220,133 @@ module.exports = (app) => {
     });
 
     app.post('/api/createfolder',async (req,res,next) => {
-      const {folder} = req.body;
-      var fs = require('fs');
-      var dir = config.directory+'/uploads/docs/'+folder;
-      if (!fs.existsSync(dir)){
-          fs.mkdirSync(dir);
+      const { folder, token} = req.body; console.log(folder);
+      const user = await jwt.verify(token, config.JWT_SECRET);
+      const userMatched = await User.findById(user.sub);
+      if (userMatched) {
+        let fldr = new Folder();
+        fldr.name = folder;
+        fldr.user_id = userMatched._id;
+        fldr.save();
+        res.json({ success: true, msg: 'Directory Created Successfully' });
+        // var fs = require('fs');
+        // var dir = config.directory + '/uploads/docs/' + folder;
+        // if (!fs.existsSync(dir)) {
+        //   let folder = new Folder();
+        //   folder.name = folder;
+        //   folder.user_id = userMatched._id;
+        //   folder.save();
+        //   res.json({ success: true, msg: 'Directory Created Successfully' });
+        //   // fs.mkdirSync(dir);
+        // }else{
+        //   res.json({ success: false, msg: 'Directory Created Already' });
+        // }
+      }else{
+        res.json({ success: false, msg: 'Something Went Wrong.' });
       }
-      res.json({success:true,msg:'Directory Created Successfully'});
     });
 
     app.post('/api/get_folders',async (req,res,next) => {
       const {token} = req.body;
       const user = await jwt.verify(token, config.JWT_SECRET);
       const userMatched = await User.findById(user.sub);
-      let src = config.directory+'/uploads/docs/';
+      // let src = config.directory+'/uploads/docs/';
       if(userMatched){
-        const { lstatSync, readdirSync } = require('fs')
-        const { join } = require('path')
-        const isDirectory  = source => lstatSync(source).isDirectory() 
-        const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
-        res.json(getDirectories);
+        let folders = await Folder.find({ user_id: ObjectId(userMatched._id)});
+        // const { lstatSync, readdirSync } = require('fs')
+        // const { join } = require('path')
+        // const isDirectory  = source => lstatSync(source).isDirectory() 
+        // const getDirectories = readdirSync(src).map(name => join(src, name)).filter(isDirectory);
+        res.json(folders);
       }
     });
 
-    app.delete('/api/folder/:folder', (req, res, next) => {
-      var fs = require('fs');
-      let dir = config.directory+'/uploads/docs/'+req.params.folder;
-      if(fs.existsSync(dir)){
-        // fs.unlinkSync(req.params.folder).then(() => {
-        //   res.json({success:true,msg:'Directory Deleted Successfully'});
-        // }).catch(err => {
-        //   res.json({success:false,msg:'Wrong'});
-        //   console.error(err)
-        // })
-        fs.rmdirSync(dir);
-        res.json({success:true,msg:'Directory Deleted Successfully'});
+    app.delete('/api/folder/:id', (req, res, next) => {
+      Folder.findOneAndRemove({ _id: req.params.id })
+      // Folder.findOne({ _id: req.params.id })
+        .exec().then((folder) => {
+          Doc.deleteMany({ '_id': { $in: folder.docs } }, function (err) {
+            console.log('Docs removed');
+          });
+          res.json({ success: true, msg: 'Directory Deleted Successfully' });
+        }).catch((err) => next(err));
+      
+      // var fs = require('fs');
+      // let dir = config.directory+'/uploads/docs/'+req.params.folder;
+      // if(fs.existsSync(dir)){
+      //   // fs.unlinkSync(req.params.folder).then(() => {
+      //   //   res.json({success:true,msg:'Directory Deleted Successfully'});
+      //   // }).catch(err => {
+      //   //   res.json({success:false,msg:'Wrong'});
+      //   //   console.error(err)
+      //   // })
+      //   // fs.rmdirSync(dir);
+      //   res.json({success:true,msg:'Directory Deleted Successfully'});
+      // }else{
+      //   res.json({success:false,msg:'Wrong'});
+      // }
+    });
+
+  app.put('/api/folder', async (req, res, next) => {
+      // var fs = require('fs');
+      // let olddir = config.directory+'/uploads/docs/'+req.body.old_folder;
+      // let newdir = config.directory+'/uploads/docs/'+req.body.folder;
+      if (req.body.folder_id) {
+        let folder = await Folder.findById(req.body.folder_id);
+        folder.name = req.body.folder;
+        folder.save();
+        res.json({ success: true, msg: 'Directory Renamed Successfully' });
+      }
+   
+      // if(fs.existsSync(olddir)){
+        
+      //   // try {
+      //   //   fs.renameSync(olddir, newdir)
+      //   //   res.json({success:true,msg:'Directory Renamed Successfully'});
+      //   // } catch (err) {
+      //   //   res.json({success:false,msg:'Wrong'});
+      //   //   console.error(err)
+      //   // }
+      // }else{
+      //   res.json({success:false,msg:'Wrong'});
+      // }
+    });
+
+    app.get('/api/get_files/:id', async (req,res,next) => {
+      let folder = await Folder.findById(req.params.id);
+      let query = {};
+      if (folder.docs.length > 0) {
+        query['_id'] = { $in: folder.docs };
+        let docs = await Doc.find(query);
+        return res.json(docs);
       }else{
-        res.json({success:false,msg:'Wrong'});
+        return res.json('Documents Not Found');
       }
-    });
-
-    app.put('/api/folder', (req, res, next) => {
-      var fs = require('fs');
-      let olddir = config.directory+'/uploads/docs/'+req.body.old_folder;
-      let newdir = config.directory+'/uploads/docs/'+req.body.folder;
-      if(fs.existsSync(olddir)){
-        try {
-          fs.renameSync(olddir, newdir)
-          res.json({success:true,msg:'Directory Renamed Successfully'});
-        } catch (err) {
-          res.json({success:false,msg:'Wrong'});
-          console.error(err)
-        }
-      }else{
-        res.json({success:false,msg:'Wrong'});
-      }
-    });
-
-    app.get('/api/get_files/:folder', async (req,res,next) => {
-      const fs = require('fs'); 
-      let src = config.directory+'/uploads/docs/'+req.params.folder;
-      let files_ = [];
-      fs.readdir(src, (err, files) => {
-        if(files.length <=0){
-          return res.json({success:false,msg:'Documents Not Found'});
-        }
-        files.forEach(file => {
-          files_.push(file);
-        });
-        return res.json({success:true,msg:files_});
-      });
+      
+     
+      // const fs = require('fs'); 
+      // let src = config.directory+'/uploads/docs/'+req.params.folder;
+      
+      // fs.readdir(src, (err, files) => {
+      //   if(files.length <=0){
+      //     return res.json({success:false,msg:'Documents Not Found'});
+      //   }
+      //   files.forEach(file => {
+      //     files_.push(file);
+      //   });
+      //   return res.json({success:true,msg:files_});
+      // });
     });
 
     app.post('/api/signers', async (req, res, next) => {
       let query = {};
       if(req.body.ids){
         query['_id'] = { $in: req.body.ids };
-        // query = { field: { $in: req.body.ids } };
       }
       if(req.body.token){
         const user = await jwt.verify(req.body.token, config.JWT_SECRET);
         const userMatched = await User.findById(user.sub);
-        query['added_by'] = ObjectId(userMatched._id); console.log(query);
-        // query = { 'added_by': ObjectId(userMatched._id) };
+        query['added_by'] = ObjectId(userMatched._id);
         Signer.find(query)
         .exec()
         .then((signers) => res.json(signers))
@@ -369,21 +446,16 @@ module.exports = (app) => {
         .exec()
         .then((doc) => {
           var fs = require('fs');
-          if ( typeof doc.name !== 'undefined' && doc.name && fs.existsSync(config.directory+'/uploads/docs/'+doc.name)){
-            fs.unlink(config.directory+'/uploads/docs/'+doc.name);
+          if (typeof doc.name !== 'undefined' && doc.name && fs.existsSync(config.directory +'/uploads/templates/'+doc.name)){
+            fs.unlink(config.directory+'/uploads/templates/'+doc.name);
           }
-          // if ( typeof doc.images !== 'undefined' && doc.images[0]){
-          //   doc.images.forEach(el => {
-          //     if(fs.existsSync(config.directory+'/uploads/docs/'+el.name)){
-          //       fs.unlink(config.directory+'/uploads/docs/'+el.name);
-          //     }
-          //   });
-          //   let strn = doc.images[0].name.replace("_cnvrt_1", "").split('.');
-          //   let pdf_file = strn[0]+'.pdf';
-          //   if(pdf_file && fs.existsSync(pdf_file)){
-          //     fs.unlink(config.directory+'/uploads/docs/'+pdf_file);
-          //   }
-          // }
+          if ( typeof doc.images !== 'undefined' && doc.images[0]){
+            doc.images.forEach(el => {
+              if (fs.existsSync(config.directory +'/uploads/templates/'+el.name)){
+                fs.unlink(config.directory +'/uploads/templates/'+el.name);
+              }
+            });
+          }
           res.json(doc);
         })
         .catch((err) => next(err));
@@ -391,22 +463,23 @@ module.exports = (app) => {
 
     app.put('/api/doc/:id', (req, res, next) => {
       var fs = require('fs');
-      San_Function.uploadFinalDoc(req.body.base64Data, async (buffer)=> {
+      const { base64Data } = req.body;
         Doc.findById(ObjectId(req.params.id))
         .exec()
-        .then((doc) => {
-            if(doc.file && fs.existsSync(config.directory + "/uploads/docs/"+doc.file)){
-              fs.unlinkSync(config.directory + "/uploads/docs/"+doc.file);
+          .then((doc) => {
+            if (doc.file && fs.existsSync(config.directory + "/uploads/docs/" + doc.file)) {
+              fs.unlinkSync(config.directory + "/uploads/docs/" + doc.file);
             }
-            doc.images = req.body.docs;
-            doc.title = buffer.name;
-            doc.file = buffer.name;
-            doc.save()
-            .then(() => res.json(doc))
-            .catch((err) => next(err));
+            San_Function.uploadFinalDoc({ doc_file: base64Data, file_name: doc.file }, async (buffer) => {
+              doc.images = req.body.docs;
+              doc.title = buffer.name;
+              doc.file = buffer.name;
+              doc.save()
+              .then(() => res.json(doc))
+              .catch((err) => next(err));
+            });
         })
         .catch((err) => next(err));
-      });
     });
 
     app.get('/files/:type/:img_name', function(req,res){

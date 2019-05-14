@@ -7,14 +7,6 @@ import history from '../history';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
 
-const getBase64 = (file) => {
-  return new Promise((resolve,reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
 
 @connect((store) => {
   return {
@@ -47,12 +39,24 @@ class Template extends Component {
     this.getTemplates();
   }
 
+  getBase64 = (file) => {
+    // this.setState({ file_name: file.name});
+    localStorage.setItem('template_name', file.name);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   templateUpload = (e) => {
     var loader = document.getElementById('outer-barG');
     $(loader).css('display','block');
     const file = e.target.files[0];
-    getBase64(file).then(base64 => {
-      axios.post('/api/add_template/',{base64Data:base64,token:localStorage.getItem('jwtToken')}).then((res) => {
+    this.getBase64(file).then(base64 => {
+      axios.post('/api/add_template/', {
+        base64Data: base64, token: localStorage.getItem('jwtToken'), file_name: localStorage.getItem('template_name')}).then((res) => {
         this.getTemplates();
         $('#outer-barG').css('display','none');
         // this.setState({
@@ -195,11 +199,13 @@ class Template extends Component {
                     }
                     else if(value.type == 'msword'){
                         img = "/assets/img/doc-1.png";
+                    }else if (value.type == 'docx') {
+                      img = "/assets/img/doc-1.png";
                     }else{
-                        img = "/files/docs/"+value.name;
+                      img = "/files/docs/"+value.name;
                     }
                       
-                      return (<li key={index}>
+                    return (<li key={index}>
                                 <ul className="list-inline top-box-list">
                                   <li><input type="checkbox"/><span></span></li>
                                   <li className="doc-box">
@@ -207,6 +213,9 @@ class Template extends Component {
                                         <div className="fig-left">
                                         <img src={img} alt="No Thumb" className="doc-pic"/>
                                         {/* <embed src={img} width="140px" className="doc-pic" /> */}
+                                        </div>
+                                        <div className="doc-info">
+                                <p>{value.name}<span className="date-doc small">{value.created_at}</span></p>
                                         </div>
                                       </a>
                                  </li>

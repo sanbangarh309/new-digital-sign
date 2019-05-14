@@ -9,6 +9,7 @@ const schema = new mongoose.Schema({
   file: String,
   images: [],
   path:String,
+  folder_id: { type: String, default: null },
   shared_with: [],
   filethumb: String,
   created_at:{ type: Date, default: Date.now },

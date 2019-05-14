@@ -7,15 +7,6 @@ import history from '../history';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
 
-const getBase64 = (file) => {
-  return new Promise((resolve,reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
-
 @connect((store) => {
   return {
       docs: store.docs,
@@ -45,7 +36,7 @@ class Dashboard extends Component {
       templates:[],
       folders:[],
       folder:null,
-      old_folder:null,
+      folder_id:null,
       disabled_fields:{pointerEvents:'none',color:'#c9c2c2'},
       checked_values:[],
       move_to:null,
@@ -54,13 +45,24 @@ class Dashboard extends Component {
       subject:'',
       message:'',
       drag:null,
-      signers:[],
+      signers:[]
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
     // this.props.dispatch(auth.actions.getDocs(localStorage.getItem('jwtToken')));
     this.getFolders();
     this.getDocs();
+  }
+
+  getBase64 = (file) => {
+    // this.setState({ file_name: file.name});
+    localStorage.setItem('file_name', file.name);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
   }
 
   componentDidMount(){
@@ -95,7 +97,7 @@ class Dashboard extends Component {
     var loader = document.getElementById('outer-barG');
     $(loader).css('display','block');
     const file = e.target.files[0];
-    getBase64(file).then(base64 => {
+    this.getBase64(file).then(base64 => {
       this.setState({doc:base64});
       localStorage.setItem('uploaded_doc', base64);
       this.setState({
@@ -178,7 +180,7 @@ class Dashboard extends Component {
     e.preventDefault();
     swal({
       title: "Do You Want to delete it from your account?",
-      text: "Are you sure that you want to delete ?",
+      text: "It Will Also Delete Docs Inside It , Are You Sure ?",
       icon: "warning",
       buttons: ["No", "Yes"],
       dangerMode: true,
@@ -187,6 +189,7 @@ class Dashboard extends Component {
       if (willdel) {
         axios.delete('/api/folder/'+folder).then((res) => {
           this.getFolders();
+          this.getDocs();
           swal("Deleted!", "Your folder has been deleted", "success");
         }).catch(error => {
           swal("Error!", "Something Went wrong", "danger");
@@ -274,7 +277,7 @@ class Dashboard extends Component {
   saveFolder = (e) => {
     e.preventDefault();
     if(this.state.folder){
-      axios.post('/api/createfolder',{folder:this.state.folder}).then((res) => {
+      axios.post('/api/createfolder', { folder: this.state.folder,token: localStorage.getItem('jwtToken')}).then((res) => {
         this.getFolders();
         setTimeout(() => $('#create_folder').modal('hide'), 500)
       }).catch(error => {
@@ -283,16 +286,16 @@ class Dashboard extends Component {
     }
   }
 
-  showRenamePop = (folder,e) => {
+  showRenamePop = (id,e) => {
     e.preventDefault();
-    this.setState({old_folder:folder});
+    this.setState({folder_id:id});
     $('#rename_folder').modal('show');
   }
 
 
   renameFolder = (e) => {
-    if(this.state.folder && this.state.old_folder){
-      axios.put('/api/folder',{folder:this.state.folder,old_folder:this.state.old_folder}).then((res) => {
+    if (this.state.folder && this.state.folder_id){
+      axios.put('/api/folder', { folder: this.state.folder, folder_id: this.state.folder_id}).then((res) => {
         this.getFolders();
         setTimeout(() => $('#rename_folder').modal('hide'), 500)
       }).catch(error => {
@@ -326,7 +329,7 @@ class Dashboard extends Component {
     $('#folder_structure').modal('show');
   }
 
-  selectFolder = (folder,e) => {
+  selectFolder = (id,e) => {
     // e.preventDefault();
     $('#myUL li').removeClass('activeClass');
     $('#myUL li span').removeClass('activeClass');
@@ -335,7 +338,7 @@ class Dashboard extends Component {
     }else{
       $(e.target).addClass("activeClass");
     }
-    this.setState({move_to:folder});
+    this.setState({ move_to: id});
     
   }
 
@@ -344,24 +347,24 @@ class Dashboard extends Component {
     console.log(this.state.checked_values)
     if(this.state.move_to && this.state.checked_values.length > 0){
       axios.post('/api/movefile',{move_to:this.state.move_to,docs:this.state.checked_values}).then((res) => {
-        this.getFolders();
-        setTimeout(() => $('#folder_structure').modal('hide'), 500)
+        this.getDocs();
+        setTimeout(() => $('#folder_structure').modal('hide'), 500);
       }).catch(error => {
        
       });
     }
   }
 
-  openFolder = (folder,e) => {
+  openFolder = (folder,name,e) => {
     if(!folder){
       this.setState({folder:null});
       this.setState({folder_data:[...new Set([])]});
       return;
     }
-    this.setState({folder:folder});
+    this.setState({ folder: name});
     axios.get('/api/get_files/'+folder).then((res) => {
       this.setState({
-        folder_data: res.data.msg
+        folder_data: res.data
       });
     }).catch(error => {
       console.log(error.response);
@@ -420,15 +423,13 @@ class Dashboard extends Component {
       return (<Redirect to={this.state.redirect}/>)
     }
     let folder_path = '';
-    if(typeof this.state.folder_data == 'string'){
+    if (typeof this.state.folder_data == 'string' || this.state.folder_data.length > 0){
       folder_path = (<div class="folderPath">
-      <a href="javascript:void(0)" onClick={this.openFolder.bind(this, null)} class="folderLink">Documents</a>
+      <a href="javascript:void(0)" onClick={this.openFolder.bind(this, null,null)} class="folderLink">Documents</a>
       <span class="folderSeparator" style={{padding: '5px'}}>›</span>{this.state.folder}              
     </div>);
     }
-    if (typeof this.state.folder_data != 'string' && this.state.folder_data.length > 0) {
-      console.log(this.state.folder_data);
-    }
+    
       return (
         <div className="dash_board">
           <header>
@@ -468,7 +469,7 @@ class Dashboard extends Component {
             </div> */}
            </div>
            <ul className="sidebar-menu tree" data-widget="tree">
-            <li><NavLink activeClassName='active' to='/dashboard'><i className="fa fa-dashboard"></i> <span>Documentation</span></NavLink></li>
+                <li><NavLink activeClassName='active' to='/dashboard'><i className="fa fa-dashboard"></i> <span>Documents</span></NavLink></li>
             <li><NavLink activeClassName='active' to='/templates'><i className="fa fa-rebel"></i> <span>Templates</span></NavLink></li>
             <li><NavLink activeClassName='active' to='/logout'><i className="fa fa-sign-out"></i> <span>Logout</span></NavLink></li>
            </ul>
@@ -485,96 +486,129 @@ class Dashboard extends Component {
                       <li><input type="checkbox"/><span></span></li> 
                           <li><a href="javascript:void(0)" onClick={this.createFolder}>NEW FOLDER <i className="fa fa-plus"></i></a></li>
                       {/* <li><a href="javascript:void(0)">FOLDER SEND </a></li> */}
+                          <li className="delete-row" style={this.state.disabled_fields}><a href="javascript:void(0)">TRASH <i className="fa fa-trash danger"></i></a></li>
+                          <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload} />UPLOAD <i className="fa fa-upload"></i></li>
                           <li><a href="javascript:void(0)" style={this.state.disabled_fields} onClick={this.multiSend}>SEND FOR SIGNING <i className="fa fa-send-o"></i></a></li>
                           <li><a href="javascript:void(0)" onClick={this.folderStructure} style={this.state.disabled_fields}>MOVE TO <i className="fa fa-arrows"></i></a></li>
-                          <li className="delete-row" style={this.state.disabled_fields}><a href="javascript:void(0)">Trash <i className="fa fa-trash danger"></i></a></li>
-                      {/* <li className="search-row">
-                        <form id="example1_filter" className="dataTables_filter">
-                          <label className="filter_search">
-                            <input type="search" className="form-control input-sm" placeholder="Search..." aria-controls="example1"/>
-                            <button className="btn search--btn"><i className="fa fa-search"></i></button>
-                          </label>
-                        </form>
-                      </li> */}
-                          <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload} />Upload <i className="fa fa-upload"></i></li>
-                          <li><a href="#">Filter <i className="fa fa-filter"></i></a></li>
+                          <li className="search-row">
+                            <form id="example1_filter" className="dataTables_filter">
+                              <label className="filter_search">
+                                <input type="search" className="form-control input-sm" placeholder="Search..." aria-controls="example1" />
+                                <button className="btn search--btn"><i className="fa fa-search"></i></button>
+                              </label>
+                            </form>
+                          </li>
                     </ul>
                   </div>
                   {(() => {
-                    switch (typeof this.state.folder_data) {
-                      case "string":   return (<div className="card-body">
-                                                  <ol className="od-list">
-                                                    <li key='not_found'>
-                                                      <div className="doc-info" style={{textAlign: 'center',padding: '29px'}}>
-                                                          <p><span className="date-doc small" style={{fontSize: '22px'}}>{this.state.folder_data}</span></p>
-                                                      </div>
-                                                    </li>
-                                                  </ol>
-                                                </div>);
-                      default:  return (<div><div className="card-body">
-                                              <ol className="od-list-2">
-                                              {this.state.folders.map((value, index) => {
-                                                let img = "/assets/img/folder.jpg";
-                                                let folder = value.substr(value.lastIndexOf('/') + 1);
-                                                return (<li key={index}>
-                                                          <ul className="list-inline top-box-list-2">
-                                                              <li><input type="checkbox" value={folder} /><span></span></li>
-                                                              <li className="doc-box">
-                                                                <a href="javascript:void(0)" onClick={this.openFolder.bind(this, folder)}>
-                                                                  <div className="fig-left">
-                                                                    <img src={img} alt="No Thumb" className="doc-pic"/>
-                                                                  </div>
-                                                                  <div className="doc-info">
-                                                                    <p><span className="date-doc small">{folder}</span></p>
-                                                                  </div>
-                                                                </a>
-                                                              </li>
-                                                              <li><a href="javascript:void(0)" onClick={this.openFolder.bind(this, folder)}>Open</a></li>
-                                                              <li>
-                                                              <div class="dropdown">
-                                                                <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
+                        if (typeof this.state.folder_data != 'string' && this.state.folder_data.length > 0) {
+                      return (<div className="card-body">
+                        <ol className="od-list">
+                          {this.state.folder_data.map((value, index) => {
+                            let img = "/files/docs/" + value.images[0].name || "/assets/img/doc-1.png";
+                            return (<li key={index}>
+                              <ul className="list-inline top-box-list">
+                                <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
+                                <li className="doc-box">
+                                  <NavLink to={'signature/' + value._id} className="btn-default btn-flat">
+                                    <div className="fig-left">
+                                      <img src={img} alt="No Thumb" className="doc-pic" />
+                                    </div>
+                                    <div className="doc-info">
+                                      <p>{value.file}<span className="date-doc small">{value.created_at}</span></p>
+                                    </div>
+                                  </NavLink>
+                                </li>
+                                <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
+                                {/* data-toggle="modal" data-target="#emailModal" */}
+                                <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
+                                <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
+                                {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
+                                <li><a href={'files/docs/' + value.file} target="_blank"><i className="fa fa-download"></i></a></li>
+                                <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
+                              </ul>
+                            </li>);
+                          })}
+                        </ol>
+                      </div>);
+                        } else {
+                          console.log(this.state.folder_data)
+                      switch (typeof this.state.folder_data) {
+                        case "string": return (<div className="card-body">
+                          <ol className="od-list">
+                            <li key='not_found'>
+                              <div className="doc-info" style={{ textAlign: 'center', padding: '29px' }}>
+                                <p><span className="date-doc small" style={{ fontSize: '22px' }}>{this.state.folder_data}</span></p>
+                              </div>
+                            </li>
+                          </ol>
+                        </div>);
+                        default: return (<div><div className="card-body">
+                          <ol className="od-list-2">
+                            {this.state.folders.map((value, index) => {
+                              let img = "/assets/img/folder.jpg";
+                              // let folder = value.substr(value.lastIndexOf('/') + 1);
+                              return (<li key={index}>
+                                <ul className="list-inline top-box-list-2">
+                                  <li><input type="checkbox" value={value._id} /><span></span></li>
+                                  <li className="doc-box">
+                                    <a href="javascript:void(0)" onClick={this.openFolder.bind(this, value._id, value.name)}>
+                                      <div className="fig-left">
+                                        <img src={img} alt="No Thumb" className="doc-pic" />
+                                      </div>
+                                      <div className="doc-info">
+                                        <p><span className="date-doc small">{value.name}</span></p>
+                                      </div>
+                                    </a>
+                                  </li>
+                                  <li><a href="javascript:void(0)" onClick={this.openFolder.bind(this, value._id, value.name)}>Open</a></li>
+                                  <li>
+                                    <div class="dropdown">
+                                      <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
                                                                 <span class="caret"></span></button>
-                                                        <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
-                                                          <li><a className="btn btn-default" style={{ border: 'solid 1px'}} onClick={this.deleteFolder.bind(this, folder)} href="javascript:void(0)">Delete</a></li>
-                                                          <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.showRenamePop.bind(this, folder)} href="javascript:void(0)">Rename</a></li>
-                                                                </ul>
-                                                              </div>
-                                                              </li>
-                                                          </ul>
-                                                      </li>)
-                                              })}
-                                              </ol>
-                                            </div>
-                                            <div className="card-body">
-                                              <ol className="od-list">
-                                                {this.state.docs.map((value, index) => {
-                                                  let img = "/files/docs/"+value.images[0].name || "/assets/img/doc-1.png";
-                                                  return (<li key={index}>
-                                                            <ul className="list-inline top-box-list">
-                                                                <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
-                                                                <li className="doc-box">
-                                                                  <a href="#">
-                                                                    <div className="fig-left">
-                                                                      <img src={img} alt="No Thumb" className="doc-pic"/>
-                                                                    </div>
-                                                                    <div className="doc-info">
-                                                                      <p>Document<span className="date-doc small">{value.created_at}</span></p>
-                                                                    </div>
-                                                                  </a>
-                                                                </li>
-                                                                <li><NavLink to={'signature/'+value._id} className="btn-default btn-flat">SIGN</NavLink></li>
-                                                                {/* data-toggle="modal" data-target="#emailModal" */}
-                                                                <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
-                                                                <li><NavLink to={'signature/'+value._id} className="btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
-                                                                {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
-                                                                <li><a href={'files/docs/'+value.file} target="_blank"><i className="fa fa-download"></i></a></li>
-                                                                <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
-                                                            </ul>
-                                                        </li>);
-                                                })}
-                                              </ol>
-                                            </div></div>);
+                                      <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
+                                        <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.deleteFolder.bind(this, value._id)} href="javascript:void(0)">Delete</a></li>
+                                        <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.showRenamePop.bind(this, value._id)} href="javascript:void(0)">Rename</a></li>
+                                      </ul>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </li>)
+                            })}
+                          </ol>
+                        </div>
+                          <div className="card-body">
+                            <ol className="od-list">
+                              {this.state.docs.map((value, index) => {
+                                let img = "/files/docs/" + value.images[0].name || "/assets/img/doc-1.png";
+                                return (<li key={index}>
+                                  <ul className="list-inline top-box-list">
+                                    <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
+                                    <li className="doc-box">
+                                      <NavLink to={'signature/' + value._id} className="btn-default btn-flat">
+                                        <div className="fig-left">
+                                          <img src={img} alt="No Thumb" className="doc-pic" />
+                                        </div>
+                                        <div className="doc-info">
+                                          <p>{value.file}<span className="date-doc small">{value.created_at}</span></p>
+                                        </div>
+                                      </NavLink>
+                                    </li>
+                                    <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
+                                    {/* data-toggle="modal" data-target="#emailModal" */}
+                                    <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
+                                    <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
+                                    {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
+                                    <li><a href={'files/docs/' + value.file} target="_blank"><i className="fa fa-download"></i></a></li>
+                                    <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
+                                  </ul>
+                                </li>);
+                              })}
+                            </ol>
+                          </div></div>);
+                      }
                     }
+                    
                   })()}
                 </div>
               </div>
@@ -662,8 +696,8 @@ class Dashboard extends Component {
                                       <div className="input-group">
                                       <ul id="myUL">
                                       {this.state.folders.map((value, index) => {
-                                        let folder = value.substr(value.lastIndexOf('/') + 1);
-                                        return (<li onClick={this.selectFolder.bind(this, folder)}><span class="caret">{folder}</span>
+                                        // let folder = value.substr(value.lastIndexOf('/') + 1);
+                                        return (<li onClick={this.selectFolder.bind(this, value._id)}><span class="caret">{value.name}</span>
                                         {/* <ul class="nested">
                                           <li>Water</li>
                                           <li>Coffee</li>
