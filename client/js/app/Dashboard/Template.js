@@ -192,12 +192,12 @@ class Template extends Component {
                 <div className="card box-spice">
                   <div className="card-body">
                     <ol className="od-list">
-                    {this.state.templates.map((value, index) => {
+                          {this.state.templates.map((value, index) => {
                     let img = "/assets/img/doc-1.png";
                     if(value.type == 'pdf'){
                       img = "/assets/img/pdf.png";
                     }
-                    else if(value.type == 'msword'){
+                    else if (value.type == 'msword' || value.type == 'doc'){
                         img = "/assets/img/doc-1.png";
                     }else if (value.type == 'docx') {
                       img = "/assets/img/doc-1.png";

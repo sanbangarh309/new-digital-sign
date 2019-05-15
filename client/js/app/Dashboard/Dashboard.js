@@ -37,6 +37,7 @@ class Dashboard extends Component {
       folders:[],
       folder:null,
       folder_id:null,
+      doc_id: null,
       disabled_fields:{pointerEvents:'none',color:'#c9c2c2'},
       checked_values:[],
       move_to:null,
@@ -45,7 +46,8 @@ class Dashboard extends Component {
       subject:'',
       message:'',
       drag:null,
-      signers:[]
+      signers:[],
+      current_doc:null
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
@@ -286,10 +288,16 @@ class Dashboard extends Component {
     }
   }
 
-  showRenamePop = (id,e) => {
+  showRenamePop = (id,type,e) => {
     e.preventDefault();
-    this.setState({folder_id:id});
-    $('#rename_folder').modal('show');
+    if (type == 'folder') {
+      this.setState({ folder_id: id });
+      $('#rename_folder').modal('show');
+    }else{
+      this.setState({ doc_id: id });
+      $('#rename_doc').modal('show');
+    }
+    
   }
 
 
@@ -316,7 +324,6 @@ class Dashboard extends Component {
           return ele != e.target.value;
       });
     }
-    console.log(this.state.checked_values)
     if (this.state.checked_values.length > 0){
       this.setState({disabled_fields:{}});
     }else{
@@ -351,6 +358,17 @@ class Dashboard extends Component {
         setTimeout(() => $('#folder_structure').modal('hide'), 500);
       }).catch(error => {
        
+      });
+    }
+  }
+
+  renameDoc = (e) => {
+    if (this.state.current_doc && this.state.doc_id) {
+      axios.put('/api/doc/rename', { doc_name: this.state.current_doc, doc_id: this.state.doc_id }).then((res) => {
+        this.getDocs();
+        setTimeout(() => $('#rename_doc').modal('hide'), 500)
+      }).catch(error => {
+
       });
     }
   }
@@ -532,7 +550,6 @@ class Dashboard extends Component {
                         </ol>
                       </div>);
                         } else {
-                          console.log(this.state.folder_data)
                       switch (typeof this.state.folder_data) {
                         case "string": return (<div className="card-body">
                           <ol className="od-list">
@@ -568,7 +585,7 @@ class Dashboard extends Component {
                                                                 <span class="caret"></span></button>
                                       <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
                                         <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.deleteFolder.bind(this, value._id)} href="javascript:void(0)">Delete</a></li>
-                                        <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.showRenamePop.bind(this, value._id)} href="javascript:void(0)">Rename</a></li>
+                                        <li><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.showRenamePop.bind(this, value._id,'folder')} href="javascript:void(0)">Rename</a></li>
                                       </ul>
                                     </div>
                                   </li>
@@ -590,17 +607,26 @@ class Dashboard extends Component {
                                           <img src={img} alt="No Thumb" className="doc-pic" />
                                         </div>
                                         <div className="doc-info">
-                                          <p>{value.file}<span className="date-doc small">{value.created_at}</span></p>
+                                          <p>{value.title}<span className="date-doc small">{value.created_at}</span></p>
                                         </div>
                                       </NavLink>
                                     </li>
                                     <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
                                     {/* data-toggle="modal" data-target="#emailModal" */}
                                     <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
-                                    <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat"><i className="fa fa-edit"></i></NavLink></li>
                                     {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
-                                    <li><a href={'files/docs/' + value.file} target="_blank"><i className="fa fa-download"></i></a></li>
-                                    <li className="delete-row"><a className="fa fa-trash danger" onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)"></a></li>
+                                    <li>
+                                      <div class="dropdown">
+                                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
+                                        <span class="caret"></span></button>
+                                        <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
+                                          <li><NavLink to={'signature/' + value._id} style={{ border: 'solid 1px', marginBottom: '10px' }} className="btn btn-default">Edit</NavLink></li>
+                                          <li><a className="btn btn-default" style={{ border: 'solid 1px', marginBottom: '10px' }} href={'files/docs/' + value.file} target="_blank">Download</a></li>
+                                          <li className="delete-row"><a className="btn btn-default" style={{ border: 'solid 1px', marginBottom: '10px' }} onClick={this.deleteDoc.bind(this, value._id)} href="javascript:void(0)">Delete</a></li>
+                                          <li><a className="btn btn-default" style={{ border: 'solid 1px', marginBottom: '10px' }} onClick={this.showRenamePop.bind(this, value._id,'doc')} href="javascript:void(0)">Rename</a></li>
+                                        </ul>
+                                      </div>
+                                    </li>
                                   </ul>
                                 </li>);
                               })}
@@ -650,7 +676,7 @@ class Dashboard extends Component {
           </div>
        </div>
 
-          <div className="modal fade san_custom" id="rename_folder" role="dialog" style={modalCss}>
+        <div className="modal fade san_custom" id="rename_folder" role="dialog" style={modalCss}>
           <div className="modal-dialog">
             <div className="modal-content">
               <div className="modal-body">
@@ -682,6 +708,39 @@ class Dashboard extends Component {
             </div>
           </div>
        </div>
+
+          <div className="modal fade san_custom" id="rename_doc" role="dialog" style={modalCss}>
+            <div className="modal-dialog">
+              <div className="modal-content">
+                <div className="modal-body">
+                  <div className="col-md-12 col-md-offset-4">
+                    <div className="panel panel-default">
+                      <div className="panel-body">
+                        <div className="text-center">
+                          <h3><i className="fa fa-lock fa-2x"></i></h3>
+                          <h2 className="text-center">Rename Doc</h2>
+                          <div className="panel-body">
+                            <div className="form-group">
+                              <div className="input-group">
+                                <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
+                                <input id="current_doc" name="current_doc" placeholder="Enter New Doc Name" onChange={this.onChange} className="form-control" type="text" />
+                              </div>
+                            </div>
+                            <div className="form-group">
+                              <input name="recover-submit" className="btn btn-lg btn-primary btn-block" value="Save" onClick={this.renameDoc} type="button" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="modal fade san_custom" id="folder_structure" role="dialog" style={modalCss}>
           <div className="modal-dialog">

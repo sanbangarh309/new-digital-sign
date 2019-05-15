@@ -137,27 +137,12 @@ module.exports = {
     if (file_name) {
       filename = file_name;
     }
-    // console.log(file_name);
-    // console.log(filename);
-    // process.exit();
     try
     {
       fs.writeFile(userUploadedImagePath, imageBuffer.data,
           function()
           {
             if (imageTypeDetected && imageTypeDetected[1] == 'pdf'){
-              // let PDF2Pic = require('pdf2pic')
-              // let converter = new PDF2Pic({
-              //   density: 100,           // output pixels per inch
-              //   savename: uniqueRandomImageName + "_cnvrt",   // output file name
-              //   savedir: uploafdf_dir,    // output file location
-              //   format: "png",          // output file format
-              //   size: 1200               // output size in pixels
-              // })
-              // converter.convertBulk(userUploadedImagePath, -1)
-              // .then(resolve => {
-              //   sb(resolve); 
-              // })
               const Pdf2Img = require('pdf2img-promises');
               let converter = new Pdf2Img();
               converter.on(filename, (msg) => {
@@ -181,7 +166,6 @@ module.exports = {
                   console.error(err);
                 })
             }else{
-              console.log(file_without_ext);
               var toPdf = require("office-to-pdf");
               var wordBuffer = imageBuffer.data;//fs.readFileSync(config.directory + "/uploads/templates/DGSign.docx")
               toPdf(wordBuffer).then(
@@ -193,13 +177,13 @@ module.exports = {
                     console.log('Received: ', msg);
                   });
                   converter.setOptions({
-                    type: 'jpg',                                // png or jpg, default jpg
-                    size: 1024,                                 // default 1024
-                    density: 600,                               // default 600
-                    quality: 100,                               // default 100
-                    outputdir: uploafdf_dir, // output folder, default null (if null given, then it will create folder name same as file name)
-                    outputname: uniqueRandomImageName + "_cnvrt",                       // output file name, dafault null (if null given, then it will create image name same as input name)
-                    page: null                                  // convert selected page, default null (if null given, then it will convert all pages)
+                    type: 'jpg', 
+                    size: 1024, 
+                    density: 600,
+                    quality: 100, 
+                    outputdir: uploafdf_dir,
+                    outputname: uniqueRandomImageName + "_cnvrt",
+                    page: null 
                   });
                   converter.convert(config.directory + "/uploads/templates/" + file_without_ext + ".pdf")
                     .then(info => {

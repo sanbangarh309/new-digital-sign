@@ -312,6 +312,17 @@ module.exports = (app) => {
       // }
     });
 
+  app.put('/api/doc/rename', async(req,res,next) => {
+    if (req.body.doc_id) {
+      let doc = await Doc.findById(req.body.doc_id);
+      doc.title = req.body.doc_name;
+      doc.save();
+      return res.json({ success: true, msg: 'Doc Renamed Successfully' });
+    }else{
+      return res.json({ success: false, msg: 'Doc Id Required!' });
+    }
+  });
+
     app.get('/api/get_files/:id', async (req,res,next) => {
       let folder = await Folder.findById(req.params.id);
       let query = {};

@@ -123,13 +123,16 @@ class Signature extends Component {
       let fina_data = [];
       localStorage.setItem('file_name', res.data.name);
       Object.keys(res.data.images).map(key => {
+        var myImg = document.querySelector("#sky");
+        var realWidth = myImg.naturalWidth;
+        var realHeight = myImg.naturalHeight;
         var i = new Image(); 
         i.onload = function(){
           fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
         };
         i.src = 'files/templates/'+res.data.images[key].name;
       });
-      
+      console.log(fina_data)
       setTimeout(() => {
         localStorage.setItem("files_array", JSON.stringify(fina_data))
         this.setState({
