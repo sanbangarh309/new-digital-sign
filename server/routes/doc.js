@@ -9,7 +9,6 @@ const ObjectId = mongoose.Types.ObjectId;
 const San_Function = require.main.require('./functions');
 const config = require.main.require('./custom_config');
 const User = require.main.require('./user').models.user;
-
 module.exports = (app) => {
     app.post('/api/get_docs', async (req, res, next) => {
         let query = {};
@@ -99,7 +98,6 @@ module.exports = (app) => {
           fldr.docs.push(id);
         }
       });
-      console.log(fldr.docs);
       // fldr.docs = docs;
       fldr.save();
       docs_.forEach(doc => {
@@ -149,6 +147,12 @@ module.exports = (app) => {
     //   doc_key++;
     // });
     
+  });
+
+  app.post('/api/multideletedocs', async (req, res, next) => {
+    Doc.deleteMany({ '_id': { $in: req.body.docs } }, function (err) {
+      res.json({ success: true, msg: 'Directory Deleted Successfully' });
+    }).catch((err) => next(err));
   });
 
     app.post('/api/add_doc', (req, res, next) => {

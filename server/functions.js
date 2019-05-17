@@ -56,10 +56,15 @@ module.exports = {
     }
     let base64Data_ = base64Data.doc_file;
     let file_name = base64Data.file_name;
+    let fileExtension = file_name.replace(/^.*\./, '');
+    if (fileExtension == 'doc' || fileExtension == 'docx') {
+      file_name = file_name.split('.').slice(0, -1).join('.');
+      file_name = file_name+'.pdf';
+    }
     var imageTypeRegularExpression = /\/(.*?)$/;
     // Generate random string
     var uniqueSHA1String = module.exports.san_Password()
-    var imageBuffer = module.exports.decodeBase64Image(base64Data_); console.log(imageBuffer);
+    var imageBuffer = module.exports.decodeBase64Image(base64Data_);
     var uploafdf_dir = config.directory + "/uploads/docs/";
     var imageTypeDetected = imageBuffer.type.match(imageTypeRegularExpression);
     if(imageTypeDetected[1] == 'pdf'){

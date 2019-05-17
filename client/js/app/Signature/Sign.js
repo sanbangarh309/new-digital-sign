@@ -35,7 +35,7 @@ class Sign extends Component {
           this.props.updateSignField({src:image,top:this.props.t,left:this.props.l,canvas:newcanvas});
           // container.children.length ? container.removeChild(container.children[0]) : null;
           if(this.props.doc_for_sign){
-            container.appendChild(img);
+            // container.appendChild(img);
           }
           // container.appendChild(img);
         //   debugger;

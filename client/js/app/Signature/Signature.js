@@ -10,14 +10,6 @@ import jsPDF from 'jspdf';
 import swal from 'sweetalert';
 var NavLink = require('react-router-dom').NavLink;
 
-const getBase64 = (file) => {
-  return new Promise((resolve,reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
 // localStorage.clear();
 class Signature extends Component {
   constructor(props){
@@ -83,6 +75,17 @@ class Signature extends Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
+  getBase64 = (file) => {
+    // this.setState({ file_name: file.name});
+    localStorage.setItem('file_name', file.name);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  }
+
   refreshSigners(doc_id){
     this.setState({signer: null});
     this.setState({ currentDocId: doc_id });
@@ -123,9 +126,6 @@ class Signature extends Component {
       let fina_data = [];
       localStorage.setItem('file_name', res.data.name);
       Object.keys(res.data.images).map(key => {
-        var myImg = document.querySelector("#sky");
-        var realWidth = myImg.naturalWidth;
-        var realHeight = myImg.naturalHeight;
         var i = new Image(); 
         i.onload = function(){
           fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
@@ -189,8 +189,6 @@ class Signature extends Component {
       axios.get('/api/signer/'+this.state.signer_id).then((res) => {  
         if(res.data.color){
           this.setState({signer_clr: res.data.color});
-          console.log(res.data.color)
-          console.log('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count)
           // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
           $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
@@ -285,11 +283,15 @@ class Signature extends Component {
               let signer_id = $(this).find('span').attr('id') || null;
               let bgcolor = $(this).attr('data-color');
               let reqrd = false;
+              let content = $(this).find('span').text();
+              if (type == 'text') {
+                content = $(this).find('input[type="text"]').val();
+              }
               if($(this).find('span').hasClass('required')){
                 reqrd = true;
               } 
               // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:$( this ).find('span').text(),doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
+                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:content,doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
               // }
               // console.log( index + ": " + $( this ).attr('id') );
               // console.log( index + ": " + $( this ).css('left') );
@@ -352,7 +354,7 @@ class Signature extends Component {
 
   docUpload = (e) => {
     const file = e.target.files[0];
-    getBase64(file).then(base64 => {
+    this.getBase64(file).then(base64 => {
       this.setState({
         uploaded_sign: base64
       });

@@ -9,14 +9,11 @@ import jsPDF from 'jspdf';
 import swal from 'sweetalert';
 var NavLink = require('react-router-dom').NavLink;
 import SignerFields from './SignerFields';
-const getBase64 = (file) => {
-  return new Promise((resolve,reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-    reader.readAsDataURL(file);
-  });
-}
+// import { Powerpoint, Word } from 'pdf-officegen'
+// const p = new Powerpoint([{}]);
+// p.convertFromPdf('/var/www/html/Digital-Signature/server/uploads/docs/sample.pdf', [{}], (err, result) => {
+//   console.log(result);
+// })
 // localStorage.clear();
 class Signature_edit extends Component {
   constructor(props){
@@ -79,6 +76,17 @@ class Signature_edit extends Component {
     this.addField = this.addField.bind(this);
     this.handleChange = this.handleChange.bind(this);
     // console.log(this.state);debugger;
+  }
+
+  getBase64 = (file) => {
+    // this.setState({ file_name: file.name});
+    localStorage.setItem('file_name', file.name);
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
   }
 
   refreshSigners(doc_id){
@@ -279,14 +287,18 @@ class Signature_edit extends Component {
               if (sign_id) {
                 signed = sign_id;
               }
+              let content = $(this).find('span').text();
+              if (type == 'text') {
+                content = $(this).find('input[type="text"]').val();
+              }
+              let attached = null;
+              if (type == 'attach') {
+                attached = $(this).find('span').attr('data-src');
+              }
               if($(this).find('span').hasClass('required')){
                 reqrd = true;
               } 
-              // if(docs[index]){
-              drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: $(this).find('span').text(), doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed});
-              // }
-              // console.log( index + ": " + $( this ).attr('id') );
-              // console.log( index + ": " + $( this ).css('left') );
+              drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed,attach_img:attached});
             });
             docs[parseInt(i)-1].drag_data = drag_data;
             doc.addImage(imgData, 'JPEG', 0, 0, width, height);
@@ -341,7 +353,7 @@ class Signature_edit extends Component {
 
   docUpload = (e) => {
     const file = e.target.files[0];
-    getBase64(file).then(base64 => {
+    this.getBase64(file).then(base64 => {
       this.setState({
         uploaded_sign: base64
       });
@@ -546,7 +558,14 @@ class Signature_edit extends Component {
   }
 
   appendSignature = (e) => {
+    let docid = this.state.doc_id;
+    console.log(docid);
+    console.log(this.state.inputFields);
+    console.log(this.state.active_tab);
     if(this.state.inputFields.includes('sign') && this.state.active_tab == 'signpad'){
+      if (this.state.doc_for_sign) {
+        this.setState({ first_attempt: true });
+      }
       this.setState({bind_signature: true});
     }else{ 
       if(this.state.sign_text && this.state.active_tab == 'initial'){
@@ -558,8 +577,8 @@ class Signature_edit extends Component {
     $('#close_btn').click();
     this.setState({active_tab:'initial'});
     if(this.state.doc_for_sign){  
-      setTimeout(() => { 
-        $(".signature_container").click();
+      setTimeout(() => {  
+        $("#signature_container_" + docid).click();
       }, 1000);
     }
   }
@@ -605,13 +624,52 @@ class Signature_edit extends Component {
   }
 
   enterData = (e) => {
+    e.preventDefault();
+    let all_ok = false;
     let tag = '';
     let count = this.state.onStartCount;
     $(".signature_container .unselectable").each(function( index ) {
-      tag = $(this).children().first().get(0).tagName;
+      tag = $(this).children().first().get(0).tagName; console.log(tag);
       $(tag.toLowerCase()+'#'+count).focus();
     });
+    if (this.state.docs.length > 0) {
+      for (let i = 1; i <= this.state.docs.length; i++) {
+        if ($("#signature_container_" + i).children().hasClass('text')) {
+          if ($("#signature_container_" + i).children().find('input[type="text"]').val()) {
+            all_ok = true;
+          }else{
+            all_ok = false;
+          }
+        }
+        console.log(all_ok)
+        if ($("#signature_container_" + i).children().hasClass('sign_text') || $("#signature_container_" + i).children().hasClass('signer_added')) {
+          if ($("#signature_container_" + i).children().find('span').text() != '' && $("#signature_container_" + i).children().find('span').text() != 'initial' && all_ok) {
+            all_ok = true;
+          } else {
+            all_ok = false;
+          }
+        }
+        console.log(all_ok)
+        if ($("#signature_container_" + i).children().hasClass('sign') || $("#signature_container_" + i).children().hasClass('signer_added')) {
+          if ($("#signature_container_" + i).children().find('img').length > 0 && $("#signature_container_" + i).children().find('span').text() != 'sign' && all_ok) {
+            all_ok = true;
+          } else {
+            all_ok = false;
+          }
+        }
+        console.log(all_ok)
+        if ($("#signature_container_" + i).children().hasClass('checkbox')) {
+          if ($("#signature_container_" + i).children().find('input[type="checkbox"]:checked').length > 0 && all_ok) {
+            all_ok = true;
+          } else {
+            all_ok = false;
+          }
+        }
+        console.log(all_ok)
+      }
+    }
     this.state.onStartCount += 1;
+    this.setState({ allOk: all_ok });
   }
 
   checkAllOk = (ok) => {
@@ -789,6 +847,7 @@ class Signature_edit extends Component {
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)}
       showInitialField={this.showInitialField.bind(this)} 
+      showSignatureField={this.showSignatureField.bind(this)}
       closeAttempt={this.closeAttempt.bind(this)}
       refreshSigners={this.refreshSigners.bind(this)}
       updateTab={this.updateTab.bind(this)}
@@ -806,6 +865,7 @@ class Signature_edit extends Component {
       signer_id={this.state.signer_id}
       first_attempt={this.state.first_attempt}
       signer_clr={this.state.signer_clr}
+      allOk={this.state.allOk}
       />
     </div>
     <div className="modal signmodal signature_modal" id="Signfiled">

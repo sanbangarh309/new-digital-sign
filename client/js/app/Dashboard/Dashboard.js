@@ -355,6 +355,7 @@ class Dashboard extends Component {
     if(this.state.move_to && this.state.checked_values.length > 0){
       axios.post('/api/movefile',{move_to:this.state.move_to,docs:this.state.checked_values}).then((res) => {
         this.getDocs();
+        this.setState({ disabled_fields: { pointerEvents: 'none', color: '#c9c2c2' } });
         setTimeout(() => $('#folder_structure').modal('hide'), 500);
       }).catch(error => {
        
@@ -416,6 +417,30 @@ class Dashboard extends Component {
     // } else {
     //   $('#doc_id').val(e.target.id);
     // }
+  }
+
+  deleteDocs = (e) => {
+    if (this.state.checked_values.length > 0) {
+      e.preventDefault();
+      swal({
+        title: "Do You Want to delete it from your account?",
+        text: "Are you sure that you want to delete ?",
+        icon: "warning",
+        buttons: ["No", "Yes"],
+        dangerMode: true,
+      })
+        .then(willdel => {
+          if (willdel) {
+            axios.post('/api/multideletedocs', { docs: this.state.checked_values }).then((res) => {
+              this.getDocs();
+              this.setState({ disabled_fields: { pointerEvents: 'none', color: '#c9c2c2' } });
+              swal("Deleted!", "Selected docs has been deleted", "success");
+            }).catch(error => {
+              swal("Error!", "Something Went wrong", "danger");
+            });
+          }
+        });
+    }
   }
 
   onChange(e){
@@ -501,13 +526,13 @@ class Dashboard extends Component {
                 <div className="card box-spice">
                   <div className="card-header">
                     <ul className="list-inline top-box-list">
-                      <li><input type="checkbox"/><span></span></li> 
+                      {/* <li><input type="checkbox" onChange={this.selectDocs.bind(this)}/><span></span></li>  */}
+                          <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload} />UPLOAD <i className="fa fa-upload"></i></li>
                           <li><a href="javascript:void(0)" onClick={this.createFolder}>NEW FOLDER <i className="fa fa-plus"></i></a></li>
                       {/* <li><a href="javascript:void(0)">FOLDER SEND </a></li> */}
-                          <li className="delete-row" style={this.state.disabled_fields}><a href="javascript:void(0)">TRASH <i className="fa fa-trash danger"></i></a></li>
-                          <li className="upload_docs"><input type="file" id="hidden_upload_file" onChange={this.docUpload} />UPLOAD <i className="fa fa-upload"></i></li>
                           <li><a href="javascript:void(0)" style={this.state.disabled_fields} onClick={this.multiSend}>SEND FOR SIGNING <i className="fa fa-send-o"></i></a></li>
                           <li><a href="javascript:void(0)" onClick={this.folderStructure} style={this.state.disabled_fields}>MOVE TO <i className="fa fa-arrows"></i></a></li>
+                          <li className="delete-row"><a href="javascript:void(0)" onClick={this.deleteDocs} style={this.state.disabled_fields}>TRASH <i className="fa fa-trash danger"></i></a></li>
                           <li className="search-row">
                             <form id="example1_filter" className="dataTables_filter">
                               <label className="filter_search">

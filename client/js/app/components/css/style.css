@@ -275,7 +275,10 @@
 	.doc-info p > span {display: block;float: left;width: 100%;}
 	.doc-info p {padding-top: 3px;}
 	.card-body .top-box-list > li {padding-top: 15px;}
-	.card-body .top-box-list > li:nth-child(2){padding-top:0;}
+	.card-body .top-box-list > li:nth-child(2) {
+	padding-top: 0;
+	width: 40%;
+}
 	.card-body .top-box-list{height:auto;}
 	.card-body .top-box-list > li::after {top: 17px;}
 	.box-spice {border-radius: 2px !important;}
@@ -1036,12 +1039,15 @@ nav.navbar .menu-btn.active span:last-of-type {
 .checkwrap input[type="checkbox"]:checked + label::after {
 	content: "\f00c";
 	position: absolute;
-	color:green;
+	color:black;
 	font-family: fontAwesome;
 	font-weight: 900;
 	line-height: 29px;
 	font-size: 1.3rem;
+	border:none !important;
 }
+
+
 
 .unselectable.checkbox {
 	background: none !important;
