@@ -65,9 +65,10 @@ class Signature_edit extends Component {
       onStartCount:0,
       token:localStorage.getItem('jwtToken'),
       signer_ids:[],
-      allOk:false,
+      allOk:true,
       redirect:false,
-      currentDocId:null
+      currentDocId:null,
+      signer_fillable_fields:{}
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -124,13 +125,14 @@ class Signature_edit extends Component {
   }
 
   componentDidMount() {
+    let objThis = this;
     let docs = localStorage.getItem('files_array') || this.state.docs
     try {
       docs = JSON.parse(docs)
     }catch(e){
 
     }
-
+    let fillabel = {};
     if (this.state.edit_id) {
       axios.get('/api/doc/'+this.state.edit_id).then((res) => {
         this.setState({
@@ -141,6 +143,10 @@ class Signature_edit extends Component {
           Object.keys(res.data.images[key].drag_data).forEach(function(key2){
             if(res.data.images[key].drag_data[key2].type == "signer_added"){
               ids.push(res.data.images[key].drag_data[key2].signer_id);
+              if (res.data.images[key].drag_data[key2].signer_id == objThis.state.doc_for_sign) {
+                fillabel[res.data.images[key].drag_data[key2].id] = { id: res.data.images[key].drag_data[key2].id, type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
+                // fillabel.push({ id: res.data.images[key].drag_data[key2].id, type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content,sign:false});
+              }
             }
           });
         });
@@ -158,6 +164,10 @@ class Signature_edit extends Component {
         docs: docs
       });
     }
+    this.setState({ allOk: false });
+    this.setState({
+      signer_fillable_fields: fillabel
+    });
   }
 
   closeAttempt(){
@@ -633,9 +643,10 @@ class Signature_edit extends Component {
       $(tag.toLowerCase()+'#'+count).focus();
     });
     if (this.state.docs.length > 0) {
+      let id = '';
       for (let i = 1; i <= this.state.docs.length; i++) {
         if ($("#signature_container_" + i).children().hasClass('text')) {
-          if ($("#signature_container_" + i).children().find('input[type="text"]').val()) {
+          if ($("#signature_container_" + i).children().find('input[type="text"]#' + this.state.doc_for_sign).first().val()) {
             all_ok = true;
           }else{
             all_ok = false;
@@ -643,7 +654,10 @@ class Signature_edit extends Component {
         }
         console.log(all_ok)
         if ($("#signature_container_" + i).children().hasClass('sign_text') || $("#signature_container_" + i).children().hasClass('signer_added')) {
-          if ($("#signature_container_" + i).children().find('span').text() != '' && $("#signature_container_" + i).children().find('span').text() != 'initial' && all_ok) {
+          let elem = $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign);
+          console.log(elem);
+          if (elem.first().text() != '' && elem.first().text() == 'sign_text' && all_ok) {
+            console.log(elem.first().text())
             all_ok = true;
           } else {
             all_ok = false;
@@ -651,7 +665,8 @@ class Signature_edit extends Component {
         }
         console.log(all_ok)
         if ($("#signature_container_" + i).children().hasClass('sign') || $("#signature_container_" + i).children().hasClass('signer_added')) {
-          if ($("#signature_container_" + i).children().find('img').length > 0 && $("#signature_container_" + i).children().find('span').text() != 'sign' && all_ok) {
+          id = $("#signature_container_" + i).children().find('span').attr('id');
+          if ($("#signature_container_" + i).children().find('img#' + this.state.doc_for_sign).length > 0 && $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign).first().text() != 'sign' && all_ok) {
             all_ok = true;
           } else {
             all_ok = false;
@@ -659,6 +674,7 @@ class Signature_edit extends Component {
         }
         console.log(all_ok)
         if ($("#signature_container_" + i).children().hasClass('checkbox')) {
+          id = $("#signature_container_" + i).children().find('span').attr('id');
           if ($("#signature_container_" + i).children().find('input[type="checkbox"]:checked').length > 0 && all_ok) {
             all_ok = true;
           } else {
@@ -672,9 +688,20 @@ class Signature_edit extends Component {
     this.setState({ allOk: all_ok });
   }
 
-  checkAllOk = (ok) => {
-    this.setState({ allOk:ok});
-    console.log(ok);
+  checkAllOk = (drag_id) => {
+    let allok = true;
+    let listt = this.state.signer_fillable_fields;
+    if (listt[drag_id]) {
+      listt[drag_id].sign = true;
+      this.setState({ signer_fillable_fields: listt });
+    }
+
+    Object.keys(listt).map((chk) => {
+      if (!listt[chk].sign) {
+        allok = false;
+      }
+    });
+    this.setState({ allOk: allok });
   }
 
   render() {

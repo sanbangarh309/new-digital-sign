@@ -47,7 +47,9 @@ class Dashboard extends Component {
       message:'',
       drag:null,
       signers:[],
-      current_doc:null
+      current_doc:null,
+      currentPage:1,
+      current_pages:null
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
@@ -118,11 +120,17 @@ class Dashboard extends Component {
     });
   }
 
-  getDocs = (e) => {
-    axios.post('/api/get_docs/',{token:localStorage.getItem('jwtToken')}).then((res) => {
+  getDocs = (e, page) => {
+    $('#outer-barG').show();
+    console.log(page)
+    axios.post('/api/get_docs/', { token: localStorage.getItem('jwtToken'), page: page ? page : this.state.currentPage}).then((res) => {
       this.setState({
-        docs: res.data
+        docs: res.data.docs
       });
+      this.setState({
+        current_pages: res.data.page
+      });
+      $('#outer-barG').hide();
     }).catch(error => {
       console.log(error.response);
     });
@@ -447,6 +455,13 @@ class Dashboard extends Component {
     this.setState({[e.target.name]:e.target.value});
   }
 
+  handleClick = (e) => {
+    this.getDocs(e, e.target.id);
+    this.setState({
+      currentPage: Number(e.target.id)
+    });
+  }
+
   render() {
     // const {docs} = this.props;
     let modalCss = {
@@ -472,6 +487,24 @@ class Dashboard extends Component {
       <span class="folderSeparator" style={{padding: '5px'}}>›</span>{this.state.folder}              
     </div>);
     }
+
+    const pageNumbers = [];
+    for (let i = 1; i <= this.state.current_pages; i++) {
+      pageNumbers.push(i);
+    }
+
+    const renderPageNumbers = pageNumbers.map(number => {
+      let activeClass_ = '';
+      if (this.state.currentPage == number) {
+        activeClass_ = 'active';
+      }
+      return (
+        <a key={number}
+          id={number}
+          onClick={this.handleClick.bind(this)}
+          href="javascript:void(0)" class={activeClass_}>{number}</a>
+      );
+    });
     
       return (
         <div className="dash_board">
@@ -661,6 +694,11 @@ class Dashboard extends Component {
                     }
                     
                   })()}
+                      <div class="pagination">
+                        <a href="#">&laquo;</a>
+                        {renderPageNumbers}
+                        <a href="#">&raquo;</a>
+                      </div>
                 </div>
               </div>
             </div>

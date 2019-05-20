@@ -322,9 +322,11 @@ class Signature extends Component {
                     var reader = new FileReader();
                     reader.readAsDataURL(blob); 
                     reader.onloadend = function() {
-                      let base64data = reader.result;     
+                      let base64data = reader.result;   
+                      $('#outer-barG').show();  
                       axios.post('/api/add_doc', { base64Data: base64data, token: localStorage.getItem('jwtToken'), docs: docs, file_name: localStorage.getItem('file_name'), tempId: objThis.state.template_id}).then((res) => {
                         localStorage.removeItem('file_name');
+                        $('#outer-barG').hide();
                         objThis.setState({ redirect: 'dashboard' });
                       });
                     }

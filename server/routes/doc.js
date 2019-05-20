@@ -16,11 +16,22 @@ module.exports = (app) => {
           const user = await jwt.verify(req.body.token, config.JWT_SECRET);
           const userMatched = await User.findById(user.sub);
           query = { 'user_id': ObjectId(userMatched._id),folder_id:null };
+          var perPage = 2;
+          var page = req.body.page || 1
+          Doc.find(query)
+            .limit(perPage)
+            .skip(perPage * page)
+            .exec(function (err, docs) {
+              Doc.count(query).exec(function (err, count) {
+                if (err) return next(err)
+                res.json({ docs: docs, page: Math.round(count / perPage) });
+              })
+            });
         }
-        Doc.find(query)
-        .exec()
-        .then((docs) => res.json(docs))
-        .catch((err) => next(err));
+        // Doc.find(query)
+        // .exec()
+        // .then((docs) => res.json(docs))
+        // .catch((err) => next(err));
     });
 
     app.post('/api/add_template', async (req, res, next) => {

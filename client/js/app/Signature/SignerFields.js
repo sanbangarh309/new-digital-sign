@@ -25,6 +25,9 @@ class SignerFields extends Component {
             $('#signer_sign_list').addClass('current-btn');
             $('#signer_text_list').removeClass('current-btn');
             $('#signer_initial_list').removeClass('current-btn');
+            $('#signer_checkbox_list').removeClass('current-btn');
+            $('#signer_radio_list').removeClass('current-btn');
+        $('#signer_attach_list').removeClass('current-btn');
             // $('#check_field').removeClass('current-btn');
             // $('#clear_field').removeClass('current-btn');
             $('#signer_date_list').removeClass('current-btn');
@@ -47,7 +50,10 @@ class SignerFields extends Component {
         $('#signer_text_list').addClass('current-btn');
         $('#signer_date_list').removeClass('current-btn');
         $('#signer_initial_list').removeClass('current-btn');
+        $('#signer_radio_list').removeClass('current-btn');
+        $('#signer_attach_list').removeClass('current-btn');
         $('#signer_sign_list').removeClass('current-btn');
+        $('#signer_checkbox_list').removeClass('current-btn');
         $('#check_field').removeClass('current-btn');
         $('#clear_field').removeClass('current-btn');
         
@@ -62,6 +68,9 @@ class SignerFields extends Component {
         $('#signer_date_list').addClass('current-btn');
         $('#signer_text_list').removeClass('current-btn');
         $('#signer_initial_list').removeClass('current-btn');
+        $('#signer_attach_list').removeClass('current-btn');
+        $('#signer_radio_list').removeClass('current-btn');
+        $('#signer_checkbox_list').removeClass('current-btn');
         $('#signer_sign_list').removeClass('current-btn');
         $('#check_field').removeClass('current-btn');
         $('#clear_field').removeClass('current-btn');
@@ -75,7 +84,10 @@ class SignerFields extends Component {
       showInitialField(e){
         $('#signer_initial_list').addClass('current-btn');
         $('#signer_text_list').removeClass('current-btn');
+        $('#signer_checkbox_list').removeClass('current-btn');
+        $('#signer_radio_list').removeClass('current-btn');
         $('#signer_sign_list').removeClass('current-btn');
+        $('#signer_attach_list').removeClass('current-btn');
         $('#check_field').removeClass('current-btn');
         $('#signer_date_list').removeClass('current-btn');
     
@@ -95,6 +107,69 @@ class SignerFields extends Component {
         $('.signature_container').removeClass('hovrcr_sign');
         console.log('clicked on Initial Button')
       }
+
+  showCheckField = () => {
+    $('#signer_checkbox_list').addClass('current-btn');
+    $('#signer_radio_list').removeClass('current-btn');
+    $('#signer_attach_list').removeClass('current-btn');
+    $('#signer_sign_list').removeClass('current-btn');
+    $('#signer_initial_list').removeClass('current-btn');
+    $('#text_field').removeClass('current-btn');
+    $('#initial_field').removeClass('current-btn');
+    $('#sign_pad').removeClass('current-btn');
+    $('#clear_field').removeClass('current-btn');
+    $('#date_field').removeClass('current-btn');
+    $('#signer_date_list').removeClass('current-btn');
+
+    $('.signature_container').addClass('hovrcr_check');
+    $('.signature_container').removeClass('hovrcr_text');
+    $('.signature_container').removeClass('hovrcr_date');
+    $('.signature_container').removeClass('hovrcr_sign');
+    $('.signature_container').removeClass('hovrcr_initials');
+    console.log('clicked on Check Button')
+  }
+
+  showRadioField = () => {
+    $('#signer_radio_list').addClass('current-btn');
+    $('#signer_checkbox_list').removeClass('current-btn');
+    $('#signer_attach_list').removeClass('current-btn');
+    $('#signer_initial_list').removeClass('current-btn');
+    $('#text_field').removeClass('current-btn');
+    $('#initial_field').removeClass('current-btn');
+    $('#signer_sign_list').removeClass('current-btn');
+    $('#sign_pad').removeClass('current-btn');
+    $('#clear_field').removeClass('current-btn');
+    $('#date_field').removeClass('current-btn');
+    $('#signer_date_list').removeClass('current-btn');
+
+    $('.signature_container').addClass('hovrcr_check');
+    $('.signature_container').removeClass('hovrcr_text');
+    $('.signature_container').removeClass('hovrcr_date');
+    $('.signature_container').removeClass('hovrcr_sign');
+    $('.signature_container').removeClass('hovrcr_initials');
+    console.log('clicked on Radio Button')
+  }
+
+  showAttachField = () => {
+    $('#signer_attach_list').addClass('current-btn');
+    $('#signer_radio_list').removeClass('current-btn');
+    $('#signer_checkbox_list').removeClass('current-btn');
+    $('#signer_initial_list').removeClass('current-btn');
+    $('#signer_sign_list').removeClass('current-btn');
+    $('#text_field').removeClass('current-btn');
+    $('#initial_field').removeClass('current-btn');
+    $('#sign_pad').removeClass('current-btn');
+    $('#clear_field').removeClass('current-btn');
+    $('#date_field').removeClass('current-btn');
+    $('#signer_date_list').removeClass('current-btn');
+
+    $('.signature_container').addClass('hovrcr_check');
+    $('.signature_container').removeClass('hovrcr_text');
+    $('.signature_container').removeClass('hovrcr_date');
+    $('.signature_container').removeClass('hovrcr_sign');
+    $('.signature_container').removeClass('hovrcr_initials');
+    console.log('clicked on Checkbox Button')
+  }
 
     //   onMouseDown(e){
     //     console.log("Draggable.onMouseDown");
@@ -142,6 +217,15 @@ class SignerFields extends Component {
         }
         if(field == 'sign'){
           this.showSignatureField();
+        }
+        if (field == 'checkbox') {
+          this.showCheckField();
+        }
+        if (field == 'radio') {
+          this.showRadioField();
+        }
+        if (field == 'attach') {
+          this.showAttachField();
         }
         this.props.setSignerField(field);
       }
