@@ -15,16 +15,25 @@ module.exports = (app) => {
         if(req.body.token){
           const user = await jwt.verify(req.body.token, config.JWT_SECRET);
           const userMatched = await User.findById(user.sub);
-          query = { 'user_id': ObjectId(userMatched._id),folder_id:null };
-          var perPage = 2;
-          var page = req.body.page || 1
+          query['user_id'] = ObjectId(userMatched._id);
+          query['folder_id'] = null;
+          // if (req.body.createdOnBefore) {
+          //   query['created_at'] = { $lte: req.body.createdOnBefore };
+          // }
+          // query = { : ObjectId(userMatched._id),folder_id:null };
+          var perPage = req.body.pageLimit;
+          var page = req.body.page > 0 ? req.body.page : 1
           Doc.find(query)
             .limit(perPage)
-            .skip(perPage * page)
+            .skip(perPage * (page-1))
+            .sort({ created_at: 'desc' })
             .exec(function (err, docs) {
-              Doc.count(query).exec(function (err, count) {
+              Doc.count({ 'user_id': ObjectId(userMatched._id),'folder_id':null}).exec(function (err, count) {
                 if (err) return next(err)
-                res.json({ docs: docs, page: Math.round(count / perPage) });
+                // console.log(docs);
+                // console.log(count);
+                // console.log(docs[docs.length - 1]);
+                res.json({ docs: docs, page: Math.round(count / perPage), total_pages: count});
               })
             });
         }
@@ -38,7 +47,7 @@ module.exports = (app) => {
       const user = await jwt.verify(req.body.token, config.JWT_SECRET);
       const userMatched = await User.findById(user.sub);
       if (userMatched) {
-        const { base64Data, file_name } = req.body; console.log(file_name);
+        const { base64Data, file_name } = req.body;
         San_Function.uploadBase64Image({ doc_file: base64Data, file_name: file_name,type:'template' },function(buffer){
           if (buffer.result == 'success') {
             let template = new Template();
@@ -54,11 +63,28 @@ module.exports = (app) => {
       }
     });
 
-    app.get('/api/get_templates',function(req, res, next){
-      Template.find({})
-        .exec()
-        .then((templates) => res.json(templates))
-        .catch((err) => next(err));
+    app.post('/api/get_templates', async(req, res, next) => {
+      let query = {};
+      if (req.body.token) {
+        const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+        const userMatched = await User.findById(user.sub);
+        query['user_id'] = ObjectId(userMatched._id);
+        var perPage = req.body.pageLimit;
+        var page = req.body.page > 0 ? req.body.page : 1
+        Template.find(query)
+          .limit(perPage)
+          .skip(perPage * (page - 1))
+          .sort({ created_at: 'desc' })
+          .exec(function (err, templates) {
+            Template.count({ 'user_id': ObjectId(userMatched._id)}).exec(function (err, count) {
+              if (err) return next(err)
+              // console.log(docs);
+              // console.log(count);
+              // console.log(docs[docs.length - 1]);
+              res.json({ templates: templates, page: Math.round(count / perPage), total_pages: count });
+            })
+          });
+      }
     });
 
     app.get('/api/template/:id', async (req,res,next) => {

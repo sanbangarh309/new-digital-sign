@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import {Redirect} from 'react-router-dom';
 import './Dashboard.css';
 import axios from 'src/common/myAxios';
-import history from '../history';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
 
@@ -31,7 +30,11 @@ class Template extends Component {
       docs:[],
       data:[],
       tab:null,
-      templates:[]
+      templates:[],
+      currentPage: 1,
+      pages: null,
+      total_pages:0,
+      pageLimit:4
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
@@ -71,11 +74,19 @@ class Template extends Component {
     });
   }
   // token:localStorage.getItem('jwtToken')
-  getTemplates=(e)=>{
-    axios.get('/api/get_templates/',{token:localStorage.getItem('jwtToken')}).then((res) => {
+  getTemplates = (e, page='')=>{
+    $('#outer-barG').show();
+    axios.post('/api/get_templates/', { token: localStorage.getItem('jwtToken'), page: page ? page : this.state.currentPage, pageLimit: this.state.pageLimit}).then((res) => {
       this.setState({
-        templates: res.data
+        templates: res.data.templates
       });
+      this.setState({
+        pages: res.data.page
+      });
+      this.setState({
+        total_pages: res.data.total_pages
+      });
+      $('#outer-barG').hide();
     }).catch(error => {
       console.log(error.response);
     });
@@ -125,7 +136,27 @@ class Template extends Component {
     this.setState({[e.target.name]:e.target.value});
    }
 
-  render() { console.log(this.state.templates)
+  handleClick = (action,e) => {
+    if (!e.target.id) {
+      let targetid = $(e.target.parentElement).find('a.active').attr('id');
+      console.log(this.state.total_pages);
+      console.log(targetid)
+      if (action == 'next') {
+        targetid = parseInt(targetid) + 1;
+      }
+      if (action == 'prev') {
+        targetid = parseInt(targetid) - 1;
+      }
+      e.target.id = targetid;
+      console.log($(e.target).closest('a.active').attr('id'));
+    }
+    this.getTemplates(e, e.target.id);
+    this.setState({
+      currentPage: Number(e.target.id)
+    });
+  }
+
+  render() {
     // const {docs} = this.props;
     // console.log(this.props);
     if (!localStorage.getItem('jwtToken')) {
@@ -133,6 +164,25 @@ class Template extends Component {
     }
     if (this.state.redirect) {
       return (<Redirect to={this.state.redirect}/>)
+    }
+    let renderPageNumbers;
+    if (this.state.total_pages > this.state.pageLimit) {
+      const pageNumbers = [];
+      for (let i = 1; i <= this.state.pages; i++) {
+        pageNumbers.push(i);
+      }
+      renderPageNumbers = pageNumbers.map(number => {
+        let activeClass_ = '';
+        if (this.state.currentPage == number) {
+          activeClass_ = 'active';
+        }
+        return (
+          <a key={number}
+            id={number}
+            onClick={this.handleClick.bind(this,'')}
+            href="javascript:void(0)" class={activeClass_}>{number}</a>
+        );
+      });
     }
       return (
         <div>
@@ -227,6 +277,25 @@ class Template extends Component {
                     })}
                     </ol>
                   </div>
+                      {(() => {
+                        let disablesFields = {};
+                        let disablesFieldsprev = {};
+                        if ((this.state.currentPage * this.state.pageLimit) == this.state.total_pages) {
+                          disablesFieldsprev['pointerEvents'] = 'none';
+                          disablesFieldsprev['color'] = 'burlywood';
+                        }
+                        if (this.state.currentPage <= 1) {
+                          disablesFields['pointerEvents'] = 'none';
+                          disablesFields['color'] = 'burlywood';
+                        }
+                        if (this.state.total_pages > this.state.pageLimit) {
+                          return (<div class="pagination">
+                            <a href="javascript:void(0)" style={disablesFields} onClick={this.handleClick.bind(this,'prev')}>&laquo;</a>
+                            {renderPageNumbers}
+                            <a href="javascript:void(0)" style={disablesFieldsprev} onClick={this.handleClick.bind(this, 'next')}>&raquo;</a>
+                          </div>)
+                        }
+                      })()}
                 </div>
               </div>
             </div>

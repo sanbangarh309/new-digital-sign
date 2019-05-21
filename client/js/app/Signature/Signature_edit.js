@@ -90,7 +90,7 @@ class Signature_edit extends Component {
     });
   }
 
-  refreshSigners(doc_id){
+  refreshSigners(doc_id){ console.log(doc_id)
     this.setState({signer: null});
     this.setState({ currentDocId: doc_id });
     this.setState({exist_signer: null});
@@ -701,6 +701,7 @@ class Signature_edit extends Component {
         allok = false;
       }
     });
+    console.log(listt);
     this.setState({ allOk: allok });
   }
 
@@ -871,6 +872,7 @@ class Signature_edit extends Component {
       </div>
       <DropArea 
       docs={docs}
+      edit_id={this.state.edit_id}
       field_type={this.state.inputFields} 
       getSignPosition={this.getSignPosition.bind(this)}
       showInitialField={this.showInitialField.bind(this)} 

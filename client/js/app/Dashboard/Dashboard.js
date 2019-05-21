@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import {Redirect} from 'react-router-dom';
 import './Dashboard.css';
 import axios from 'src/common/myAxios';
-import history from '../history';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
 
@@ -49,7 +48,10 @@ class Dashboard extends Component {
       signers:[],
       current_doc:null,
       currentPage:1,
-      current_pages:null
+      current_pages:null,
+      lastDate:null,
+      total_pages:0,
+      pageLimit: 4
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
@@ -122,14 +124,19 @@ class Dashboard extends Component {
 
   getDocs = (e, page) => {
     $('#outer-barG').show();
-    console.log(page)
-    axios.post('/api/get_docs/', { token: localStorage.getItem('jwtToken'), page: page ? page : this.state.currentPage}).then((res) => {
+    axios.post('/api/get_docs/', { token: localStorage.getItem('jwtToken'), page: page ? page : this.state.currentPage, pageLimit: this.state.pageLimit}).then((res) => {
       this.setState({
         docs: res.data.docs
       });
       this.setState({
         current_pages: res.data.page
       });
+      this.setState({
+        total_pages: res.data.total_pages
+      });
+      // this.setState({
+      //   lastDate: res.data.lastDate
+      // });
       $('#outer-barG').hide();
     }).catch(error => {
       console.log(error.response);
@@ -455,8 +462,22 @@ class Dashboard extends Component {
     this.setState({[e.target.name]:e.target.value});
   }
 
-  handleClick = (e) => {
-    this.getDocs(e, e.target.id);
+
+  handleClick = (action, e) => {
+    if (!e.target.id) {
+      let targetid = $(e.target.parentElement).find('a.active').attr('id');
+      console.log(this.state.total_pages);
+      console.log(targetid)
+      if (action == 'next') {
+        targetid = parseInt(targetid) + 1;
+      }
+      if (action == 'prev') {
+        targetid = parseInt(targetid) - 1;
+      }
+      e.target.id = targetid;
+      console.log($(e.target).closest('a.active').attr('id'));
+    }
+    this.getTemplates(e, e.target.id);
     this.setState({
       currentPage: Number(e.target.id)
     });
@@ -488,23 +509,25 @@ class Dashboard extends Component {
     </div>);
     }
 
-    const pageNumbers = [];
-    for (let i = 1; i <= this.state.current_pages; i++) {
-      pageNumbers.push(i);
-    }
-
-    const renderPageNumbers = pageNumbers.map(number => {
-      let activeClass_ = '';
-      if (this.state.currentPage == number) {
-        activeClass_ = 'active';
+    let renderPageNumbers;
+    if (this.state.total_pages > this.state.pageLimit) {
+      const pageNumbers = [];
+      for (let i = 1; i <= this.state.current_pages; i++) {
+        pageNumbers.push(i);
       }
-      return (
-        <a key={number}
-          id={number}
-          onClick={this.handleClick.bind(this)}
-          href="javascript:void(0)" class={activeClass_}>{number}</a>
-      );
-    });
+      renderPageNumbers = pageNumbers.map(number => {
+        let activeClass_ = '';
+        if (this.state.currentPage == number) {
+          activeClass_ = 'active';
+        }
+        return (
+          <a key={number}
+            id={number}
+            onClick={this.handleClick.bind(this)}
+            href="javascript:void(0)" class={activeClass_}>{number}</a>
+        );
+      });
+    }
     
       return (
         <div className="dash_board">
@@ -694,11 +717,25 @@ class Dashboard extends Component {
                     }
                     
                   })()}
-                      <div class="pagination">
-                        <a href="#">&laquo;</a>
-                        {renderPageNumbers}
-                        <a href="#">&raquo;</a>
-                      </div>
+                      {(() => {
+                        let disablesFields = {};
+                        let disablesFieldsprev = {};
+                        if ((this.state.currentPage * this.state.pageLimit) == this.state.total_pages) {
+                          disablesFieldsprev['pointerEvents'] = 'none';
+                          disablesFieldsprev['color'] = 'burlywood';
+                        }
+                        if (this.state.currentPage <= 1) {
+                          disablesFields['pointerEvents'] = 'none';
+                          disablesFields['color'] = 'burlywood';
+                        }
+                        if (this.state.total_pages > this.state.pageLimit) {
+                          return (<div class="pagination">
+                            <a href="javascript:void(0)" style={disablesFields} onClick={this.handleClick.bind(this, 'prev')}>&laquo;</a>
+                            {renderPageNumbers}
+                            <a href="javascript:void(0)" style={disablesFieldsprev} onClick={this.handleClick.bind(this, 'next')}>&raquo;</a>
+                          </div>)
+                        }
+                      })()}
                 </div>
               </div>
             </div>
