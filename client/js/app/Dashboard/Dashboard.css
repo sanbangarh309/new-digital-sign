@@ -116,3 +116,7 @@
   background-color: #ddd;
   border-radius: 5px;
 }
+.dash_board .dropdown-toggle::after{
+	margin-top: 7px !important;
+}
+

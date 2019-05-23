@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import history from '../history';
 import Header from './Header';
 import Comment from './Comment';
-import  { Redirect } from 'react-router-dom'
 import Footer from './Footer';
 import ModalComponent from './ModalComponent';
 import './loader.css';

@@ -56,8 +56,8 @@ export function getDocs(token) {
             //     });
             //   });
             const response = await axios.post('/api/get_docs/', {token:token}); 
-            // console.log(response);
-            dispatch({type: ok('DOCS_SAVED'), payload: response.data});
+            // console.log(response.data.docs);
+            dispatch({type: ok('DOCS_SAVED'), payload: response.data.docs});
             // dispatch(push(redirectTo));
         } catch (err) {
             dispatch({type: fail('DOCS_SAVED'), payload: 'not found'});

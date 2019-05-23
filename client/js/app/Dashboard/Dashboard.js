@@ -5,6 +5,7 @@ import './Dashboard.css';
 import axios from 'src/common/myAxios';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
+// import auth from 'src/auth';
 
 @connect((store) => {
   return {
@@ -16,7 +17,7 @@ import {connect} from 'react-redux';
 class Dashboard extends Component {
   static propTypes = {
       dispatch: PropTypes.func,
-      docs: PropTypes.object,
+      docs: PropTypes.array,
       user: PropTypes.object,
   };
 
@@ -51,13 +52,20 @@ class Dashboard extends Component {
       current_pages:null,
       lastDate:null,
       total_pages:0,
-      pageLimit: 4
+      pageLimit: 4,
+      invitation_list:[]
     };
     localStorage.setItem("files_array", [])
     this.onChange = this.onChange.bind(this);
     // this.props.dispatch(auth.actions.getDocs(localStorage.getItem('jwtToken')));
     this.getFolders();
     this.getDocs();
+    // connect(this.mapStateToProps.bind(this));
+  }
+
+  mapStateToProps(state) {
+    const { docs } = this.state
+    return { docs: docs }
   }
 
   getBase64 = (file) => {
@@ -84,11 +92,34 @@ class Dashboard extends Component {
           // }
         });
       }
-    }, 1000);
+      console.log(this.state.docs);
+      if (this.state.docs.length > 0) {
+        let ids = {};
+        // Object.keys(docs).forEach(function (head) {
+        //   Object.keys(docs[head].images).forEach(function (key) {
+        //     ids[docs[head]._id] = [];
+        //     console.log(docs[head].images);
+            
+        //     Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
+        //       // && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)
+        //       if (docs[head].images[key].drag_data[key2].type == "signer_added") {
+        //         ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
+        //         // ids[docs[head]._id] = docs[head].images[key].drag_data[key2].signer_id;
+        //         // ids.push({ docid: docs[head]._id, signer_id: docs[head].images[key].drag_data[key2].signer_id});
+        //         // if (docs[head].images[key].drag_data[key2].signer_id == objThis.state.doc_for_sign) {
+        //         //   fillabel[docs[head].images[key].drag_data[key2].id] = { id: docs[head].images[key].drag_data[key2].id, signer_id: docs[head].images[key].drag_data[key2].signer_id, type: docs[head].images[key].drag_data[key2].type, content: docs[head].images[key].drag_data[key2].content, sign: false }
+        //         // }
+        //       }
+        //     });
+        //   });
+        // });
+        // this.getSigners([...new Set(ids)]);
+        console.log(ids)
+      } 
+    }, 2000);
   }
 
   getSigners  = (ids) => {
-    console.log(ids);
     axios.post('/api/signers/',{ids:ids,token:localStorage.getItem('jwtToken')}).then((res) => {
       this.setState({
         signers: res.data
@@ -99,9 +130,19 @@ class Dashboard extends Component {
     });
   }
 
+  getSignersWithDoc = (data) => {
+    axios.post('/api/signerswithdoc/', { signDoc: data, token: localStorage.getItem('jwtToken') }).then((res) => {
+      this.setState({
+        invitation_list: res.data.msg
+      });
+      console.log(res.data.msg);
+    }).catch(error => {
+      console.log(error.response);
+    });
+  }
+
   docUpload = (e) => {
-    var loader = document.getElementById('outer-barG');
-    $(loader).css('display','block');
+    $('#outer-barG').show();
     const file = e.target.files[0];
     this.getBase64(file).then(base64 => {
       this.setState({doc:base64});
@@ -134,6 +175,21 @@ class Dashboard extends Component {
       this.setState({
         total_pages: res.data.total_pages
       });
+      let ids = {};
+      let docs = res.data.docs;
+      Object.keys(docs).forEach(function (head) {
+        Object.keys(docs[head].images).forEach(function (key) {
+          ids[docs[head]._id] = [];
+          console.log(docs[head].images);
+          Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
+            if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
+              ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
+            }
+          });
+        });
+      });
+      this.getSignersWithDoc(ids);
+      console.log(ids)
       // this.setState({
       //   lastDate: res.data.lastDate
       // });
@@ -146,13 +202,12 @@ class Dashboard extends Component {
   appendId = (e) => {
     // this.getSigners();
     let ids = [];
-    let dragData = JSON.parse($(e.target).attr('data-string'));
-    Object.keys(dragData).forEach(function(key){
+    let dragData = JSON.parse($(e.target).attr('data-string')); 
+    Object.keys(dragData).forEach(function (key) {
       if(dragData[key].type == "signer_added"){
         ids.push(dragData[key].signer_id);
       }
     });
-
     $("#email_table #signersPanel tr input").each(function (index) {
       if ($(this).val() && $.trim($(this).val()) != '') {
         $(this).val('');
@@ -162,7 +217,6 @@ class Dashboard extends Component {
     this.setState({message: '' });
     // $("#email_table input.emailSubject").val('');
     // $("#email_table textarea.emailText").val('');
-    
     this.getSigners([...new Set(ids)]);
     $('#emailModal').modal('show');
     if(!$('#doc_id').hasClass('hidden_doc')){
@@ -365,8 +419,6 @@ class Dashboard extends Component {
   }
 
   moveDoc = (e) => {
-    console.log(this.state.move_to);
-    console.log(this.state.checked_values)
     if(this.state.move_to && this.state.checked_values.length > 0){
       axios.post('/api/movefile',{move_to:this.state.move_to,docs:this.state.checked_values}).then((res) => {
         this.getDocs();
@@ -466,8 +518,6 @@ class Dashboard extends Component {
   handleClick = (action, e) => {
     if (!e.target.id) {
       let targetid = $(e.target.parentElement).find('a.active').attr('id');
-      console.log(this.state.total_pages);
-      console.log(targetid)
       if (action == 'next') {
         targetid = parseInt(targetid) + 1;
       }
@@ -475,7 +525,6 @@ class Dashboard extends Component {
         targetid = parseInt(targetid) - 1;
       }
       e.target.id = targetid;
-      console.log($(e.target).closest('a.active').attr('id'));
     }
     this.getTemplates(e, e.target.id);
     this.setState({
@@ -483,8 +532,37 @@ class Dashboard extends Component {
     });
   }
 
+  resendSignature = (data,e) => {
+    e.preventDefault();
+    $('#outer-barG').show();
+    axios.post('/api/sendemail', { 'emails': [{ signer_id: data.signer_id, email: data.email }], 'subject': data.email + ' is Awaiting For Your Signature', 'message': data.email + ' invited you to sign below doc', 'id': data.docId, token: localStorage.getItem('jwtToken'), queId: data.queId }).then((res) => {
+      $('#outer-barG').hide();
+      swal("Sent!", "Document Resend Successfully", "success");
+    }).catch(error => {
+      swal("Error!", "Something Went wrong", "danger");
+    });
+  }
+
+  removeSignature = (docid, queid,e) => {
+    e.preventDefault();
+    axios.delete('/api/que/' + queid+'/'+docid).then((res) => {
+      if (res.data.success) {
+        $('#invitation_id_' + queid).remove();
+        swal("Deleted!", "Signer deleted Successfully", "success");
+      }else{
+        swal("Error!", "Something Went wrong", "danger");
+      }
+    }).catch(error => {
+      swal("Error!", "Something Went wrong", "danger");
+    });
+  }
+
+  stopPropagation = (e) => {
+    e.stopPropagation();
+  }
+
   render() {
-    // const {docs} = this.props;
+    const { user } = this.props;
     let modalCss = {
       top: '65px'
     }
@@ -678,19 +756,42 @@ class Dashboard extends Component {
                           <div className="card-body">
                             <ol className="od-list">
                               {this.state.docs.map((value, index) => {
+                                let signers_list = [];
+                                if (this.state.invitation_list[value._id]) {
+                                  let docData = this.state.invitation_list[value._id];
+                                  Object.keys(docData).map((invitevalue, inviteindex) => {
+                                    // console.log(inviteindex);
+                                    // console.log(docData[invitevalue]);
+                                    if (docData[invitevalue].status == 'pending') {
+                                      signers_list.push(<a href="javascript:void(0)" id={"invitation_id_" + docData[invitevalue].queId} style={{ float: 'left', textDecoration: 'none', outline: 'none' }} class="dropdown col-sm-6">
+                                        <a href="javascript:void(0)" class="btn-default dropdown-toggle" style={{ textDecoration: 'none', outline: 'none' }} type="button" data-toggle="dropdown"><img src="/assets/img/pending.png" style={{ padding: '3px' }} />{docData[invitevalue].email}
+                                        <span class="caret"></span></a>
+                                        <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>
+                                          <li style={{ padding: '3px'}}><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.resendSignature.bind(this, docData[invitevalue])} href="javascript:void(0)">Resend Signature</a></li>
+                                          <li style={{ padding: '3px'}}><a className="btn btn-default" style={{ border: 'solid 1px' }} onClick={this.removeSignature.bind(this, value._id, docData[invitevalue].queId)} href="javascript:void(0)">Remove Signer</a></li>
+                                        </ul>
+                                      </a>);
+                                    }else{
+                                      signers_list.push(<a href="javascript:void(0)" onClick={this.stopPropagation} style={{ padding: '3px', float: 'left' }}><img src="/assets/img/pending.png" style={{ padding: '3px' }} />{docData[invitevalue].email}</a>)
+                                    }
+                                  });
+                                }
+                                
                                 let img = "/files/docs/" + value.images[0].name || "/assets/img/doc-1.png";
                                 return (<li key={index}>
                                   <ul className="list-inline top-box-list">
                                     <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
                                     <li className="doc-box">
-                                      <NavLink to={'signature/' + value._id} className="btn-default btn-flat">
+                                      <a className="btn-default btn-flat" href="javascript:void(0)">
+                                      <NavLink to={'signature/' + value._id}>
                                         <div className="fig-left">
                                           <img src={img} alt="No Thumb" className="doc-pic" />
                                         </div>
-                                        <div className="doc-info">
-                                          <p>{value.title}<span className="date-doc small">{value.created_at}</span></p>
-                                        </div>
                                       </NavLink>
+                                        <div className="doc-info">
+                                          <p>{value.title}<span className="date-doc small">{value.created_at}</span><span className="date-doc small row">{signers_list}</span></p>
+                                        </div>
+                                      </a>
                                     </li>
                                     <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
                                     {/* data-toggle="modal" data-target="#emailModal" */}
@@ -939,9 +1040,9 @@ class Dashboard extends Component {
                           <tr>
                             <td>
                                 <span>
-                                  <label>Subject &amp; Message</label><input id="subject" name="subject" type="text" value={this.state.subject} onChange={this.onChange} required className="form-control emailSubject" />
+                                    <label>Subject &amp; Message</label><input id="subject" name="subject" type="text" defaultValue={user.email +' Needs Your Signature'} value={this.state.subject} onChange={this.onChange} required className="form-control emailSubject" />
                                   <div id="invitationForm:emailSubjectMessages" aria-live="polite" className="ui-message"></div>
-                                  <textarea cols="20" rows="5" maxlength="2147483647" required className="form-control emailText" value={this.state.message} onChange={this.onChange} name="message"></textarea>
+                                    <textarea cols="20" rows="5" maxlength="2147483647" required className="form-control emailText" defaultValue={user.email +' invited you to sign'} value={this.state.message} onChange={this.onChange} name="message"></textarea>
                                   <div aria-live="polite" className="ui-message"></div>
                                 </span>
                             </td>

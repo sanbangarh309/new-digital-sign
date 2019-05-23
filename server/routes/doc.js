@@ -1,3 +1,6 @@
+/**
+* @author Sandeep Bangarh <sanbangarh309@gmail.com>
+*/
 const Doc = require.main.require('./models/Doc');
 const Signer = require.main.require('./models/Signer');
 const Que = require.main.require('./models/Que');
@@ -199,13 +202,17 @@ module.exports = (app) => {
             const userMatched = await User.findById(user.sub);
             // console.log(userMatched);
             if (userMatched) { 
-              if (buffer.name) {
                   let doc = new Doc();
+                  if (!buffer || buffer == '') {
+                    doc.title = file_name;
+                    doc.file = file_name
+                  }else{
+                    doc.title = buffer.name;
+                    doc.file = buffer.name;
+                  }
                   doc.user_id = user.sub;
-                  doc.title = buffer.name;
                   doc.price = req.body.price || 0;
                   doc.description = req.body.description || '';
-                  doc.file = buffer.name;
                   doc.images = req.body.docs;
                   doc.save();
                   if (tempId) {
@@ -216,9 +223,6 @@ module.exports = (app) => {
                     });
                   }
                   return res.json(doc);
-              }else{
-                return res.json({msg:'file not exist'});
-              }
             }else{
               return res.json({msg:'user not exist'});
             }
@@ -261,7 +265,7 @@ module.exports = (app) => {
     });
 
     app.post('/api/createfolder',async (req,res,next) => {
-      const { folder, token} = req.body; console.log(folder);
+      const { folder, token} = req.body; 
       const user = await jwt.verify(token, config.JWT_SECRET);
       const userMatched = await User.findById(user.sub);
       if (userMatched) {
@@ -401,12 +405,51 @@ module.exports = (app) => {
         query['added_by'] = ObjectId(userMatched._id);
         Signer.find(query)
         .exec()
-        .then((signers) => res.json(signers))
+        .then((signers) => {
+          // signers.forEach(signer => {
+          //   console.log(ObjectId(signer._id))
+          //   Que.find()
+          // });
+          // console.log(signers);
+          // Que
+          res.json(signers) 
+        })
         .catch((err) => next(err));
       }else{
         res.json({success:false})
       }
     });
+
+  app.post('/api/signerswithdoc', async (req,res,next) => {
+    const { signDoc,token} = req.body;
+    if (token) {
+      let query = {};
+      let queQuery = {};
+      const user = await jwt.verify(req.body.token, config.JWT_SECRET);
+      const userMatched = await User.findById(user.sub);
+      query['added_by'] = ObjectId(userMatched._id);
+      let final_response = {};
+      const finalValue = Object.keys(signDoc).map(async (key) => { // map instead of forEach
+            queQuery['signer_id'] = { $in: signDoc[key] };
+            queQuery['doc_id'] = key;
+            final_response[key] = [];
+            return Que.find(queQuery).exec().then(function (ques) {
+              if (ques) {
+                ques.forEach((que) => {
+                  final_response[key].push({ docId: que.doc_id, queId: que._id, signer_id: que.signer_id,email: que.email, status: que.status });
+                });
+                return final_response[key];
+              } else {
+                return final_response[key].push({ docId: key});
+              }
+            });
+          });
+
+      const resolvedFinalArray = await Promise.all(finalValue);
+      return res.json({ status: true, msg: final_response});
+    }
+    return res.json({ status: false, msg: 'Token Not Found' });
+  });
 
     app.get('/api/signer/:id', async (req,res,next) => {
       Signer.findById(req.params.id)
@@ -424,18 +467,32 @@ module.exports = (app) => {
         const user = await jwt.verify(req.body.token, config.JWT_SECRET);
         const userMatched = await User.findById(user.sub);
         let order = 0;
-        req.body.emails.forEach(el => {
-          let que = new Que();
-          que.email = el.email;
-          que.signer_id = el.signer_id;
-          que.doc_id = req.body.id;
-          que.order = order;
-          // if(order == 0){
+        req.body.emails.forEach(async (el) => {
+          let que = await Que.findOne({ email: el.email });
+          if (que) {
+            que.signer_id = el.signer_id;
+            que.doc_id = req.body.id;
+            que.link = link + el.signer_id;
+            que.save();
+          }else{
+            let que = new Que();
+            que.email = el.email;
+            que.signer_id = el.signer_id;
+            que.doc_id = req.body.id;
+            que.order = order;
+            // if(order == 0){
             que.email_sent = 'yes';
-          // }
-          que.link = link+el.signer_id;
-          que.save();
-          order++;
+            // }
+            que.link = link + el.signer_id;
+            const signer = await Signer.findById(el.signer_id);
+            if (signer) {
+              signer.email = el.email;
+              signer.save();
+            }
+            que.save();
+            order++;
+          }
+          
           link = link+el.signer_id;
           var mailOptions = {
             from: userMatched.email,
@@ -493,6 +550,26 @@ module.exports = (app) => {
         .catch((err) => next(err));
     });
 
+  app.delete('/api/que/:queid/:docid', async(req,res,next) => {
+    Que.findOneAndRemove({ _id: req.params.queid })
+      .exec()
+      .then((que) => {
+        return res.json({ success: true, msg: 'Signer Removed Successfully' });
+      })
+      .catch((err) => next(err));
+
+      
+    // const que = await Que.findById(req.params.queid);
+    // if (que && que.doc_id == req.params.docid) {
+    //   const signer = await Que.findById(que.signer_id);
+    //   if (signer) {
+    //     // signer.delete();
+    //     que.delete();
+    //   } 
+    // }
+    // return res.json({success:true,msg:'Signer Removed Successfully'});
+  })
+
     app.delete('/api/template/:id', (req, res, next) => {
       Template.findOneAndRemove({_id: req.params.id})
         .exec()
@@ -524,8 +601,11 @@ module.exports = (app) => {
             }
             San_Function.uploadFinalDoc({ doc_file: base64Data, file_name: doc.file }, async (buffer) => {
               doc.images = req.body.docs;
-              doc.title = buffer.name;
-              doc.file = buffer.name;
+              if (!buffer || buffer =='') {
+              }else{
+                doc.title = buffer.name;
+                doc.file = buffer.name;
+              }
               doc.save()
               .then(() => res.json(doc))
               .catch((err) => next(err));

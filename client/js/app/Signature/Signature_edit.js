@@ -68,7 +68,9 @@ class Signature_edit extends Component {
       allOk:true,
       redirect:false,
       currentDocId:null,
-      signer_fillable_fields:{}
+      signer_fillable_fields:{},
+      onetimeload:false,
+      showSigner:false
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -90,7 +92,13 @@ class Signature_edit extends Component {
     });
   }
 
-  refreshSigners(doc_id){ console.log(doc_id)
+  oneTimeLoad = (done) => {
+    if (done) {
+      this.setState({ onetimeload: true }); 
+    }
+  }
+
+  refreshSigners(doc_id){
     this.setState({signer: null});
     this.setState({ currentDocId: doc_id });
     this.setState({exist_signer: null});
@@ -144,8 +152,7 @@ class Signature_edit extends Component {
             if(res.data.images[key].drag_data[key2].type == "signer_added"){
               ids.push(res.data.images[key].drag_data[key2].signer_id);
               if (res.data.images[key].drag_data[key2].signer_id == objThis.state.doc_for_sign) {
-                fillabel[res.data.images[key].drag_data[key2].id] = { id: res.data.images[key].drag_data[key2].id, type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
-                // fillabel.push({ id: res.data.images[key].drag_data[key2].id, type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content,sign:false});
+                fillabel[res.data.images[key].drag_data[key2].id] = { id: res.data.images[key].drag_data[key2].id, signer_id: res.data.images[key].drag_data[key2].signer_id ,type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
               }
             }
           });
@@ -175,22 +182,31 @@ class Signature_edit extends Component {
   }
 
   addField(e){
-    let fld = this.state.signer_field;
+    let fld = this.state.signer_field; 
     if(this.state.signer){
       let clr = this.getRandomColor();
-      this.setState({signer_clr: clr});
+      // this.setState({signer_clr: clr});
       axios.post('/api/addfield',{signer:this.state.signer,signer_clr:clr,docId:this.state.edit_id,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');
         // let unique = [...new Set(this.state.inputFields)];
         // this.setState({inputFields:unique});
-        this.setState({signer_field: fld});
-        this.setState({first_attempt: true});
-        this.setState({signer_id: res.data._id});
-        $('#add_signer').modal('hide');
-        let docid = this.state.currentDocId;
-        setTimeout(() => {
+        // this.setState({signer_field: fld});
+        // this.setState({first_attempt: true});
+        // this.setState({signer_id: res.data._id});
+        this.setState({
+          signer_clr: clr, signer_field: fld, first_attempt: true, signer_id: res.data._id
+        }, () => {
+          console.log(this.state.first_attempt);
+          $('.signer_added.' + res.data._id).css('background-color', res.data.color);
+          $('#add_signer').modal('hide');
+          let docid = this.state.currentDocId;
           $("#signature_container_" + docid).click();
-        }, 1000);
+        });
+        // $('#add_signer').modal('hide');
+        // let docid = this.state.currentDocId;
+        // setTimeout(() => {
+        //   $("#signature_container_" + docid).click();
+        // }, 1000);
       }).catch(error => {
         
       });
@@ -203,16 +219,25 @@ class Signature_edit extends Component {
       this.setState({signer_field: fld});
       axios.get('/api/signer/'+this.state.signer_id).then((res) => {  
         if(res.data.color){
-          this.setState({signer_clr: res.data.color});
+          // this.setState({signer_clr: res.data.color});
+          this.setState({
+            signer_clr: res.data.color
+          }, () => {
+            $('.signer_added.' + res.data._id).css('background-color', res.data.color);
+            this.state.field_count += 1;
+            $('#add_signer').modal('hide');
+              let docid = this.state.currentDocId;
+            $("#signature_container_" + docid).click();
+          })
           // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
-          $('.signer_added.'+res.data._id).css('background-color',res.data.color);
+          // $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
-        this.state.field_count += 1;
-        $('#add_signer').modal('hide');
-        let docid = this.state.currentDocId;
-        setTimeout(() => {
-          $("#signature_container_" + docid).click();
-        }, 1000);
+       
+        // $('#add_signer').modal('hide');
+        // let docid = this.state.currentDocId;
+        // setTimeout(() => {
+        //   $("#signature_container_" + docid).click();
+        // }, 1000);
       }).catch(error => {
         console.log(error.response);
       });
@@ -233,26 +258,107 @@ class Signature_edit extends Component {
     axios.post('/api/chktype',{doc_file:doc}).then((res) => {
         localStorage.setItem('uploaded_doc','')
         let fina_data = [];
-        Object.keys(res.data.message).map(key => {
-          var i = new Image(); 
-          i.onload = function(){
-            fina_data.push({name:res.data.message[key].name,w:i.width,h:i.height});
-          };
-          i.src = 'files/docs/'+res.data.message[key].name;
+        // Object.keys(res.data.message).map(key => {
+        //   var i = new Image(); 
+        //   i.onload = function(){
+        //     fina_data.push({name:res.data.message[key].name,w:i.width,h:i.height});
+        //   };
+        //   i.src = 'files/docs/'+res.data.message[key].name;
+        // });
+        // setTimeout(() => {
+        //   localStorage.setItem("files_array", JSON.stringify(fina_data))
+        //   this.setState({
+        //     docs: fina_data
+        //   });
+        //   var loader = document.getElementById('outer-barG');
+        //   $('#modal_backdrop').remove();
+        //   $(loader).css('display','none');
+        // }, 1000);    
+      const requests = Object.keys(res.data.message).map(key => {
+        var i = new Image();
+        i.onload = function () {
+          return fina_data.push({ name: res.data.message[key].name, w: i.width, h: i.height });
+        };
+        i.src = 'files/docs/' + res.data.message[key].name;
+      });
+
+      Promise.all(requests).then(() => {
+        localStorage.setItem("files_array", JSON.stringify(fina_data))
+        this.setState({
+          docs: fina_data
         });
-        setTimeout(() => {
-          localStorage.setItem("files_array", JSON.stringify(fina_data))
-          this.setState({
-            docs: fina_data
-          });
-          var loader = document.getElementById('outer-barG');
-          $('#modal_backdrop').remove();
-          $(loader).css('display','none');
-        }, 1000);    
+        $('#modal_backdrop').remove();
+        $('#outer-barG').hide();
+      });
     }); 
   }
 
   convertHtmlToCanvas = (e) => {
+    e.preventDefault();
+    // if (this.state.allOk) {
+    //   this.finalSave(e);
+    //   return;
+    // }
+    let edit_id = this.state.edit_id;
+    let docs = this.state.docs;
+    let inputfields = this.state.inputFields;
+    let sign_id = this.state.doc_for_sign;
+    const objThis = this;
+    if(this.state.docs.length > 0){
+      for(let i=1;i <=this.state.docs.length;i++){
+        let drag_data = [];
+        docs[parseInt(i) - 1].drag_data = [];
+        $("#signature_container_" + i + " .unselectable").each(function (index) {
+          let key___ = inputfields.slice(inputfields.length - 1);
+          let field = $(this).data('id') || key___[0];
+          let type = $(this).data('id') || field;
+          let img = $(this).find('img').attr('src');
+          let w = $(this).width();
+          let h = $(this).height();
+          let font = $(this).css("font-size");
+          let fontfamily = $(this).find('span').css('font-family');
+          let clr = $(this).find('span').css('color');
+          let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
+          let bgcolor = $(this).attr('data-color');
+          let reqrd = false;
+          let signed = false;
+          if (sign_id) {
+            signed = sign_id;
+          }
+          let content = $(this).find('span').text();
+          if (type == 'text') {
+            content = $(this).find('input[type="text"]').val();
+          }
+          let attached = null;
+          if (type == 'attach') {
+            attached = $(this).find('span').attr('data-src');
+          }
+          if ($(this).find('span').hasClass('required')) {
+            reqrd = true;
+          }
+          drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
+        });
+        docs[parseInt(i) - 1].drag_data = drag_data;
+        swal({
+          title: "Do You Want to save it in your account?",
+          text: "Are you sure that you want to save this ?",
+          icon: "success",
+          buttons: ["No", "Yes"],
+          dangerMode: false,
+        })
+        .then(willSave => {
+            if (willSave) {
+              axios.put('/api/doc/' + edit_id, { base64Data: null, token: localStorage.getItem('jwtToken'), docs: docs }).then((res) => {
+                objThis.setState({ redirect: 'dashboard' });
+              });
+              swal("Saved!", "Your doc file has been saved", "success");
+            }
+        });
+      }
+    }
+  }
+
+  finalSave = (e) => {
     e.preventDefault();
     let doc = '';
     let width = '';
@@ -262,87 +368,87 @@ class Signature_edit extends Component {
     let inputfields = this.state.inputFields;
     let sign_id = this.state.doc_for_sign;
     const objThis = this;
-    if(this.state.docs.length > 0){
-      for(let i=1;i <=this.state.docs.length;i++){
-        $("#signature_container_"+i).css('background-color','transparent');
-        html2canvas(document.querySelector("#signature_container_"+i), { allowTaint: true }).then(canvas => { 
+    if (this.state.docs.length > 0) {
+      for (let i = 1; i <= this.state.docs.length; i++) {
+        $("#signature_container_" + i).css('background-color', 'transparent');
+        html2canvas(document.querySelector("#signature_container_" + i), { allowTaint: true }).then(canvas => {
           var imgData = canvas.toDataURL(
-            'image/jpeg',[0.0, 1.0]);      
-            this.calculatePDF_height_width("#signature_container_"+i,0);
-            if(i ==1){
-              doc = new jsPDF('p', 'mm', 'a4');
-              width = doc.internal.pageSize.getWidth();
-              height = doc.internal.pageSize.getHeight();
-              doc.setFont("helvetica");
-              doc.setFontType("bold");
-            }else{
-              doc.addPage();
+            'image/jpeg', [0.0, 1.0]);
+          this.calculatePDF_height_width("#signature_container_" + i, 0);
+          if (i == 1) {
+            doc = new jsPDF('p', 'mm', 'a4');
+            width = doc.internal.pageSize.getWidth();
+            height = doc.internal.pageSize.getHeight();
+            doc.setFont("helvetica");
+            doc.setFontType("bold");
+          } else {
+            doc.addPage();
+          }
+          let drag_data = [];
+          docs[parseInt(i) - 1].drag_data = [];
+          $("#signature_container_" + i + " .unselectable").each(function (index) {
+            let key___ = inputfields.slice(inputfields.length - 1);
+            let field = $(this).data('id') || key___[0];
+            let type = $(this).data('id') || field;
+            let img = $(this).find('img').attr('src');
+            let w = $(this).width();
+            let h = $(this).height();
+            let font = $(this).css("font-size");
+            let fontfamily = $(this).find('span').css('font-family');
+            let clr = $(this).find('span').css('color');
+            let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
+            let bgcolor = $(this).attr('data-color');
+            let reqrd = false;
+            let signed = false;
+            if (sign_id) {
+              signed = sign_id;
             }
-            let drag_data = [];
-             docs[parseInt(i)-1].drag_data = [];
-            $("#signature_container_"+i+" .unselectable").each(function( index ) {
-              let key___ = inputfields.slice(inputfields.length - 1);
-              let field = $( this ).data('id') || key___[0];
-              let type = $( this ).data('id') || field; 
-              let img = $( this ).find('img').attr('src');
-              let w=$(this).width();
-              let h=$(this).height();
-              let font = $(this).css("font-size");
-              let fontfamily = $(this).find('span').css('font-family');
-              let clr = $(this).find('span').css('color');
-              let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
-              let bgcolor = $(this).attr('data-color');
-              let reqrd = false;
-              let signed = false;
-              if (sign_id) {
-                signed = sign_id;
-              }
-              let content = $(this).find('span').text();
-              if (type == 'text') {
-                content = $(this).find('input[type="text"]').val();
-              }
-              let attached = null;
-              if (type == 'attach') {
-                attached = $(this).find('span').attr('data-src');
-              }
-              if($(this).find('span').hasClass('required')){
-                reqrd = true;
-              } 
-              drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed,attach_img:attached});
-            });
-            docs[parseInt(i)-1].drag_data = drag_data;
-            doc.addImage(imgData, 'JPEG', 0, 0, width, height);
-            if(i == this.state.docs.length){
-              setTimeout(function() {
-                var blob = doc.output("blob"); 
-                var blobURL = URL.createObjectURL(blob);
-                var downloadLink = document.getElementById('pdf-download-link');
-                downloadLink.href = blobURL;
-                var loader = document.getElementById('outer-barG');
-                $('#modal_backdrop').remove();
-                $(loader).css('display','none');
-                swal({
-                  title: "Do You Want to save it in your account?",
-                  text: "Are you sure that you want to save this ?",
-                  icon: "success",
-                  buttons: ["No", "Yes"],
-                  dangerMode: false,
-                })
+            let content = $(this).find('span').text();
+            if (type == 'text') {
+              content = $(this).find('input[type="text"]').val();
+            }
+            let attached = null;
+            if (type == 'attach') {
+              attached = $(this).find('span').attr('data-src');
+            }
+            if ($(this).find('span').hasClass('required')) {
+              reqrd = true;
+            }
+            drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
+          });
+          docs[parseInt(i) - 1].drag_data = drag_data;
+          doc.addImage(imgData, 'JPEG', 0, 0, width, height);
+          if (i == this.state.docs.length) {
+            setTimeout(function () {
+              var blob = doc.output("blob");
+              var blobURL = URL.createObjectURL(blob);
+              var downloadLink = document.getElementById('pdf-download-link');
+              downloadLink.href = blobURL;
+              var loader = document.getElementById('outer-barG');
+              $('#modal_backdrop').remove();
+              $(loader).css('display', 'none');
+              swal({
+                title: "Do You Want to save it in your account?",
+                text: "Are you sure that you want to save this ?",
+                icon: "success",
+                buttons: ["No", "Yes"],
+                dangerMode: false,
+              })
                 .then(willSave => {
                   if (willSave) {
                     var reader = new FileReader();
-                    reader.readAsDataURL(blob); 
-                    reader.onloadend = function() {
-                      let base64data = reader.result;              
-                        axios.put('/api/doc/'+edit_id,{base64Data:base64data,token:localStorage.getItem('jwtToken'),docs:docs}).then((res) => {
-                          objThis.setState({ redirect: 'dashboard' });
-                        });
+                    reader.readAsDataURL(blob);
+                    reader.onloadend = function () {
+                      let base64data = reader.result;
+                      axios.put('/api/doc/' + edit_id, { base64Data: base64data, token: localStorage.getItem('jwtToken'), docs: docs }).then((res) => {
+                        objThis.setState({ redirect: 'dashboard' });
+                      });
                     }
                     swal("Saved!", "Your doc file has been saved", "success");
                   }
                 });
-              },500);
-            }
+            }, 500);
+          }
         });
       }
     }
@@ -378,12 +484,11 @@ class Signature_edit extends Component {
 
   saveData(e){
     e.preventDefault();
-    var loader = document.getElementById('outer-barG');
     $('<div class="modal-backdrop show" id="modal_backdrop"></div>').appendTo('body');
     // document.getElementById("app").appendChild('<div class="modal-backdrop show"></div>');
-    $(loader).css('display','block');
+    $('#outer-barG').show();
     this.convertHtmlToCanvas(e);
-    
+    $('#modal_backdrop').remove();
     // setTimeout(() => {
     //   console.log(this.state.redirect);
     //   if (this.state.redirect) {
@@ -638,9 +743,23 @@ class Signature_edit extends Component {
     let all_ok = false;
     let tag = '';
     let count = this.state.onStartCount;
+    let objThis = this;
     $(".signature_container .unselectable").each(function( index ) {
-      tag = $(this).children().first().get(0).tagName; console.log(tag);
-      $(tag.toLowerCase()+'#'+count).focus();
+      let docid = $(this).attr('data-docId'); 
+      let field = $(this).attr('id'); 
+      var size = 0, key;
+      for (key in objThis.state.signer_fillable_fields) {
+        if (size == count) {
+          console.log(field);
+          $('#' + field).css('border', '1px solid #000');
+          // $(tag.toLowerCase() + '#' + count).focus();
+          console.log(key);
+          // console.log($(this).children());
+        }
+        size++;
+      }
+      // tag = $(this).children().first().get(0).tagName; console.log($(tag.toLowerCase() + '#' + count));
+      // $(tag.toLowerCase()+'#'+count).focus();
     });
     if (this.state.docs.length > 0) {
       let id = '';
@@ -655,7 +774,7 @@ class Signature_edit extends Component {
         console.log(all_ok)
         if ($("#signature_container_" + i).children().hasClass('sign_text') || $("#signature_container_" + i).children().hasClass('signer_added')) {
           let elem = $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign);
-          console.log(elem);
+          // console.log(elem);
           if (elem.first().text() != '' && elem.first().text() == 'sign_text' && all_ok) {
             console.log(elem.first().text())
             all_ok = true;
@@ -703,6 +822,12 @@ class Signature_edit extends Component {
     });
     console.log(listt);
     this.setState({ allOk: allok });
+  }
+
+  showHideAddSigner = () => {
+    this.setState(prevState => ({
+      showSigner: !prevState.showSigner
+    }));
   }
 
   render() {
@@ -877,6 +1002,8 @@ class Signature_edit extends Component {
       getSignPosition={this.getSignPosition.bind(this)}
       showInitialField={this.showInitialField.bind(this)} 
       showSignatureField={this.showSignatureField.bind(this)}
+      oneTimeLoad={this.oneTimeLoad.bind(this)}
+      onetimeload_={this.state.onetimeload}
       closeAttempt={this.closeAttempt.bind(this)}
       refreshSigners={this.refreshSigners.bind(this)}
       updateTab={this.updateTab.bind(this)}
@@ -1004,13 +1131,17 @@ class Signature_edit extends Component {
                                 <h2 className="text-center">Field Properties</h2>
                                 {required_msg}
                                 <div className="panel-body">
-                                    <div className="form-group">
+                                {(() => {
+                            console.log(this.state.showSigner);
+                                  if (this.state.showSigner) {
+                                    return (<div className="form-group">
                                       <div className="input-group">
                                         <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
-                                        <input id="signer" name="signer" placeholder="Who is filling in this field?" onChange={this.handleChange} className="form-control"  type="text" />
+                                        <input id="signer" name="signer" placeholder="Who is filling in this field?" onChange={this.handleChange} className="form-control" type="text" />
                                       </div>
-                                    </div>
-                                    Or
+                                    </div>);
+                                  }
+                                })()}
                                     <div className="form-group">
                                       <div className="input-group">
                                         <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
@@ -1020,10 +1151,15 @@ class Signature_edit extends Component {
                                         </select>
                                       </div>
                                     </div>
+                          <div className="form-group">
+                            <div className="input-group">
+                              <a href="javascript:void(0)" class="btn-default" style={{ textDecoration: 'none', outline: 'none' }} onClick={this.showHideAddSigner} >Add Signer</a>
+                            </div>
+                          </div>
                                     <div className="form-group">
                                       <div className="input-group">
                                         <label className="input-group-addon">Field Required</label>
-                                        <input name="field_required" onChange={this.handleChange} className="form-control"  type="checkbox" />
+                              <input name="field_required" onChange={this.handleChange} className="form-control" checked="checked"  type="checkbox" />
                                       </div>
                                     </div>
                                     <div className="form-group">

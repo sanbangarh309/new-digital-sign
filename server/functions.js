@@ -51,7 +51,7 @@ module.exports = {
   },
 
   uploadFinalDoc : function(base64Data,sb){
-    if (!base64Data) {
+    if (!base64Data.doc_file) {
       return sb('');
     }
     let base64Data_ = base64Data.doc_file;

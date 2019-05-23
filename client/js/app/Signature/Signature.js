@@ -62,7 +62,9 @@ class Signature extends Component {
       token:localStorage.getItem('jwtToken'),
       field_count:0,
       redirect:false,
-      currentDocId:null
+      currentDocId:null,
+      onetimeload: false,
+      showSigner:false
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -73,6 +75,13 @@ class Signature extends Component {
     }
     this.addField = this.addField.bind(this);
     this.handleChange = this.handleChange.bind(this);
+  }
+
+
+  oneTimeLoad = (done) => {
+    if (done) {
+      this.setState({ onetimeload: true });
+    }
   }
 
   getBase64 = (file) => {
@@ -125,21 +134,34 @@ class Signature extends Component {
     axios.get('/api/template/'+id).then((res) => {
       let fina_data = [];
       localStorage.setItem('file_name', res.data.name);
-      Object.keys(res.data.images).map(key => {
-        var i = new Image(); 
-        i.onload = function(){
-          fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
+      // Object.keys(res.data.images).map(key => {
+      //   var i = new Image(); 
+      //   i.onload = function(){
+      //     fina_data.push({name:res.data.images[key].name,w:i.width,h:i.height});
+      //   };
+      //   i.src = 'files/templates/'+res.data.images[key].name;
+      // });
+      // setTimeout(() => {
+      //   localStorage.setItem("files_array", JSON.stringify(fina_data))
+      //   this.setState({
+      //     docs: fina_data
+      //   });
+      //   $('#outer-barG').css('display','none');
+      // }, 1000);    
+      const requests = Object.keys(res.data.images).map(key => {
+        var i = new Image();
+        i.onload = function () {
+          return fina_data.push({ name: res.data.images[key].name, w: i.width, h: i.height });
         };
-        i.src = 'files/templates/'+res.data.images[key].name;
+        i.src = 'files/templates/' + res.data.images[key].name;
       });
-      console.log(fina_data)
-      setTimeout(() => {
-        localStorage.setItem("files_array", JSON.stringify(fina_data))
+
+      Promise.all(requests).then(() => {
         this.setState({
           docs: fina_data
         });
-        $('#outer-barG').css('display','none');
-      }, 1000);    
+        $('#outer-barG').hide();
+      });
   }).catch(error => {
     console.log(error.response);
   });
@@ -218,128 +240,207 @@ class Signature extends Component {
     axios.post('/api/chktype', { doc_file: doc, file_name: localStorage.getItem('file_name')}).then((res) => {
         localStorage.setItem('uploaded_doc','')
         let fina_data = [];
-        Object.keys(res.data.message).map(key => {
-          var i = new Image(); 
-          i.onload = function(){
-            fina_data.push({name:res.data.message[key].name,w:i.width,h:i.height});
-          };
-          i.src = 'files/docs/'+res.data.message[key].name;
-        });
+        // Object.keys(res.data.message).map(key => {
+        //   var i = new Image(); 
+        //   i.onload = function(){
+        //     fina_data.push({name:res.data.message[key].name,w:i.width,h:i.height});
+        //   };
+        //   i.src = 'files/docs/'+res.data.message[key].name;
+        // });
         
-        setTimeout(() => {
+        // setTimeout(() => {
+        //   localStorage.setItem("files_array", JSON.stringify(fina_data))
+        //   this.setState({
+        //     docs: fina_data
+        //   });
+        //   var loader = document.getElementById('outer-barG');
+        //   $('#modal_backdrop').remove();
+        //   $(loader).css('display','none');
+        // }, 1000); 
+      const requests = Object.keys(res.data.message).map(key => {
+          var i = new Image();
+          i.onload = function () {
+            return fina_data.push({ name: res.data.message[key].name, w: i.width, h: i.height });
+          };
+        i.src = 'files/docs/' + res.data.message[key].name;
+        });
+
+        Promise.all(requests).then(() => {
           localStorage.setItem("files_array", JSON.stringify(fina_data))
           this.setState({
             docs: fina_data
           });
-          var loader = document.getElementById('outer-barG');
           $('#modal_backdrop').remove();
-          $(loader).css('display','none');
-        }, 1000);    
+          $('#outer-barG').hide();
+        });
     }); 
   }
 
-  convertHtmlToCanvas = () => {
-    const objThis = this;
-    let save = '';
-    let doc = '';
-    let width = '';
-    let height = '';
+  convertHtmlToCanvas = (e) => {
+    e.preventDefault();
+    $('#outer-barG').show();
     let docs = this.state.docs;
     let inputfields = this.state.inputFields;
-    // console.log($("#signature_container_1 .unselectable").attr('id'));
-    // console.log($("#signature_container_1 .unselectable").css('left'));
-    // $("#signature_container_1 .unselectable").each(function( index ) {
-    //   console.log( index + ": " + $( this ).attr('id') );
-    //   console.log( index + ": " + $( this ).css('left') );
-    // });
-    // debugger;
-    if(this.state.docs.length > 0){
-      doc = new jsPDF('p', 'mm', 'a4');
-      for(let i=1;i <=this.state.docs.length;i++){
-        html2canvas(document.querySelector("#signature_container_"+i), { allowTaint: true }).then(canvas => { 
-          var imgData = canvas.toDataURL(
-            'image/jpeg',[0.0, 1.0]);      
-            this.calculatePDF_height_width("#signature_container_"+i,0);
-            if(i ==1){
-              width = doc.internal.pageSize.getWidth();
-              height = doc.internal.pageSize.getHeight();
-              doc.setFont("helvetica");
-              doc.setFontType("bold");
-            }else{
-              doc.addPage();
-            }
-             let drag_data = [];
-             docs[parseInt(i)-1].drag_data = [];
-            $("#signature_container_"+i+" .unselectable").each(function( index ) {
-              let key___ = inputfields.slice(inputfields.length - 1);
-              let field = $( this ).data('id') || key___[0];
-              let type = $( this ).data('id') || field; 
-              let img = $( this ).find('img').attr('src') || null;
-              let w=$(this).width();
-              let h=$(this).height();
-              let font = $(this).css("font-size") || null;
-              let fontfamily = $(this).find('span').css('font-family') || null;
-              let clr = $(this).find('span').css('color') || null;
-              let signer_id = $(this).find('span').attr('id') || null;
-              let bgcolor = $(this).attr('data-color');
-              let reqrd = false;
-              let content = $(this).find('span').text();
-              if (type == 'text') {
-                content = $(this).find('input[type="text"]').val();
-              }
-              if($(this).find('span').hasClass('required')){
-                reqrd = true;
-              } 
-              // if(docs[index]){
-                drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:content,doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
-              // }
-              // console.log( index + ": " + $( this ).attr('id') );
-              // console.log( index + ": " + $( this ).css('left') );
-            });
-            // console.log(drag_data);
-            // debugger;
-            docs[parseInt(i)-1].drag_data = drag_data;
-            // docs[parseInt(i)-1].saved_dom = saved_dom;
-            doc.addImage(imgData, 'JPEG', 0, 0, width, height);
-            if(i == this.state.docs.length){
-              setTimeout(function() {
-                var blob = doc.output("blob");
-                var blobURL = URL.createObjectURL(blob);
-                var downloadLink = document.getElementById('pdf-download-link');
-                downloadLink.href = blobURL;
-                var loader = document.getElementById('outer-barG');
-                $('#modal_backdrop').remove();
-                $(loader).css('display','none');
-                swal({
-                  title: "Do You Want to save it in your account?",
-                  text: "Are you sure that you want to save this ?",
-                  icon: "success",
-                  buttons: ["No", "Yes"],
-                  dangerMode: false,
-                })
-                .then(willSave => {
-                  if (willSave) {
-                    var reader = new FileReader();
-                    reader.readAsDataURL(blob); 
-                    reader.onloadend = function() {
-                      let base64data = reader.result;   
-                      $('#outer-barG').show();  
-                      axios.post('/api/add_doc', { base64Data: base64data, token: localStorage.getItem('jwtToken'), docs: docs, file_name: localStorage.getItem('file_name'), tempId: objThis.state.template_id}).then((res) => {
-                        localStorage.removeItem('file_name');
-                        $('#outer-barG').hide();
-                        objThis.setState({ redirect: 'dashboard' });
-                      });
-                    }
-                    // debugger;
-                    swal("Saved!", "Your doc file has been saved", "success");
-                  }
-                });
-              },500);
-            }
+    let sign_id = this.state.doc_for_sign;
+    const objThis = this;
+    if (this.state.docs.length > 0) {
+      for (let i = 1; i <= this.state.docs.length; i++) {
+        let drag_data = [];
+        docs[parseInt(i) - 1].drag_data = [];
+        $("#signature_container_" + i + " .unselectable").each(function (index) {
+          let key___ = inputfields.slice(inputfields.length - 1);
+          let field = $(this).data('id') || key___[0];
+          let type = $(this).data('id') || field;
+          let img = $(this).find('img').attr('src');
+          let w = $(this).width();
+          let h = $(this).height();
+          let font = $(this).css("font-size");
+          let fontfamily = $(this).find('span').css('font-family');
+          let clr = $(this).find('span').css('color');
+          let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
+          let bgcolor = $(this).attr('data-color');
+          let reqrd = false;
+          let signed = false;
+          if (sign_id) {
+            signed = sign_id;
+          }
+          let content = $(this).find('span').text();
+          if (type == 'text') {
+            content = $(this).find('input[type="text"]').val();
+          }
+          let attached = null;
+          if (type == 'attach') {
+            attached = $(this).find('span').attr('data-src');
+          }
+          if ($(this).find('span').hasClass('required')) {
+            reqrd = true;
+          }
+          drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
         });
+        docs[parseInt(i) - 1].drag_data = drag_data;
+        swal({
+          title: "Do You Want to save it in your account?",
+          text: "Are you sure that you want to save this ?",
+          icon: "success",
+          buttons: ["No", "Yes"],
+          dangerMode: false,
+        })
+          .then(willSave => {
+            if (willSave) {
+              axios.post('/api/add_doc', { base64Data: null, token: localStorage.getItem('jwtToken'), docs: docs, file_name: localStorage.getItem('file_name'), tempId: objThis.state.template_id }).then((res) => {
+                localStorage.removeItem('file_name');
+                $('#outer-barG').hide();
+                objThis.setState({ redirect: 'dashboard' });
+              });
+              swal("Saved!", "Your doc file has been saved", "success");
+            }
+          });
       }
     }
   }
+
+  // convertHtmlToCanvas = () => {
+  //   const objThis = this;
+  //   let save = '';
+  //   let doc = '';
+  //   let width = '';
+  //   let height = '';
+  //   let docs = this.state.docs;
+  //   let inputfields = this.state.inputFields;
+  //   // console.log($("#signature_container_1 .unselectable").attr('id'));
+  //   // console.log($("#signature_container_1 .unselectable").css('left'));
+  //   // $("#signature_container_1 .unselectable").each(function( index ) {
+  //   //   console.log( index + ": " + $( this ).attr('id') );
+  //   //   console.log( index + ": " + $( this ).css('left') );
+  //   // });
+  //   // debugger;
+  //   if(this.state.docs.length > 0){
+  //     doc = new jsPDF('p', 'mm', 'a4');
+  //     for(let i=1;i <=this.state.docs.length;i++){
+  //       html2canvas(document.querySelector("#signature_container_"+i), { allowTaint: true }).then(canvas => { 
+  //         var imgData = canvas.toDataURL(
+  //           'image/jpeg',[0.0, 1.0]);      
+  //           this.calculatePDF_height_width("#signature_container_"+i,0);
+  //           if(i ==1){
+  //             width = doc.internal.pageSize.getWidth();
+  //             height = doc.internal.pageSize.getHeight();
+  //             doc.setFont("helvetica");
+  //             doc.setFontType("bold");
+  //           }else{
+  //             doc.addPage();
+  //           }
+  //            let drag_data = [];
+  //            docs[parseInt(i)-1].drag_data = [];
+  //           $("#signature_container_"+i+" .unselectable").each(function( index ) {
+  //             let key___ = inputfields.slice(inputfields.length - 1);
+  //             let field = $( this ).data('id') || key___[0];
+  //             let type = $( this ).data('id') || field; 
+  //             let img = $( this ).find('img').attr('src') || null;
+  //             let w=$(this).width();
+  //             let h=$(this).height();
+  //             let font = $(this).css("font-size") || null;
+  //             let fontfamily = $(this).find('span').css('font-family') || null;
+  //             let clr = $(this).find('span').css('color') || null;
+  //             let signer_id = $(this).find('span').attr('id') || null;
+  //             let bgcolor = $(this).attr('data-color');
+  //             let reqrd = false;
+  //             let content = $(this).find('span').text();
+  //             if (type == 'text') {
+  //               content = $(this).find('input[type="text"]').val();
+  //             }
+  //             if($(this).find('span').hasClass('required')){
+  //               reqrd = true;
+  //             } 
+  //             // if(docs[index]){
+  //               drag_data.push({ id: index, isDragging: false, isResizing: false, top:$( this ).css('top'), left: $( this ).css('left'),width:w, height:h, fontSize:font,isHide:false, type:type,appendOn:false,content:content,doc_id:i,required:reqrd,sign_img:img,sign_text:$( this ).find('span').text(),sign_font:fontfamily,sign_color:clr,signer_id:signer_id,signer_clr:bgcolor});
+  //             // }
+  //             // console.log( index + ": " + $( this ).attr('id') );
+  //             // console.log( index + ": " + $( this ).css('left') );
+  //           });
+  //           // console.log(drag_data);
+  //           // debugger;
+  //           docs[parseInt(i)-1].drag_data = drag_data;
+  //           // docs[parseInt(i)-1].saved_dom = saved_dom;
+  //           doc.addImage(imgData, 'JPEG', 0, 0, width, height);
+  //           if(i == this.state.docs.length){
+  //             setTimeout(function() {
+  //               var blob = doc.output("blob");
+  //               var blobURL = URL.createObjectURL(blob);
+  //               var downloadLink = document.getElementById('pdf-download-link');
+  //               downloadLink.href = blobURL;
+  //               var loader = document.getElementById('outer-barG');
+  //               $('#modal_backdrop').remove();
+  //               $(loader).css('display','none');
+  //               swal({
+  //                 title: "Do You Want to save it in your account?",
+  //                 text: "Are you sure that you want to save this ?",
+  //                 icon: "success",
+  //                 buttons: ["No", "Yes"],
+  //                 dangerMode: false,
+  //               })
+  //               .then(willSave => {
+  //                 if (willSave) {
+  //                   var reader = new FileReader();
+  //                   reader.readAsDataURL(blob); 
+  //                   reader.onloadend = function() {
+  //                     let base64data = reader.result;   
+  //                     $('#outer-barG').show();  
+  //                     axios.post('/api/add_doc', { base64Data: base64data, token: localStorage.getItem('jwtToken'), docs: docs, file_name: localStorage.getItem('file_name'), tempId: objThis.state.template_id}).then((res) => {
+  //                       localStorage.removeItem('file_name');
+  //                       $('#outer-barG').hide();
+  //                       objThis.setState({ redirect: 'dashboard' });
+  //                     });
+  //                   }
+  //                   // debugger;
+  //                   swal("Saved!", "Your doc file has been saved", "success");
+  //                 }
+  //               });
+  //             },500);
+  //           }
+  //       });
+  //     }
+  //   }
+  // }
 
  
 
@@ -370,11 +471,7 @@ class Signature extends Component {
   }
 
   saveData(e){
-    var loader = document.getElementById('outer-barG');
-    $('<div class="modal-backdrop show" id="modal_backdrop"></div>').appendTo('body');
-    // document.getElementById("app").appendChild('<div class="modal-backdrop show"></div>');
-    $(loader).css('display','block');
-    this.convertHtmlToCanvas();
+    this.convertHtmlToCanvas(e);
   }
 
   createTextField(e){
@@ -605,6 +702,13 @@ class Signature extends Component {
     //   this.state.inputFields.push('sign_text');
     // }
   }
+
+  showHideAddSigner = () => {
+    this.setState(prevState => ({
+      showSigner: !prevState.showSigner
+    }));
+  }
+
   render() {
     // debugger;
     let dashboard = '';
@@ -744,6 +848,8 @@ class Signature extends Component {
       closeAttempt={this.closeAttempt.bind(this)}
       updateTab={this.updateTab.bind(this)}
       refreshSigners={this.refreshSigners.bind(this)}
+      oneTimeLoad={this.oneTimeLoad.bind(this)}
+      onetimeload_={this.state.onetimeload}
       sign_image={this.state.sign_image} 
       sign_text={this.state.sign_text} 
       sign_font={this.state.sign_font}
@@ -866,26 +972,35 @@ class Signature extends Component {
                                 <h2 className="text-center">Field Properties</h2>
                                 {required_msg}
                                 <div className="panel-body">
-                                    <div className="form-group">
-                                      <div className="input-group">
-                                        <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
-                                        <input id="signer" name="signer" placeholder="Who is filling in this field?" onChange={this.handleChange} className="form-control"  type="text" />
-                                      </div>
-                                    </div>
-                                    Or
-                                    <div className="form-group">
-                                      <div className="input-group">
-                                        <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
-                                        <select name="exist_signer" id="exist_signer" onChange={this.handleChange}>
-                                        <option value=''>Select Signer</option>
-                                        {this.state.signers.map((person) => <option id={person._id} key={person._id}>{person.name}</option>)}
-                                        </select>
-                                      </div>
-                                    </div>
+                          {(() => {
+                            console.log(this.state.showSigner);
+                            if (this.state.showSigner) {
+                              return (<div className="form-group">
+                                <div className="input-group">
+                                  <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
+                                  <input id="signer" name="signer" placeholder="Who is filling in this field?" onChange={this.handleChange} className="form-control" type="text" />
+                                </div>
+                              </div>);
+                            }
+                          })()}
+                          <div className="form-group">
+                            <div className="input-group">
+                              <span className="input-group-addon"><i className="glyphicon glyphicon-envelope color-blue"></i></span>
+                              <select name="exist_signer" id="exist_signer" onChange={this.handleChange}>
+                                <option value=''>Select Signer</option>
+                                {this.state.signers.map((person) => <option id={person._id} key={person._id}>{person.name}</option>)}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="form-group">
+                            <div className="input-group">
+                              <a href="javascript:void(0)" class="btn-default" style={{ textDecoration: 'none', outline: 'none' }} onClick={this.showHideAddSigner} >Add Signer</a>
+                            </div>
+                          </div>
                                     <div className="form-group">
                                       <div className="input-group">
                                       <label className="input-group-addon">Field Required</label>
-                                        <input name="field_required" onChange={this.handleChange} className="form-control" value="required"  type="checkbox" />
+                              <input name="field_required" onChange={this.handleChange} className="form-control" value="required" checked="checked"  type="checkbox" />
                                       </div>
                                     </div>
                                     <div className="form-group">

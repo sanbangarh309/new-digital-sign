@@ -7,7 +7,7 @@ const schema = new mongoose.Schema({
   doc_id:{ type: String, required: true },
   email_sent:{ type: String, default: 'no' },
   link:{ type: String, default: '' },
-  status:{ type: Number, default: 0 },
+  status:{ type: String, default: 'pending' },
   created_at:{ type: Date, default: Date.now },
 });
 
