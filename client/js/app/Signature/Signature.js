@@ -577,11 +577,11 @@ class Signature extends Component {
       return (<Redirect to={'/' + this.state.redirect} />);
     }
     const Fields = this.state.signers.map((person) =>
-        (<li 
+      (<li
         key={person._id}
-        >
-        <a href="javascript:void(0)" id={'signer_'+person._id} className="btn sign-btn" className="btn"><span class="material-icons">border_color</span>{person.name}</a>
-        </li>)
+      >
+        <a href="javascript:void(0)" id={'signer_' + person._id} className="btn sign-btn" className="btn"><span class="custom-icons" style={{ 'backgroundColor': person.color, 'padding': '5px' }}></span><span style={{ paddingLeft: '5px' }}>{person.name}</span></a>
+      </li>)
     );
     if (!localStorage.getItem('jwtToken')) {
       return <Redirect to='/'  />
