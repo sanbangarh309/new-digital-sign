@@ -115,7 +115,6 @@ class Template extends Component {
     e.preventDefault();
     swal({
       title: "Do You Want to delete it from your account?",
-      text: "Are you sure that you want to delete ?",
       icon: "warning",
       buttons: ["No", "Yes"],
       dangerMode: true,

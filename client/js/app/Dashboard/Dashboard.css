@@ -120,3 +120,20 @@
 	margin-top: 7px !important;
 }
 
+.card-body .top-box-list > li:nth-child(2) {
+    padding-top: 0 !important;
+    width: 53%  !important;
+    float: left !important;
+    padding: 0  !important;
+}
+
+.list-inline.top-box-list {
+    margin: 0 0 0 39px  !important;
+}
+
+.folder_more_button{
+	width: 29.5%;
+	text-align: right;
+	left: 0;
+}
+

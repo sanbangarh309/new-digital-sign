@@ -92,7 +92,6 @@ class Dashboard extends Component {
           // }
         });
       }
-      console.log(this.state.docs);
       if (this.state.docs.length > 0) {
         let ids = {};
         // Object.keys(docs).forEach(function (head) {
@@ -180,7 +179,6 @@ class Dashboard extends Component {
       Object.keys(docs).forEach(function (head) {
         Object.keys(docs[head].images).forEach(function (key) {
           ids[docs[head]._id] = [];
-          console.log(docs[head].images);
           Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
             if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
               ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
@@ -189,7 +187,6 @@ class Dashboard extends Component {
         });
       });
       this.getSignersWithDoc(ids);
-      console.log(ids)
       // this.setState({
       //   lastDate: res.data.lastDate
       // });
@@ -230,7 +227,6 @@ class Dashboard extends Component {
     e.preventDefault();
     swal({
       title: "Do You Want to delete it from your account?",
-      text: "Are you sure that you want to delete ?",
       icon: "warning",
       buttons: ["No", "Yes"],
       dangerMode: true,
@@ -282,17 +278,23 @@ class Dashboard extends Component {
     let uniqueemails = [...new Set(emails)];
     if(uniqueemails.length > 0 && id){
       axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id,token:localStorage.getItem('jwtToken')}).then((res) => {
-        this.setState({
-          added: true,
-          alert: 'alert alert-success',
-          msg: 'Document Shared Successfully',
-        });
+        $('#emailModal').modal('hide');
+        // let ids = {};
+        // let docs = this.state.docs;
+        // Object.keys(docs).forEach(function (head) {
+        //   Object.keys(docs[head].images).forEach(function (key) {
+        //     ids[docs[head]._id] = [];
+        //     Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
+        //       if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
+        //         ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
+        //       }
+        //     });
+        //   });
+        // });
+        // this.getSignersWithDoc(ids);
+        swal("Success!", "Document Shared Successfully", "success");
       }).catch(error => {
-        this.setState({
-          added: true,
-          alert: 'alert alert-danger',
-          msg: error.response.data.error,
-        });
+        swal("Error!", "Something Went wrong", "danger");
       });
     }
     return false;
@@ -491,7 +493,6 @@ class Dashboard extends Component {
       e.preventDefault();
       swal({
         title: "Do You Want to delete it from your account?",
-        text: "Are you sure that you want to delete ?",
         icon: "warning",
         buttons: ["No", "Yes"],
         dangerMode: true,
@@ -738,7 +739,7 @@ class Dashboard extends Component {
                                     </a>
                                   </li>
                                   <li><a href="javascript:void(0)" onClick={this.openFolder.bind(this, value._id, value.name)}>Open</a></li>
-                                  <li>
+                                  <li className="folder_more_button">
                                     <div class="dropdown">
                                       <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
                                                                 <span class="caret"></span></button>
@@ -763,7 +764,7 @@ class Dashboard extends Component {
                                     // console.log(inviteindex);
                                     // console.log(docData[invitevalue]);
                                     if (docData[invitevalue].status == 'pending') {
-                                      signers_list.push(<a href="javascript:void(0)" id={"invitation_id_" + docData[invitevalue].queId} style={{ float: 'left', textDecoration: 'none', outline: 'none' }} class="dropdown col-sm-6">
+                                      signers_list.push(<a href="javascript:void(0)" id={"invitation_id_" + docData[invitevalue].queId} style={{ float: 'left', textDecoration: 'none', outline: 'none' }} class="dropdown col-sm-4">
                                         <a href="javascript:void(0)" class="btn-default dropdown-toggle" style={{ textDecoration: 'none', outline: 'none' }} type="button" data-toggle="dropdown"><img src="/assets/img/pending.png" style={{ padding: '3px' }} />{docData[invitevalue].email}
                                         <span class="caret"></span></a>
                                         <ul class="dropdown-menu" style={{ minWidth: '6rem' }}>

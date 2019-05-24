@@ -70,7 +70,9 @@ class Signature_edit extends Component {
       currentDocId:null,
       signer_fillable_fields:{},
       onetimeload:false,
-      showSigner:false
+      showSigner:false,
+      checked:true,
+      field_required:'required'
     };
     let doc = localStorage.getItem('uploaded_doc') || ''
     if(doc){
@@ -152,7 +154,8 @@ class Signature_edit extends Component {
             if(res.data.images[key].drag_data[key2].type == "signer_added"){
               ids.push(res.data.images[key].drag_data[key2].signer_id);
               if (res.data.images[key].drag_data[key2].signer_id == objThis.state.doc_for_sign) {
-                fillabel[res.data.images[key].drag_data[key2].id] = { id: res.data.images[key].drag_data[key2].id, signer_id: res.data.images[key].drag_data[key2].signer_id ,type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
+                res.data.images[key].drag_data[key2]['sign'] = false;
+                fillabel[res.data.images[key].drag_data[key2].id] = res.data.images[key].drag_data[key2];//{ id: res.data.images[key].drag_data[key2].id, signer_id: res.data.images[key].drag_data[key2].signer_id, doc_id: res.data.images[key].drag_data[key2].doc_id ,type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
               }
             }
           });
@@ -188,25 +191,15 @@ class Signature_edit extends Component {
       // this.setState({signer_clr: clr});
       axios.post('/api/addfield',{signer:this.state.signer,signer_clr:clr,docId:this.state.edit_id,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');
-        // let unique = [...new Set(this.state.inputFields)];
-        // this.setState({inputFields:unique});
-        // this.setState({signer_field: fld});
-        // this.setState({first_attempt: true});
-        // this.setState({signer_id: res.data._id});
         this.setState({
           signer_clr: clr, signer_field: fld, first_attempt: true, signer_id: res.data._id
         }, () => {
-          console.log(this.state.first_attempt);
           $('.signer_added.' + res.data._id).css('background-color', res.data.color);
           $('#add_signer').modal('hide');
           let docid = this.state.currentDocId;
           $("#signature_container_" + docid).click();
         });
-        // $('#add_signer').modal('hide');
-        // let docid = this.state.currentDocId;
-        // setTimeout(() => {
-        //   $("#signature_container_" + docid).click();
-        // }, 1000);
+     
       }).catch(error => {
         
       });
@@ -229,15 +222,7 @@ class Signature_edit extends Component {
               let docid = this.state.currentDocId;
             $("#signature_container_" + docid).click();
           })
-          // $('#signer_added_doc_'+this.state.doc_id+'_'+this.state.field_count).css('background-color',res.data.color);
-          // $('.signer_added.'+res.data._id).css('background-color',res.data.color);
         }
-       
-        // $('#add_signer').modal('hide');
-        // let docid = this.state.currentDocId;
-        // setTimeout(() => {
-        //   $("#signature_container_" + docid).click();
-        // }, 1000);
       }).catch(error => {
         console.log(error.response);
       });
@@ -249,47 +234,17 @@ class Signature_edit extends Component {
   }
 
   chkFileType = (doc) => {
-    // this.setState({
-    //        doc_blob: doc
-    // });
     var loader = document.getElementById('outer-barG');
     $('<div class="modal-backdrop show" id="modal_backdrop"></div>').appendTo('body');
     $(loader).css('display','block');
     axios.post('/api/chktype',{doc_file:doc}).then((res) => {
-        localStorage.setItem('uploaded_doc','')
-        let fina_data = [];
-        // Object.keys(res.data.message).map(key => {
-        //   var i = new Image(); 
-        //   i.onload = function(){
-        //     fina_data.push({name:res.data.message[key].name,w:i.width,h:i.height});
-        //   };
-        //   i.src = 'files/docs/'+res.data.message[key].name;
-        // });
-        // setTimeout(() => {
-        //   localStorage.setItem("files_array", JSON.stringify(fina_data))
-        //   this.setState({
-        //     docs: fina_data
-        //   });
-        //   var loader = document.getElementById('outer-barG');
-        //   $('#modal_backdrop').remove();
-        //   $(loader).css('display','none');
-        // }, 1000);    
-      const requests = Object.keys(res.data.message).map(key => {
-        var i = new Image();
-        i.onload = function () {
-          return fina_data.push({ name: res.data.message[key].name, w: i.width, h: i.height });
-        };
-        i.src = 'files/docs/' + res.data.message[key].name;
+      localStorage.setItem('uploaded_doc', '');
+      localStorage.setItem("files_array", JSON.stringify(res.data))
+      this.setState({
+        docs: res.data
       });
-
-      Promise.all(requests).then(() => {
-        localStorage.setItem("files_array", JSON.stringify(fina_data))
-        this.setState({
-          docs: fina_data
-        });
-        $('#modal_backdrop').remove();
-        $('#outer-barG').hide();
-      });
+      $('#modal_backdrop').remove();
+      $('#outer-barG').hide();
     }); 
   }
 
@@ -334,14 +289,17 @@ class Signature_edit extends Component {
             attached = $(this).find('span').attr('data-src');
           }
           if ($(this).find('span').hasClass('required')) {
-            reqrd = true;
+            reqrd = 'required';
           }
-          drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
+          let sign_done = false;
+          if ($(this).hasClass('signed_done')) {
+            sign_done = true
+          }
+          drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached, completed:sign_done });
         });
         docs[parseInt(i) - 1].drag_data = drag_data;
         swal({
           title: "Do You Want to save it in your account?",
-          text: "Are you sure that you want to save this ?",
           icon: "success",
           buttons: ["No", "Yes"],
           dangerMode: false,
@@ -349,9 +307,12 @@ class Signature_edit extends Component {
         .then(willSave => {
             if (willSave) {
               axios.put('/api/doc/' + edit_id, { base64Data: null, token: localStorage.getItem('jwtToken'), docs: docs }).then((res) => {
+                $('#outer-barG').hide();
                 objThis.setState({ redirect: 'dashboard' });
               });
               swal("Saved!", "Your doc file has been saved", "success");
+            }else{
+              $('#outer-barG').hide();
             }
         });
       }
@@ -429,7 +390,6 @@ class Signature_edit extends Component {
               $(loader).css('display', 'none');
               swal({
                 title: "Do You Want to save it in your account?",
-                text: "Are you sure that you want to save this ?",
                 icon: "success",
                 buttons: ["No", "Yes"],
                 dangerMode: false,
@@ -728,7 +688,11 @@ class Signature_edit extends Component {
       }
     }
     if(e.target.name == 'field_required'){
-      if($(e.target).is(":checked")){
+      this.setState(prevState => ({
+        checked: !prevState.checked
+      }));
+      if ($(e.target).is(":checked")) {
+        console.log(e.target.value)
         this.setState({[e.target.name]: e.target.value});
       }else{
         this.setState({[e.target.name]: ''});
@@ -744,66 +708,110 @@ class Signature_edit extends Component {
     let tag = '';
     let count = this.state.onStartCount;
     let objThis = this;
-    $(".signature_container .unselectable").each(function( index ) {
-      let docid = $(this).attr('data-docId'); 
-      let field = $(this).attr('id'); 
-      var size = 0, key;
-      for (key in objThis.state.signer_fillable_fields) {
-        if (size == count) {
-          console.log(field);
-          $('#' + field).css('border', '1px solid #000');
-          // $(tag.toLowerCase() + '#' + count).focus();
-          console.log(key);
-          // console.log($(this).children());
+    let fillable = objThis.state.signer_fillable_fields;
+    var size = 0, key;
+    $(".signature_container .unselectable").each(function (index) {
+      $(this).css('border','none');
+    });
+    let stopLoop = false;
+    for (key in fillable) {
+      if (size == count) {
+        console.log(fillable[key]);
+        if (fillable[key].type == 'signer_added') {
+          if (fillable[key].content == '✔') {
+            if ($('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+              stopLoop = true;
+              $('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
+            } else {
+              $('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid rgb(144, 183, 185)');
+            }
+          }
+          else if (fillable[key].content == 'text') {
+            if ($('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+              stopLoop = true;
+              $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
+            } else {
+              $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid rgb(144, 183, 185)');
+            }
+          }
+          else if (fillable[key].sign_img && fillable[key].sign_img.includes('radio_inactive.png')) {
+            if ($('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+              stopLoop = true;
+              $('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
+            } else {
+              $('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid rgb(144, 183, 185)');
+            }
+            
+          } else {
+            if ($('#' + fillable[key].type + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+              stopLoop = true;
+              $('#' + fillable[key].type + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
+            }else{
+              $('#' + fillable[key].type + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid rgb(144, 183, 185)');
+            }
+          }
         }
+        console.log('#' + fillable[key].type + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id)
+        console.log('size:- ' + size);
+        console.log('count:- ' + count);
+      }
+      if (!stopLoop) {
         size++;
       }
-      // tag = $(this).children().first().get(0).tagName; console.log($(tag.toLowerCase() + '#' + count));
-      // $(tag.toLowerCase()+'#'+count).focus();
-    });
-    if (this.state.docs.length > 0) {
-      let id = '';
-      for (let i = 1; i <= this.state.docs.length; i++) {
-        if ($("#signature_container_" + i).children().hasClass('text')) {
-          if ($("#signature_container_" + i).children().find('input[type="text"]#' + this.state.doc_for_sign).first().val()) {
-            all_ok = true;
-          }else{
-            all_ok = false;
-          }
-        }
-        console.log(all_ok)
-        if ($("#signature_container_" + i).children().hasClass('sign_text') || $("#signature_container_" + i).children().hasClass('signer_added')) {
-          let elem = $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign);
-          // console.log(elem);
-          if (elem.first().text() != '' && elem.first().text() == 'sign_text' && all_ok) {
-            console.log(elem.first().text())
-            all_ok = true;
-          } else {
-            all_ok = false;
-          }
-        }
-        console.log(all_ok)
-        if ($("#signature_container_" + i).children().hasClass('sign') || $("#signature_container_" + i).children().hasClass('signer_added')) {
-          id = $("#signature_container_" + i).children().find('span').attr('id');
-          if ($("#signature_container_" + i).children().find('img#' + this.state.doc_for_sign).length > 0 && $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign).first().text() != 'sign' && all_ok) {
-            all_ok = true;
-          } else {
-            all_ok = false;
-          }
-        }
-        console.log(all_ok)
-        if ($("#signature_container_" + i).children().hasClass('checkbox')) {
-          id = $("#signature_container_" + i).children().find('span').attr('id');
-          if ($("#signature_container_" + i).children().find('input[type="checkbox"]:checked').length > 0 && all_ok) {
-            all_ok = true;
-          } else {
-            all_ok = false;
-          }
-        }
-        console.log(all_ok)
-      }
     }
-    this.state.onStartCount += 1;
+    // $(".signature_container").each(function( index ) {
+    //   let docid = $(this).children().attr('data-docId'); 
+    //   let field = $(this).children().attr('id'); 
+      
+    //   // tag = $(this).children().first().get(0).tagName; console.log($(tag.toLowerCase() + '#' + count));
+    //   // $(tag.toLowerCase()+'#'+count).focus();
+    // });
+    // if (this.state.docs.length > 0) {
+    //   let id = '';
+    //   for (let i = 1; i <= this.state.docs.length; i++) {
+    //     if ($("#signature_container_" + i).children().hasClass('text')) {
+    //       if ($("#signature_container_" + i).children().find('input[type="text"]#' + this.state.doc_for_sign).first().val()) {
+    //         all_ok = true;
+    //       }else{
+    //         all_ok = false;
+    //       }
+    //     }
+    //     console.log(all_ok)
+    //     if ($("#signature_container_" + i).children().hasClass('sign_text') || $("#signature_container_" + i).children().hasClass('signer_added')) {
+    //       let elem = $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign);
+    //       // console.log(elem);
+    //       if (elem.first().text() != '' && elem.first().text() == 'sign_text' && all_ok) {
+    //         console.log(elem.first().text())
+    //         all_ok = true;
+    //       } else {
+    //         all_ok = false;
+    //       }
+    //     }
+    //     console.log(all_ok)
+    //     if ($("#signature_container_" + i).children().hasClass('sign') || $("#signature_container_" + i).children().hasClass('signer_added')) {
+    //       id = $("#signature_container_" + i).children().find('span').attr('id');
+    //       if ($("#signature_container_" + i).children().find('img#' + this.state.doc_for_sign).length > 0 && $("#signature_container_" + i).children().find('span#' + this.state.doc_for_sign).first().text() != 'sign' && all_ok) {
+    //         all_ok = true;
+    //       } else {
+    //         all_ok = false;
+    //       }
+    //     }
+    //     console.log(all_ok)
+    //     if ($("#signature_container_" + i).children().hasClass('checkbox')) {
+    //       id = $("#signature_container_" + i).children().find('span').attr('id');
+    //       if ($("#signature_container_" + i).children().find('input[type="checkbox"]:checked').length > 0 && all_ok) {
+    //         all_ok = true;
+    //       } else {
+    //         all_ok = false;
+    //       }
+    //     }
+    //     console.log(all_ok)
+    //   }
+    // }
+    if (!stopLoop) {
+      this.state.onStartCount += 1;
+    }
+    
     this.setState({ allOk: all_ok });
   }
 
@@ -816,11 +824,14 @@ class Signature_edit extends Component {
     }
 
     Object.keys(listt).map((chk) => {
-      if (!listt[chk].sign) {
+      console.log(listt[chk]);
+      // if (!listt[chk].sign) {
+      //   allok = false;
+      // }
+      if (listt[chk].required == 'required' && !listt[chk].sign) {
         allok = false;
       }
     });
-    console.log(listt);
     this.setState({ allOk: allok });
   }
 
@@ -1022,6 +1033,7 @@ class Signature_edit extends Component {
       first_attempt={this.state.first_attempt}
       signer_clr={this.state.signer_clr}
       allOk={this.state.allOk}
+      field_required={this.state.field_required}
       />
     </div>
     <div className="modal signmodal signature_modal" id="Signfiled">
@@ -1132,7 +1144,6 @@ class Signature_edit extends Component {
                                 {required_msg}
                                 <div className="panel-body">
                                 {(() => {
-                            console.log(this.state.showSigner);
                                   if (this.state.showSigner) {
                                     return (<div className="form-group">
                                       <div className="input-group">
@@ -1159,7 +1170,7 @@ class Signature_edit extends Component {
                                     <div className="form-group">
                                       <div className="input-group">
                                         <label className="input-group-addon">Field Required</label>
-                              <input name="field_required" onChange={this.handleChange} className="form-control" checked="checked"  type="checkbox" />
+                              <input name="field_required" onChange={this.handleChange} className="form-control" checked={this.state.checked} type="checkbox" value="required" />
                                       </div>
                                     </div>
                                     <div className="form-group">

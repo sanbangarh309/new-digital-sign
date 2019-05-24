@@ -112,7 +112,23 @@ module.exports = (app) => {
       // let base64Data = req.body.doc_file;
       const { doc_file, file_name } = req.body;
       San_Function.uploadBase64Image({ doc_file: doc_file, file_name: file_name, type: 'doc' },function(buffer){
-        res.json(buffer)
+        let fina_data = [];
+        const gm = require('gm');
+        var Promise = require('bluebird');
+        Promise.promisifyAll(gm.prototype);
+        const requests = Object.keys(buffer.message).map(key => {
+          return gm(buffer.message[key].path).identifyAsync()
+            .then(function (ret) {
+              return fina_data.push({ name: buffer.message[key].name, w: ret.size.width, h: ret.size.height });
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
+        });
+        Promise.all(requests).then(() => {
+          return res.json(fina_data)
+        });
+        
       });
     });
 
@@ -493,12 +509,11 @@ module.exports = (app) => {
             order++;
           }
           
-          link = link+el.signer_id;
           var mailOptions = {
             from: userMatched.email,
             to: el.email,
             subject: req.body.subject,
-            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
+            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">' + req.body.message + '</div><br/>Click To Sign:<br/>-------------------<br/><a href="' + que.link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
           };
           San_Function.sanSendMail(req, res, mailOptions);
         });
