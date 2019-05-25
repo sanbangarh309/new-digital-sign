@@ -448,7 +448,7 @@ module.exports = (app) => {
       const finalValue = Object.keys(signDoc).map(async (key) => { // map instead of forEach
             queQuery['signer_id'] = { $in: signDoc[key] };
             queQuery['doc_id'] = key;
-            final_response[key] = [];
+        final_response[key] = [];
             return Que.find(queQuery).exec().then(function (ques) {
               if (ques) {
                 ques.forEach((que) => {
@@ -487,6 +487,7 @@ module.exports = (app) => {
           let que = await Que.findOne({ email: el.email });
           if (que) {
             que.signer_id = el.signer_id;
+            que.email = el.email;
             que.doc_id = req.body.id;
             que.link = link + el.signer_id;
             que.save();
@@ -518,25 +519,6 @@ module.exports = (app) => {
           San_Function.sanSendMail(req, res, mailOptions);
         });
         return res.json({success:true,msg:'Document Shared Successfully'});
-        // Doc.findById(req.body.id)
-        // .exec()
-        // .then((doc) => {
-        //   let img = '';
-        //   if(doc.images){
-        //     // img = "http://"+req.headers.host+"/files/docs/"+doc.images[0].name;
-            
-        //   }else{
-        //     return false;
-        //   }
-        //   var mailOptions = {
-        //     from: 'sandeep.digittrix@gmail.com',
-        //     to: email_to,
-        //     subject: req.body.subject,
-        //     html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">'+ req.body.message+'</div><br/>Click To Sign:<br/>-------------------<br/><a href="'+ link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
-        //   };
-        //   San_Function.sanSendMail(req, res, mailOptions);
-        //   return res.json(doc);
-        // }).catch((err) => next(err));
       }
     });
 
@@ -559,6 +541,7 @@ module.exports = (app) => {
             if(pdf_file && fs.existsSync(pdf_file)){
               fs.unlink(config.directory+'/uploads/docs/'+pdf_file);
             }
+            Que.updateMany({ doc_id: req.params.id }, { $set: { status: "pending" } }, function (err, que) { });
           }
           res.json(doc);
         })
@@ -607,7 +590,7 @@ module.exports = (app) => {
 
     app.put('/api/doc/:id', (req, res, next) => {
       var fs = require('fs');
-      const { base64Data } = req.body;
+      const { base64Data, saved_by } = req.body;
         Doc.findById(ObjectId(req.params.id))
         .exec()
           .then((doc) => {
@@ -620,6 +603,9 @@ module.exports = (app) => {
               }else{
                 doc.title = buffer.name;
                 doc.file = buffer.name;
+              }
+              if (saved_by && req.params.id) {
+                Que.updateMany({ signer_id: saved_by, doc_id: req.params.id }, { $set: { status: "done" } }, function (err, que) {});
               }
               doc.save()
               .then(() => res.json(doc))

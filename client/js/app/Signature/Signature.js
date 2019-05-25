@@ -99,7 +99,7 @@ class Signature extends Component {
   refreshSigners(doc_id){
     this.setState({signer: null});
     this.setState({ currentDocId: doc_id });
-    this.setState({exist_signer: null});
+    // this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
         signers: res.data
@@ -171,7 +171,7 @@ class Signature extends Component {
     e.preventDefault();
     let fld = this.state.signer_field;
     if(this.state.signer){
-      // let clr = this.getRandomColor();
+      let clr = this.getRandomColor();
       this.setState({signer_clr: clr});
       axios.post('/api/addfield',{signer:this.state.signer,signer_clr:clr,token:this.state.token}).then((res) => {
         this.state.inputFields.push('signer_added');

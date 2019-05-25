@@ -414,7 +414,7 @@ class DropArea extends React.Component {
           }
           if(key___ == 'text'){
             w = 33;
-            h = 40;
+            h = 67;
             y = parseFloat(y) - 40;
           }
           if (key___ == 'signer_added' && text == 'radio') {
@@ -515,11 +515,8 @@ class DropArea extends React.Component {
         dropjgah_classes.push('hovrcr_sign');
       }
       let key_ = 1;
-      const total_page = this.props.docs.length; console.log(total_page);
+      const total_page = this.props.docs.length;
       let fields = this.state.items;
-      this.props.docs.forEach(element => {
-        console.log(element);
-      });
       this.props.docs.map(doc => {
         let items = [];
         let back_style = {
@@ -897,7 +894,7 @@ class DropArea extends React.Component {
               case "signer": return (<span className={"preventClicking " + this.props.field_required + " " + extra_class} id={this.props.signer_id} style={textstyle}>{signer_field}</span>);
               case "sign_text": return (<span style={cusstyle} class={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id}>{this.props.sign_text}</span>);
               case "checkbox": return (<div className="checkwrap"><input type="checkbox" className={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={cusstyle} /><label style={labelCss}></label></div>);
-              case "radio": return (<input type="radio" name="custom_checkboxes" className={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={cusstyle} />);
+              case "radio": return (<input type="radio" name="custom_checkboxes" className={"class_" + field + " preventClicking " + extra_class} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} style={cusstyle} value={"checked_"+this.props.drag_id} />);
               case "attach": return (<div className="attach"><span className={"preventClicking attach " + this.props.field_required + " " + extra_class} id={this.props.signer_id} style={textstyle}>{signer_field}<input type="file" className="attach" onChange={this.props.uploadImage.bind(this,this.props.id)} accept="image/*" style={{ opacity: 0, width: '0px', height: '0px'}} /></span></div>)
               // default: return (<textarea rows="1" className={"form-control "+this.props.field_required} onKeyDown={this.adjustWidth.bind(this)} id={this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle}></textarea>);
               default: return (<input type={datadtype} onKeyUp={this.props.checkInputFields} className={this.props.field_required + " " + extra_class} onKeyPress={this.adjustWidth.bind(this, this.props.docId)} id={this.props.doc_for_sign ? this.props.signer_id : this.props.drag_id} placeholder={field} defaultValue={dateField} style={cusstyle} />);

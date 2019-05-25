@@ -103,7 +103,7 @@ class Signature_edit extends Component {
   refreshSigners(doc_id){
     this.setState({signer: null});
     this.setState({ currentDocId: doc_id });
-    this.setState({exist_signer: null});
+    // this.setState({exist_signer: null});
     axios.post('/api/signers/',{token:this.state.token}).then((res) => {
       this.setState({
         signers: res.data
@@ -185,7 +185,7 @@ class Signature_edit extends Component {
   }
 
   addField(e){
-    let fld = this.state.signer_field; 
+    let fld = this.state.signer_field; console.log(this.state.exist_signer);
     if(this.state.signer){
       let clr = this.getRandomColor();
       // this.setState({signer_clr: clr});
@@ -306,7 +306,7 @@ class Signature_edit extends Component {
         })
         .then(willSave => {
             if (willSave) {
-              axios.put('/api/doc/' + edit_id, { base64Data: null, token: localStorage.getItem('jwtToken'), docs: docs }).then((res) => {
+              axios.put('/api/doc/' + edit_id, { base64Data: null, token: localStorage.getItem('jwtToken'), docs: docs, saved_by: this.state.doc_for_sign }).then((res) => {
                 $('#outer-barG').hide();
                 objThis.setState({ redirect: 'dashboard' });
               });
@@ -704,6 +704,7 @@ class Signature_edit extends Component {
 
   enterData = (e) => {
     e.preventDefault();
+    e.target.text = 'Next';
     let all_ok = false;
     let tag = '';
     let count = this.state.onStartCount;
@@ -713,13 +714,13 @@ class Signature_edit extends Component {
     $(".signature_container .unselectable").each(function (index) {
       $(this).css('border','none');
     });
+    console.log(fillable)
     let stopLoop = false;
     for (key in fillable) {
       if (size == count) {
-        console.log(fillable[key]);
         if (fillable[key].type == 'signer_added') {
           if (fillable[key].content == '✔') {
-            if ($('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+            if ($('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required') && $('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).prop("checked") == false) {
               stopLoop = true;
               $('#checkbox_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
             } else {
@@ -727,15 +728,17 @@ class Signature_edit extends Component {
             }
           }
           else if (fillable[key].content == 'text') {
-            if ($('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+            if ($('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required') && $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).find('input').val() == '') {
               stopLoop = true;
+              $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).find('input').focus();
               $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
             } else {
               $('#' + fillable[key].content + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid rgb(144, 183, 185)');
             }
           }
           else if (fillable[key].sign_img && fillable[key].sign_img.includes('radio_inactive.png')) {
-            if ($('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required')) {
+            console.log($('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).find('input').val())
+            if ($('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).hasClass('required') && !$('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).find('input').is(':checked')) {
               stopLoop = true;
               $('#radio_doc_' + fillable[key].doc_id + '_' + fillable[key].id).css('border', '1px solid red');
             } else {
@@ -751,13 +754,18 @@ class Signature_edit extends Component {
             }
           }
         }
-        console.log('#' + fillable[key].type + '_doc_' + fillable[key].doc_id + '_' + fillable[key].id)
-        console.log('size:- ' + size);
-        console.log('count:- ' + count);
+        console.log(stopLoop)
+        console.log(size)
+        console.log(count)
+        console.log(Object.values(fillable).length)
+        console.log(size + 1);
+        if (Object.values(fillable).length == size + 1 && !stopLoop) {
+          all_ok = true;
+        }
       }
-      if (!stopLoop) {
-        size++;
-      }
+      size++;
+      
+      
     }
     // $(".signature_container").each(function( index ) {
     //   let docid = $(this).children().attr('data-docId'); 

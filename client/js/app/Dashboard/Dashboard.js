@@ -180,12 +180,16 @@ class Dashboard extends Component {
         Object.keys(docs[head].images).forEach(function (key) {
           ids[docs[head]._id] = [];
           Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
+            console.log(docs[head].images[key].drag_data[key2])
             if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
+              ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
+            } else if (docs[head].images[key].drag_data[key2].completed && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
               ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
             }
           });
         });
       });
+      console.log(ids)
       this.getSignersWithDoc(ids);
       // this.setState({
       //   lastDate: res.data.lastDate
@@ -773,7 +777,7 @@ class Dashboard extends Component {
                                         </ul>
                                       </a>);
                                     }else{
-                                      signers_list.push(<a href="javascript:void(0)" onClick={this.stopPropagation} style={{ padding: '3px', float: 'left' }}><img src="/assets/img/pending.png" style={{ padding: '3px' }} />{docData[invitevalue].email}</a>)
+                                      signers_list.push(<a href="javascript:void(0)" onClick={this.stopPropagation} style={{ padding: '3px', float: 'left' }}><img src={"/assets/img/" + docData[invitevalue].status+".png"} style={{ padding: '3px' }} />{docData[invitevalue].email}</a>)
                                     }
                                   });
                                 }
