@@ -181,11 +181,12 @@ class Dashboard extends Component {
           ids[docs[head]._id] = [];
           Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
             console.log(docs[head].images[key].drag_data[key2])
-            if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
+            if (!ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
               ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
-            } else if (docs[head].images[key].drag_data[key2].completed && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
-              ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
-            }
+            } 
+            // else if (docs[head].images[key].drag_data[key2].completed && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
+            //   ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
+            // }
           });
         });
       });
@@ -205,9 +206,9 @@ class Dashboard extends Component {
     let ids = [];
     let dragData = JSON.parse($(e.target).attr('data-string')); 
     Object.keys(dragData).forEach(function (key) {
-      if(dragData[key].type == "signer_added"){
+      // if(dragData[key].type == "signer_added"){
         ids.push(dragData[key].signer_id);
-      }
+      // }
     });
     $("#email_table #signersPanel tr input").each(function (index) {
       if ($(this).val() && $.trim($(this).val()) != '') {

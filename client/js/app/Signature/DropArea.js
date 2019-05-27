@@ -202,8 +202,8 @@ class DropArea extends React.Component {
       }
       this.setState({currentNode:e.target.nodeName});
       this.setState({currentText:e.target.innerText});
-      let doc_id = $(e.target).parents('div.unselectable').last().attr('data-docId');
-      let draggable_id = $(e.target).parents('div.unselectable').last().attr('data-dragId');
+      let doc_id = $(e.target).parents('div.unselectable').last().attr('data-docid');
+      let draggable_id = $(e.target).parents('div.unselectable').last().attr('data-dragid');
       let key___ = '';
       // let draggable_id = '';
       doc_id = (doc_id ? doc_id : e.target.id.replace(/[^\d.]/g, '')) || 1;
@@ -873,9 +873,10 @@ class DropArea extends React.Component {
         <div className={"text-field-box item unselectable " + field + ' ' + this.props.signer_id + ' ' + this.props.field_required + ' ' + extra_class}
           ref={"node"}
           data-id={field}
-          data-docId={this.props.docId}
-          data-dragId={this.props.drag_id}
+          data-docid={this.props.docId}
+          data-dragid={this.props.drag_id}
           data-color={this.props.signer_clr}
+          data-signerid={this.props.signer_id}
           draggable= {this.props.doc_for_sign ? "false" : this.props.isDragging}
           id={ field+'_' + this.props.id }
           fieldtype={field}

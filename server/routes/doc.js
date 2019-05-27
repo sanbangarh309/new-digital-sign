@@ -94,7 +94,28 @@ module.exports = (app) => {
       Template.findById(req.params.id)
         .exec()
         .then((doc) => {
-          res.json(doc);
+          let fina_data = [];
+          const gm = require('gm');
+          var Promise = require('bluebird');
+          Promise.promisifyAll(gm.prototype);
+            const requests = Object.keys(doc.images).map(key => {
+              if (require('fs').existsSync(doc.images[key].path)) {
+                return gm(doc.images[key].path).identifyAsync()
+                  .then(function (ret) {
+                    return fina_data.push({ name: doc.images[key].name, w: ret.size.width, h: ret.size.height });
+                  })
+                  .catch(function (err) {
+                    console.error(err);
+                  });
+              }else{
+                return [];
+              }
+            });
+            Promise.all(requests).then(() => {
+              return res.json(fina_data)
+            });
+          
+          // res.json(doc);
         })
         .catch((err) => next(err));
     });

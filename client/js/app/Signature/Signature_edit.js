@@ -151,13 +151,13 @@ class Signature_edit extends Component {
         let ids = [];
         Object.keys(res.data.images).forEach(function(key){ 
           Object.keys(res.data.images[key].drag_data).forEach(function(key2){
-            if(res.data.images[key].drag_data[key2].type == "signer_added"){
+            // if(res.data.images[key].drag_data[key2].type == "signer_added"){
               ids.push(res.data.images[key].drag_data[key2].signer_id);
               if (res.data.images[key].drag_data[key2].signer_id == objThis.state.doc_for_sign) {
                 res.data.images[key].drag_data[key2]['sign'] = false;
                 fillabel[res.data.images[key].drag_data[key2].id] = res.data.images[key].drag_data[key2];//{ id: res.data.images[key].drag_data[key2].id, signer_id: res.data.images[key].drag_data[key2].signer_id, doc_id: res.data.images[key].drag_data[key2].doc_id ,type: res.data.images[key].drag_data[key2].type, content: res.data.images[key].drag_data[key2].content, sign: false }
               }
-            }
+            // }
           });
         });
         this.setState({
@@ -273,13 +273,10 @@ class Signature_edit extends Component {
           let font = $(this).css("font-size");
           let fontfamily = $(this).find('span').css('font-family');
           let clr = $(this).find('span').css('color');
-          let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
+          let signer_id = $(this).attr('data-signerid') ? $(this).attr('data-signerid') : sign_id;
           let bgcolor = $(this).attr('data-color');
           let reqrd = false;
           let signed = false;
-          if (sign_id) {
-            signed = sign_id;
-          }
           let content = $(this).find('span').text();
           if (type == 'text') {
             content = $(this).find('input[type="text"]').val();
@@ -294,9 +291,12 @@ class Signature_edit extends Component {
           let sign_done = false;
           if ($(this).hasClass('signed_done')) {
             sign_done = true
+            signed = $(this).attr('data-signerid');
           }
           drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached, completed:sign_done });
         });
+        // console.log(drag_data);
+        // debugger;
         docs[parseInt(i) - 1].drag_data = drag_data;
         swal({
           title: "Do You Want to save it in your account?",

@@ -133,25 +133,14 @@ class Signature extends Component {
 
   useTemplate = (id) => {
     axios.get('/api/template/'+id).then((res) => {
-      let fina_data = [];
-      localStorage.setItem('file_name', res.data.name);
-      const requests = Object.keys(res.data.images).map(key => {
-        var i = new Image();
-        i.onload = function () {
-          return fina_data.push({ name: res.data.images[key].name, w: i.width, h: i.height });
-        };
-        i.src = 'files/templates/' + res.data.images[key].name;
-      });
-
-      Promise.all(requests).then(() => {
+        localStorage.setItem('file_name', res.data.name);
         this.setState({
-          docs: fina_data
+          docs: res.data
         });
         $('#outer-barG').hide();
-      });
-  }).catch(error => {
-    console.log(error.response);
-  });
+    }).catch(error => {
+      console.log(error.response);
+    });
   }
 
   closeAttempt(){
@@ -248,13 +237,10 @@ class Signature extends Component {
           let font = $(this).css("font-size");
           let fontfamily = $(this).find('span').css('font-family');
           let clr = $(this).find('span').css('color');
-          let signer_id = sign_id ? sign_id : $(this).find('span').attr('id');
+          let signer_id = $(this).attr('data-signerid') ? $(this).attr('data-signerid') : sign_id;
           let bgcolor = $(this).attr('data-color');
           let reqrd = false;
           let signed = false;
-          if (sign_id) {
-            signed = sign_id;
-          }
           let content = $(this).find('span').text();
           if (type == 'text') {
             content = $(this).find('input[type="text"]').val();
@@ -269,6 +255,7 @@ class Signature extends Component {
           let sign_done = false;
           if ($(this).hasClass('signed_done')) {
             sign_done = true
+            signed = $(this).attr('data-signerid');
           }
           drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached, completed: sign_done });
         });
@@ -333,8 +320,6 @@ class Signature extends Component {
     $('#sign_pad').removeClass('current-btn');
     $('#check_field').removeClass('current-btn');
     $('#clear_field').removeClass('current-btn');
-    
-
     $('.signature_container').addClass('hovrcr_text');
   	$('.signature_container').removeClass('hovrcr_date');
   	$('.signature_container').removeClass('hovrcr_initials');
