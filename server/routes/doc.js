@@ -112,7 +112,7 @@ module.exports = (app) => {
               }
             });
             Promise.all(requests).then(() => {
-              return res.json(fina_data)
+              return res.json({ name: doc.name, payload: fina_data});
             });
           
           // res.json(doc);
@@ -539,7 +539,24 @@ module.exports = (app) => {
           };
           San_Function.sanSendMail(req, res, mailOptions);
         });
-        return res.json({success:true,msg:'Document Shared Successfully'});
+        const doc = await Doc.findById(req.body.id);
+        let ids = {};
+        ids[req.body.id] = [];
+        var fn = function asyncMultiplyBy2(v) {
+          return new Promise((resolve, reject) => {
+            v.drag_data.map((drag) => {
+              if (!ids[req.body.id].includes(drag.signer_id)) {
+                resolve(ids[req.body.id].push(drag.signer_id));
+              } else {
+                reject('')
+              }
+            });
+          });
+        };
+        Promise.all(doc.images.map(fn)).then(function (data) {
+          return res.json({ success: true, msg: 'Document Shared Successfully', ids: ids });
+        });
+        // return res.json({success:true,msg:'Document Shared Successfully'});
       }
     });
 
@@ -609,7 +626,7 @@ module.exports = (app) => {
         .catch((err) => next(err));
     });
 
-    app.put('/api/doc/:id', (req, res, next) => {
+    app.put('/api/doc/:id', async (req, res, next) => {
       var fs = require('fs');
       const { base64Data, saved_by } = req.body;
         Doc.findById(ObjectId(req.params.id))
@@ -626,7 +643,18 @@ module.exports = (app) => {
                 doc.file = buffer.name;
               }
               if (saved_by && req.params.id) {
-                Que.updateMany({ signer_id: saved_by, doc_id: req.params.id }, { $set: { status: "done" } }, function (err, que) {});
+                Que.updateMany({ signer_id: saved_by, doc_id: req.params.id }, { $set: { status: "done", doc_id:'' } }, function (err, que) {});
+                const userMatched = await User.findById(doc.user_id);
+                const signer = await Signer.findById(saved_by);
+                if (userMatched && signer) {
+                  var mailOptions = {
+                    from: signer.email,
+                    to: userMatched.email,
+                    subject: 'Signing Done By "' + signer.email+'"',
+                    html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">Hi , ' + userMatched.lastname+'</br> Please Check Your Doc.</div></font></b></div>'
+                  };
+                  San_Function.sanSendMail(req, res, mailOptions);
+                }
               }
               doc.save()
               .then(() => res.json(doc))

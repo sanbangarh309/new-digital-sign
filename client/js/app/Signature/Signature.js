@@ -134,8 +134,9 @@ class Signature extends Component {
   useTemplate = (id) => {
     axios.get('/api/template/'+id).then((res) => {
         localStorage.setItem('file_name', res.data.name);
+      console.log(res.data)
         this.setState({
-          docs: res.data
+          docs: res.data.payload
         });
         $('#outer-barG').hide();
     }).catch(error => {

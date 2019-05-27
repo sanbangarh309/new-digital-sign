@@ -134,7 +134,6 @@ class Dashboard extends Component {
       this.setState({
         invitation_list: res.data.msg
       });
-      console.log(res.data.msg);
     }).catch(error => {
       console.log(error.response);
     });
@@ -190,7 +189,6 @@ class Dashboard extends Component {
           });
         });
       });
-      console.log(ids)
       this.getSignersWithDoc(ids);
       // this.setState({
       //   lastDate: res.data.lastDate
@@ -284,19 +282,7 @@ class Dashboard extends Component {
     if(uniqueemails.length > 0 && id){
       axios.post('/api/sendemail',{'emails':uniqueemails,'subject':this.state.subject,'message':this.state.message,'id':id,token:localStorage.getItem('jwtToken')}).then((res) => {
         $('#emailModal').modal('hide');
-        // let ids = {};
-        // let docs = this.state.docs;
-        // Object.keys(docs).forEach(function (head) {
-        //   Object.keys(docs[head].images).forEach(function (key) {
-        //     ids[docs[head]._id] = [];
-        //     Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
-        //       if (docs[head].images[key].drag_data[key2].type == "signer_added" && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
-        //         ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
-        //       }
-        //     });
-        //   });
-        // });
-        // this.getSignersWithDoc(ids);
+        this.getSignersWithDoc(res.data.ids);
         swal("Success!", "Document Shared Successfully", "success");
       }).catch(error => {
         swal("Error!", "Something Went wrong", "danger");
