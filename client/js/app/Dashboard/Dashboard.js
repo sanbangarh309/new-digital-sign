@@ -5,6 +5,7 @@ import './Dashboard.css';
 import axios from 'src/common/myAxios';
 var NavLink = require('react-router-dom').NavLink;
 import {connect} from 'react-redux';
+import swal from 'sweetalert';
 // import auth from 'src/auth';
 
 @connect((store) => {
@@ -593,7 +594,7 @@ class Dashboard extends Component {
         return (
           <a key={number}
             id={number}
-            onClick={this.handleClick.bind(this)}
+            onClick={this.handleClick.bind(this,'current')}
             href="javascript:void(0)" class={activeClass_}>{number}</a>
         );
       });

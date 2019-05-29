@@ -399,7 +399,7 @@ class Home extends React.Component {
         </div>
      </div>
   </section>
-<div className="back-top" title="Top of Page"><i className="fa fa-arrow-up"></i></div>
+
       </div>
     );
   }

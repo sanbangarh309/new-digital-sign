@@ -6,6 +6,7 @@ const Signer = require.main.require('./models/Signer');
 const Que = require.main.require('./models/Que');
 const Folder = require.main.require('./models/Folder');
 const Template = require.main.require('./models/Template');
+const Guest = require.main.require('./models/Guest');
 const jwt = require('jwt-then');
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
@@ -663,6 +664,30 @@ module.exports = (app) => {
         })
         .catch((err) => next(err));
     });
+
+  app.post('/api/add_guest',function(req,res,next){
+    try {
+      if (!req.body.email) {
+        return res.status(404).json({ error: 'Email Required' });
+      }
+      let guest = new Guest();
+      guest.name = req.body.name;
+      guest.email = req.body.email;
+      guest.message = req.body.message;
+      guest.phone = req.body.phone;
+      guest.save();
+      var mailOptions = {
+        from: req.body.email,
+        to: 'sandeep.digittrix@gmail.com',
+        subject: 'New Contact Digital Signature',
+        html: '<div><b><font style="font-family:tahoma;font-size:10pt">Contact Info:<br/>-------------------<br/>Name:- ' + req.body.name + '<br/>Email:- ' + req.body.email + '<br/>Phone:- ' + req.body.phone + '<br/>Message:- ' + req.body.message + '</font></b></div>'
+      };
+      San_Function.sanSendMail(req, res, mailOptions);
+      res.json(guest)
+    } catch (error) {
+      next(error)
+    }
+  });
 
     app.get('/files/:type/:img_name', function(req,res){
           var filename = req.params.img_name;

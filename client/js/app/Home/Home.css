@@ -1,2 +1,2 @@
-.Banner_View {background:url(../components/images/banner.png) no-repeat;}
+.Banner_View {background:url(../../../public/assets/images/banner.png) no-repeat;}
 .banner-captions-left{visibility: visible; animation-duration:500ms; animation-delay:500ms; animation-name:zoomIn;}
