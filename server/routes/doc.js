@@ -5,6 +5,8 @@ const Doc = require.main.require('./models/Doc');
 const Signer = require.main.require('./models/Signer');
 const Que = require.main.require('./models/Que');
 const Folder = require.main.require('./models/Folder');
+const Plan = require.main.require('./models/Plan');
+const Setting = require.main.require('./models/Setting');
 const Template = require.main.require('./models/Template');
 const Guest = require.main.require('./models/Guest');
 const jwt = require('jwt-then');
@@ -531,14 +533,15 @@ module.exports = (app) => {
             que.save();
             order++;
           }
-          
-          var mailOptions = {
-            from: userMatched.email,
-            to: el.email,
-            subject: req.body.subject,
-            html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">' + req.body.message + '</div><br/>Click To Sign:<br/>-------------------<br/><a href="' + que.link+'"><img src="'+img+'" width=100 /></a></font></b></div>'
-          };
-          San_Function.sanSendMail(req, res, mailOptions);
+          if (que.link) {
+            var mailOptions = {
+              from: userMatched.email,
+              to: el.email,
+              subject: req.body.subject,
+              html: '<div><b><font style="font-family:tahoma;font-size:8pt"><div style="text-align:center;font-size: 20px;">' + req.body.message + '</div><br/>Click To Sign:<br/>-------------------<br/><a href="' + que.link + '"><img src="' + img + '" width=100 /></a></font></b></div>'
+            };
+            San_Function.sanSendMail(req, res, mailOptions);
+          }
         });
         const doc = await Doc.findById(req.body.id);
         let ids = {};
@@ -644,7 +647,8 @@ module.exports = (app) => {
                 doc.file = buffer.name;
               }
               if (saved_by && req.params.id) {
-                Que.updateMany({ signer_id: saved_by, doc_id: req.params.id }, { $set: { status: "done", doc_id:'' } }, function (err, que) {});
+                // doc_id:''
+                Que.updateMany({ signer_id: saved_by, doc_id: req.params.id }, { $set: { status: "done" } }, function (err, que) {});
                 const userMatched = await User.findById(doc.user_id);
                 const signer = await Signer.findById(saved_by);
                 if (userMatched && signer) {
@@ -674,6 +678,9 @@ module.exports = (app) => {
       guest.name = req.body.name;
       guest.email = req.body.email;
       guest.message = req.body.message;
+      if (req.body.subscribed) {
+        guest.subscribed = req.body.subscribed;
+      }
       guest.phone = req.body.phone;
       guest.save();
       var mailOptions = {
@@ -688,6 +695,18 @@ module.exports = (app) => {
       next(error)
     }
   });
+
+  app.get('/api/prices', async (req, res) => {
+    const prices = await Plan.find({});
+    res.json(prices);
+  });
+
+  app.get('/api/setting', async (req, res) => {
+    const setting = await Setting.findOne({});
+    res.json(setting);
+  });
+
+  
 
     app.get('/files/:type/:img_name', function(req,res){
           var filename = req.params.img_name;

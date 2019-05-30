@@ -114,7 +114,6 @@ class Dashboard extends Component {
         //   });
         // });
         // this.getSigners([...new Set(ids)]);
-        console.log(ids)
       } 
     }, 2000);
   }
@@ -126,7 +125,7 @@ class Dashboard extends Component {
       });
      
     }).catch(error => {
-      console.log(error.response);
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -136,7 +135,7 @@ class Dashboard extends Component {
         invitation_list: res.data.msg
       });
     }).catch(error => {
-      console.log(error.response);
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -158,7 +157,7 @@ class Dashboard extends Component {
         folders: res.data
       });
     }).catch(error => {
-      console.log(error.response);
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -180,13 +179,9 @@ class Dashboard extends Component {
         Object.keys(docs[head].images).forEach(function (key) {
           ids[docs[head]._id] = [];
           Object.keys(docs[head].images[key].drag_data).forEach(function (key2) {
-            console.log(docs[head].images[key].drag_data[key2])
             if (!ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
               ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
             } 
-            // else if (docs[head].images[key].drag_data[key2].completed && !ids[docs[head]._id].includes(docs[head].images[key].drag_data[key2].signer_id)) {
-            //   ids[docs[head]._id].push(docs[head].images[key].drag_data[key2].signer_id);
-            // }
           });
         });
       });
@@ -196,7 +191,7 @@ class Dashboard extends Component {
       // });
       $('#outer-barG').hide();
     }).catch(error => {
-      console.log(error.response);
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -241,7 +236,7 @@ class Dashboard extends Component {
           this.getDocs();
           swal("Deleted!", "Your doc file has been deleted", "success");
         }).catch(error => {
-          swal("Error!", "Something Went wrong", "danger");
+          swal("Error!", "Something Went wrong", "error");
         }); 
       }
     }); 
@@ -263,7 +258,7 @@ class Dashboard extends Component {
           this.getDocs();
           swal("Deleted!", "Your folder has been deleted", "success");
         }).catch(error => {
-          swal("Error!", "Something Went wrong", "danger");
+          swal("Error!", error.response.data.error, "error");
         }); 
       }
     });
@@ -286,7 +281,7 @@ class Dashboard extends Component {
         this.getSignersWithDoc(res.data.ids);
         swal("Success!", "Document Shared Successfully", "success");
       }).catch(error => {
-        swal("Error!", "Something Went wrong", "danger");
+        swal("Error!", error.response.data.error, "error");
       });
     }
     return false;
@@ -496,7 +491,7 @@ class Dashboard extends Component {
               this.setState({ disabled_fields: { pointerEvents: 'none', color: '#c9c2c2' } });
               swal("Deleted!", "Selected docs has been deleted", "success");
             }).catch(error => {
-              swal("Error!", "Something Went wrong", "danger");
+              swal("Error!", error.response.data.error, "error");
             });
           }
         });
@@ -532,7 +527,7 @@ class Dashboard extends Component {
       $('#outer-barG').hide();
       swal("Sent!", "Document Resend Successfully", "success");
     }).catch(error => {
-      swal("Error!", "Something Went wrong", "danger");
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -543,10 +538,10 @@ class Dashboard extends Component {
         $('#invitation_id_' + queid).remove();
         swal("Deleted!", "Signer deleted Successfully", "success");
       }else{
-        swal("Error!", "Something Went wrong", "danger");
+        swal("Error!", "Something Went wrong", "error");
       }
     }).catch(error => {
-      swal("Error!", "Something Went wrong", "danger");
+      swal("Error!", error.response.data.error, "error");
     });
   }
 
@@ -773,10 +768,10 @@ class Dashboard extends Component {
                                 let img = "/files/docs/" + value.images[0].name || "/assets/img/doc-1.png";
                                 return (<li key={index}>
                                   <ul className="list-inline top-box-list">
-                                    <li><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
-                                    <li className="doc-box">
+                                    <li key={index+'.1'}><input onChange={this.saveAction} type="checkbox" value={value._id} /><span></span></li>
+                                    <li key={index +'.2'} className="doc-box">
                                       <a className="btn-default btn-flat" href="javascript:void(0)">
-                                      <NavLink to={'signature/' + value._id}>
+                                      <NavLink  to={'signature/' + value._id}>
                                         <div className="fig-left">
                                           <img src={img} alt="No Thumb" className="doc-pic" />
                                         </div>
@@ -786,11 +781,11 @@ class Dashboard extends Component {
                                         </div>
                                       </a>
                                     </li>
-                                    <li><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
+                                    <li key={index+'.3'}><NavLink to={'signature/' + value._id} className="btn-default btn-flat">SIGN</NavLink></li>
                                     {/* data-toggle="modal" data-target="#emailModal" */}
-                                    <li><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
+                                    <li key={index+'.4'}><a href="javascript:void(0)" id={value._id} data-string={JSON.stringify(value.images[0].drag_data)} onClick={this.appendId}>SEND FOR SIGNING </a></li>
                                     {/* <li><a href="#"><i className="fa fa-share"></i></a></li> */}
-                                    <li>
+                                    <li key={index+'.5'}>
                                       <div class="dropdown">
                                         <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">More
                                         <span class="caret"></span></button>
@@ -989,7 +984,7 @@ class Dashboard extends Component {
           </div>
        </div>
 
-          <div id="emailModal" className="modal fade san_custom" tabindex="-1" role="dialog" aria-labelledby="contactModalLabel" style={modalCss}>
+          <div id="emailModal" className="modal fade san_custom" tabIndex="-1" role="dialog" aria-labelledby="contactModalLabel" style={modalCss}>
         <div className="modal-dialog modal-lg">
                 <div className="modal-content">
                     <div className="modal-header">
@@ -1003,7 +998,7 @@ class Dashboard extends Component {
 							    <div className="col-md-12 col-md-offset-4">
                   {addedAlert}
 							      <form className="form-horizontal" role="form" onSubmit={this.sendEmail.bind(this)} id="email_modal_form">
-                    <table id="email_table" className="sendEmailDialogPanel" cellpadding="2" style= {{width: '100%',float: 'left'}}>
+                          <table id="email_table" className="sendEmailDialogPanel" cellPadding="2" style= {{width: '100%',float: 'left'}}>
                       <tbody>
                           <tr>
                             <td>
@@ -1033,9 +1028,9 @@ class Dashboard extends Component {
                           <tr>
                             <td>
                                 <span>
-                                    <label>Subject &amp; Message</label><input id="subject" name="subject" type="text" defaultValue={user.email +' Needs Your Signature'} value={this.state.subject} onChange={this.onChange} required className="form-control emailSubject" />
+                                    <label>Subject &amp; Message</label><input id="subject" name="subject" type="text" defaultValue={user.email +' Needs Your Signature'} onChange={this.onChange} required className="form-control emailSubject" />
                                   <div id="invitationForm:emailSubjectMessages" aria-live="polite" className="ui-message"></div>
-                                    <textarea cols="20" rows="5" maxlength="2147483647" required className="form-control emailText" defaultValue={user.email +' invited you to sign'} value={this.state.message} onChange={this.onChange} name="message"></textarea>
+                                    <textarea cols="20" rows="5" maxLength="2147483647" required className="form-control emailText" defaultValue={user.email +' invited you to sign'} onChange={this.onChange} name="message"></textarea>
                                   <div aria-live="polite" className="ui-message"></div>
                                 </span>
                             </td>

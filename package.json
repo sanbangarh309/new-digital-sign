@@ -37,6 +37,7 @@
     "connect-timeout": "^1.9.0",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^0.28.11",
+    "dotenv": "^8.0.0",
     "express": "^4.16.3",
     "file-base64": "^1.0.0",
     "file-loader": "^3.0.1",

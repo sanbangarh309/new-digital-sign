@@ -578,7 +578,7 @@ class DropArea extends React.Component {
             }
           });
           
-        DropJgah.push(<div><div className="pageNumber">Page {key_} of {total_page}</div><div
+        DropJgah.push(<div key={key_}><div className="pageNumber">Page {key_} of {total_page}</div><div
             className={dropjgah_classes.join(' ')} 
             onDragOver={this.onDragOver.bind(this)}
             id={'signature_container_'+key_}
@@ -592,7 +592,7 @@ class DropArea extends React.Component {
       });
       
       return (
-        <div className="right-maintemplate" key="1">
+        <div className="right-maintemplate" key="0.1">
         {DropJgah}
         </div>
       );

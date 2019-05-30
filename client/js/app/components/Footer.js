@@ -1,6 +1,18 @@
 import React from 'react';
 var NavLink = require('react-router-dom').NavLink;
 import ModalComponent from './ModalComponent';
+import axios from 'src/common/myAxios';
+import swal from 'sweetalert';
+const subscribeNews = (e) => { 
+	let email = $('#subscribed_email').val();
+	axios.post('/api/add_guest', { name:email,email: email, subscribed:1 }).then((res) => {
+		$('#subscribed_email').val('');
+		swal("Subscribed!", "You Subscribed Successfully for newsletter", "success");
+	}).catch(error => {
+		console.log(error.response);
+	});
+}
+
 const Footer = () => (
   <footer className="footer">
 <div className="footer-widgets">
@@ -52,8 +64,8 @@ const Footer = () => (
 			</div>
 			<div className="subscription-form-wrapper">
 			   <form className="subscription-form d-flex">
-				  <input className="input-text subscription-input" placeholder="Subscribe our newsletter" size="21" type="text"/>
-				  <button className="btn button"><i className="fa fa-paper-plane"></i></button>
+				  <input className="input-text subscription-input" id ="subscribed_email" placeholder="Subscribe our newsletter" size="21" type="email"/>
+				  <button type="button" className="btn button" onClick={subscribeNews}><i className="fa fa-paper-plane"></i></button>
 			   </form>
 			</div>
 			<div className="textwidget">

@@ -28,7 +28,7 @@ const Header = () => {
   return (
    <header className="home-header">
       <nav className="navbar navbar-expand-lg navbar-light custom-navheader" id="sroll-className">
-          <a className="navbar-brand d-lg-block d-md-block" href="./"><img src="/assets/img/fina-logo.png" alt=""/></a>
+          <a className="navbar-brand d-lg-block d-md-block" href="/"><img src="/assets/img/fina-logo.png" alt=""/></a>
   			<button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
   				<span className="navbar-toggler-icon"></span>
   			</button>

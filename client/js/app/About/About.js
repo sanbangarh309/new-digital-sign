@@ -8,14 +8,24 @@ class About extends Component {
     super(props);
     this.state = {
       page:'About',
-      data:[]
+      setting:[]
     };
     this.onChange = this.onChange.bind(this);
   }
 
+  componentDidMount() {
+    axios.get('/api/setting').then((res) => {
+      this.setState({
+        about: res.data.about
+      });
+    }).catch(error => {
+      console.log("Error!");
+    });
+  }
+
   onChange(e){
     this.setState({[e.target.name]:e.target.value});
-   }
+  }
 
   render() {
     return (
@@ -32,7 +42,7 @@ class About extends Component {
     <div className="container">
       <div className="col-md-8 offset-md-2 p-0 text-center">
         <h3 className="section-heading text-center">We make your business gain more revenue at a glance.</h3>
-        <p className="lead">Maecenas sed diam eget risus varius blandit sit amet non magna. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Vestibulum id ligula porta felis euismod semper. Nulla vitae elit libero, a pharetra augue. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Maecenas mollis interdum!</p>
+                <p className="lead" dangerouslySetInnerHTML={{ __html: this.state.about }}></p>
         <a href="#0" className="cta cta-default all-caps contact-trigger"> Get in Touch</a>
       </div>
     </div>

@@ -11,12 +11,12 @@ const timeout = require('connect-timeout');
 const historyApiFallback = require('connect-history-api-fallback');
 
 const mongoose = require('mongoose');
-
+const dotenv = require('dotenv');
+dotenv.config();
 const webpack = require('webpack');
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
-
-const devMode = 'production';//process.env.NODE_ENV !== 'production';
+const devMode = process.env.NODE_ENV !== 'production';
 const host = process.env.HOST || '0.0.0.0';
 const port = process.env.PORT || 5200;
 const config = require('./custom_config');

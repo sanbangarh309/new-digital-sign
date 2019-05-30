@@ -375,7 +375,7 @@ class Signature_edit extends Component {
             if ($(this).find('span').hasClass('required')) {
               reqrd = true;
             }
-            drag_data.push({ id: index, isDragging: false, isResizing: false, top: $(this).css('top'), left: $(this).css('left'), width: w, height: h, fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
+            drag_data.push({ id: index, isDragging: false, isResizing: false, top: parseFloat($(this).css('top')), left: parseFloat($(this).css('left')), width: parseFloat(w), height: parseFloat(h), fontSize: font, isHide: false, type: type, appendOn: false, content: content, doc_id: i, required: reqrd, sign_img: img, sign_text: $(this).find('span').text(), sign_font: fontfamily, sign_color: clr, signer_id: signer_id, signer_clr: bgcolor, signed_done_by: signed, attach_img: attached });
           });
           docs[parseInt(i) - 1].drag_data = drag_data;
           doc.addImage(imgData, 'JPEG', 0, 0, width, height);
@@ -596,8 +596,8 @@ class Signature_edit extends Component {
   }
 
   getSignPosition(top,left,doc_id){
-    this.setState({top:top});
-    this.setState({left:left});
+    this.setState({ top: parseFloat(top)});
+    this.setState({ left: parseFloat(left)});
     this.setState({doc_id:doc_id});
   }
 
@@ -885,7 +885,7 @@ class Signature_edit extends Component {
       <div className="container-fluid">
         <div className="col-md-12">
           <div className="row">
-            <a className="navbar-brand d-lg-block d-md-block" href="index.html"><img src="/assets/img/fina-logo.png" alt=""/></a>
+            <a className="navbar-brand d-lg-block d-md-block" href="/"><img src="/assets/img/fina-logo.png" alt=""/></a>
             <button className="navbar-toggler hamburger-btn collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
 						<div className="hamburger">
 							<span></span>
