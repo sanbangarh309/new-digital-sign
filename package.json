@@ -73,7 +73,7 @@
     "qhistory": "^1.0.0",
     "react": "^16.3.2",
     "react-bootstrap": "^1.0.0-beta.8",
-    "react-dom": "^16.3.2",
+    "react-dom": "^16.4.2",
     "react-draggable-resizable": "^1.0.1",
     "react-hot-loader": "^4.2.0",
     "react-loadable": "^5.4.0",
