@@ -49,7 +49,7 @@
     "html-webpack-plugin": "^3.2.0",
     "html2canvas": "^1.0.0-alpha.12",
     "install": "^0.12.2",
-    "jquery": "^3.3.1",
+    "jquery": "^3.5.0",
     "jsonwebtoken": "^8.2.1",
     "jspdf": "^1.5.3",
     "jwt-then": "^0.6.0",
