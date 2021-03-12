@@ -51,7 +51,7 @@
     "install": "^0.12.2",
     "jquery": "^3.3.1",
     "jsonwebtoken": "^8.2.1",
-    "jspdf": "^1.5.3",
+    "jspdf": "^2.3.1",
     "jwt-then": "^0.6.0",
     "mini-css-extract-plugin": "^0.4.0",
     "mongoose": "^5.1.1",
